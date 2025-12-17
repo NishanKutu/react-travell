@@ -3,8 +3,11 @@ import { Routes, Route } from 'react-router-dom';
 import Home from './components/Home';
 import Features from './components/Features';
 import PopularDestination from './components/PopularDestination';
+import About from './pages/About';
+import Destinations from './pages/Destinations';
+import ContactPage from './pages/ContactPage';
 
-const MyRoute = () => {
+const MyRout = () => {
   return (
     <Routes>
       <Route path="/" element={
@@ -14,13 +17,14 @@ const MyRoute = () => {
           <PopularDestination />
         </>
       } />
-      
 
-      <Route path="/home" element={<Home />} />
+      
       <Route path="/features" element={<Features />} />
-      {/* <Route path="/destinations" element={<Destination />} /> */}
+      <Route path="/about" element={<About />} />
+      <Route path = "/destinations" element = {<Destinations/>} />
+      <Route path="/contact" element={<ContactPage />} />
     </Routes>
   );
 };
 
-export default MyRoute;
+export default MyRout;

@@ -10,9 +10,9 @@ const App = () => {
       <main>
         <MyRout />
       </main>
-      <Footer/>
+      <Footer />
     </div>
   );
-}
+};
 
 export default App;
