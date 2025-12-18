@@ -46,11 +46,11 @@ const ContactPage = () => {
         <div className="bg-white font-sans text-gray-800">
             {/* --- HERO SECTION --- */}
             <div 
-                className="relative h-[300px] flex items-center justify-center bg-cover bg-center"
+                className="relative h-80 flex items-center justify-center bg-cover bg-center"
                 style={{ backgroundImage: `url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1500&q=80')` }}
             >
                 <div className="absolute inset-0 bg-black/40"></div>
-                <h1 className="relative z-10 text-white text-5xl md:text-6xl font-serif">Contact Us</h1>
+                <h1 className="relative olute z-10 text-white text-6xl md:text-8xl font-serif">Contact Us</h1>
             </div>
 
             {/* --- MAIN CONTENT --- */}
