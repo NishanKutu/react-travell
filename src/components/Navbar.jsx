@@ -2,16 +2,37 @@ import React, { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import Button from '../layout/Button';
 import { AiOutlineMenu, AiOutlineClose } from 'react-icons/ai';
+import LoginPage from '../pages/LoginPage'; 
+import SignupPage from '..//pages/Signup';
 
 const Navbar = () => {
     const [menu, setMenu] = useState(false);
+    const [isLoginOpen, setIsLoginOpen] = useState(false);
+    const [isSignupOpen, setIsSignupOpen] = useState(false);
+
+    const openLogin = () => {
+        setIsLoginOpen(true);
+        setIsSignupOpen(false);
+        setMenu(false);
+    };
+
+    const openSignup = () => {
+        setIsSignupOpen(true);
+        setIsLoginOpen(false);
+        setMenu(false);
+    };
+
+    const closeAll = () => {
+        setIsLoginOpen(false);
+        setIsSignupOpen(false);
+    };
 
     const navItems = [
         { name: 'Home', path: '/' },
         { name: 'Features', path: '/features' },
         { name: 'Destinations', path: '/destinations' },
         { name: 'About', path: '/about' },
-        { name: 'ContactPage', path: '/contact' },
+        { name: 'Contact', path: '/contact' },
     ];
 
     const handleChange = () => setMenu(!menu);
@@ -21,6 +42,7 @@ const Navbar = () => {
 
     return (
         <header className="sticky top-0 z-50">
+            {/* Main Navbar Container */}
             <div className="flex flex-row justify-between p-5 md:px-32 px-5 bg-[#004d4d] text-white shadow-[0_3px_10px_rgb(0,0,0,0.2)]">
                 <div className="flex items-center">
                     <Link to="/" className="cursor-pointer" onClick={() => setMenu(false)}>
@@ -28,6 +50,7 @@ const Navbar = () => {
                     </Link>
                 </div>
 
+                {/* Desktop Navigation */}
                 <nav className="hidden lg:flex flex-row items-center gap-8">
                     {navItems.map((item) => (
                         <NavLink
@@ -42,18 +65,25 @@ const Navbar = () => {
                     ))}
                 </nav>
 
+                {/* Desktop Buttons */}
                 <div className="hidden lg:flex flex-row items-center gap-4">
-                    <Button title="Login" variant="secondary" />
-                    <Button title="Signup" isPrimary={true} />
+                    <div onClick={openLogin}>
+                        <Button title="Login" variant="secondary" />
+                    </div>
+                    <div onClick={openSignup}>
+                        <Button title="Signup" isPrimary={true} />
+                    </div>
                 </div>
 
+                {/* Mobile Menu Icon */}
                 <div className="lg:hidden flex items-center p-2 cursor-pointer" onClick={handleChange}>
                     {menu ? <AiOutlineClose size={25} /> : <AiOutlineMenu size={25} />}
                 </div>
 
+                {/* Mobile Sidebar Menu */}
                 <div className={`
                     ${menu ? "translate-x-0" : "-translate-x-full"} 
-                    lg:hidden flex flex-col absolute z-50 bg-[#004d4d]/95 backdrop-blur-md text-white left-0 top-[72px] text-2xl text-center pt-8 pb-10 gap-8 w-full h-fit transition-transform duration-300 ease-in-out
+                    lg:hidden flex flex-col absolute z-50 bg-[#004d4d]/95 backdrop-blur-md text-white left-0 top-18 text-2xl text-center pt-8 pb-10 gap-8 w-full h-fit transition-transform duration-300 ease-in-out
                 `}>
                     {navItems.map((item) => (
                         <NavLink
@@ -68,12 +98,28 @@ const Navbar = () => {
                         </NavLink>
                     ))}
 
+                    {/* Mobile Login/Signup Buttons */}
                     <div className="flex flex-col items-center gap-4 mt-4">
-                        <Button title="Login" variant="secondary" />
-                        <Button title="Signup" isPrimary={true} />
+                        <div onClick={openLogin}>
+                            <Button title="Login" variant="secondary" />
+                        </div>
+                        <div onClick={openSignup}>
+                            <Button title="Signup" isPrimary={true} />
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <LoginPage 
+                isOpen={isLoginOpen} 
+                onClose={closeAll} 
+                switchToSignup={openSignup} 
+            />
+            <SignupPage 
+                isOpen={isSignupOpen} 
+                onClose={closeAll} 
+                switchToLogin={openLogin} 
+            />
         </header>
     );
 };

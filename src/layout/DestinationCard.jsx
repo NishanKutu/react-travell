@@ -2,7 +2,7 @@ import React from 'react';
 
 const DestinationCard = ({ img, title, days, price, category, discount }) => {
   return (
-    <div className=" relative overflow-hidden rounded-2xl group cursor-pointer h-[450px] w-full shadow-lg ">
+    <div className=" relative overflow-hidden rounded-2xl group cursor-pointer h-112.5 w-full shadow-lg ">
       
       {discount && (
         <div className="absolute top-4 right-4 z-20 bg-[#bd8157] text-white rounded-full w-16 h-16 flex flex-col items-center justify-center text-center leading-tight shadow-lg border-2 border-white/20">
