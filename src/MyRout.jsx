@@ -22,7 +22,7 @@ const MyRout = () => {
       <Route path="/features" element={<Features />} />
       <Route path="/about" element={<About />} />
       <Route path = "/destinations" element = {<Destinations/>} />
-      <Route path="/contact" element={<ContactPage />} />
+      <Route path="/contact" element={<ContactPage/>} />
     </Routes>
   );
 };

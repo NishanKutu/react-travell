@@ -11,7 +11,7 @@ const Navbar = () => {
         { name: 'Features', path: '/features' },
         { name: 'Destinations', path: '/destinations' },
         { name: 'About', path: '/about' },
-        { name: 'Contact', path: '/contact' },
+        { name: 'ContactPage', path: '/contact' },
     ];
 
     const handleChange = () => setMenu(!menu);
