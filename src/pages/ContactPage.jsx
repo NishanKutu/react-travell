@@ -50,7 +50,7 @@ const ContactPage = () => {
                 style={{ backgroundImage: `url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1500&q=80')` }}
             >
                 <div className="absolute inset-0 bg-black/40"></div>
-                <h1 className="relative olute z-10 text-white text-6xl md:text-8xl font-serif">Contact Us</h1>
+                <h1 className="relative olute z-10 text-white text-6xl md:text-8xl font-serif animate-pop-up">Contact Us</h1>
             </div>
 
             {/* --- MAIN CONTENT --- */}

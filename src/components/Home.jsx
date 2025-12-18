@@ -1,4 +1,5 @@
 import React from 'react';
+import "../App.css";
 import Button from '../layout/Button';
 import { Link } from 'react-scroll';
 import img from '../assets/img/Hero.jpg';
@@ -16,11 +17,11 @@ const Home = () => {
 
                 <div className="relative z-10 w-full max-w-7xl mx-auto px-5 md:px-32">
                     <div className="text-center mx-auto p-4 ">
-                        <h1 className="font-serif text-6xl md:text-7xl text-white leading-tight">
+                        <h1 className="font-serif text-6xl md:text-7xl text-white leading-tight animate-pop-up">
                             Discover the Best Destinations
                         </h1>
 
-                        <p className="mt-6 text-lg md:text-2xl text-white">
+                        <p className="mt-6 text-lg md:text-2xl text-white animate-pop-up">
                             Experience the Dream with TravelForU the best tourist destinations
                             that we have to offer
                         </p>
