@@ -11,6 +11,13 @@ export const tours = [
         id: 1,
         code: 'RAJ',
         title: 'Best Of Japan',
+        gallery: [
+            indiaImg, // Main large photo (Step 1)
+            templeImg, // Smaller photo (Step 2)
+            desert, // Smaller photo (Step 3)
+            templeImg  // Smaller photo (Step 4)
+        ],
+        fullDescription: "Experience the perfect blend of ancient tradition and futuristic technology...",
         duration: '9 Days 7 Nights',
         cities: 'Tokyo · Kyoto · Nara · Osaka',
         price: 2949,
@@ -28,6 +35,13 @@ export const tours = [
         id: 2,
         code: 'RDY',
         title: 'Yangtze Essence',
+        gallery: [
+            indiaImg, // Main large photo (Step 1)
+            templeImg, // Smaller photo (Step 2)
+            desert, // Smaller photo (Step 3)
+            templeImg  // Smaller photo (Step 4)
+        ],
+        fullDescription: "Experience the perfect blend of ancient tradition and futuristic technology...",
         duration: '13 Days 11 Nights',
         cities: 'Beijing · Xian · Chongqing · Yangtze River · Yichang · Shanghai',
         price: 3250,
@@ -44,6 +58,13 @@ export const tours = [
         id: 3,
         code: 'CDN',
         title: 'Gems of Europe',
+        gallery: [
+            indiaImg, // Main large photo (Step 1)
+            templeImg, // Smaller photo (Step 2)
+            desert, // Smaller photo (Step 3)
+            templeImg  // Smaller photo (Step 4)
+        ],
+        fullDescription: "Experience the perfect blend of ancient tradition and futuristic technology...",
         duration: '12 Days 10 Nights',
         cities: 'London · Paris · Lucrene · Milan · Venice · Montecatini',
         price: 2900,
@@ -60,6 +81,13 @@ export const tours = [
         id: 4,
         code: 'EBC',
         title: 'Classic China',
+        gallery: [
+            indiaImg, // Main large photo (Step 1)
+            templeImg, // Smaller photo (Step 2)
+            desert, // Smaller photo (Step 3)
+            templeImg  // Smaller photo (Step 4)
+        ],
+        fullDescription: "Experience the perfect blend of ancient tradition and futuristic technology...",
         duration: '12 Days 11 Nights',
         cities: 'Beijing · Xian · Chengdu · Shanghai',
         price: 3050,
@@ -76,6 +104,13 @@ export const tours = [
         id: 5,
         code: 'DRD',
         title: 'Majestic India & Scenic Sri Lanka',
+        gallery: [
+            indiaImg, // Main large photo (Step 1)
+            templeImg, // Smaller photo (Step 2)
+            desert, // Smaller photo (Step 3)
+            templeImg  // Smaller photo (Step 4)
+        ],
+        fullDescription: "Experience the perfect blend of ancient tradition and futuristic technology...",
         duration: '15 Days 14 Nights',
         cities: 'Delhi · Varanasi · Delhi · Agra · Jaipur · Mumbai · Colombo · Negombo · Dambulla · Kanady · Nuwara eliya · Colombo',
         price: 8500,
@@ -91,6 +126,13 @@ export const tours = [
         id: 6,
         code: 'CNB',
         title: 'Magical Kenya Safari',
+        gallery: [
+            indiaImg, // Main large photo (Step 1)
+            templeImg, // Smaller photo (Step 2)
+            desert, // Smaller photo (Step 3)
+            templeImg  // Smaller photo (Step 4)
+        ],
+        fullDescription: "Experience the perfect blend of ancient tradition and futuristic technology...",
         duration: '9 Days 8 Nights',
         cities: 'Nairobi · Aberdare National Park · Shaba National Reserve · Lake Nakuru National Park · Masai Mara National Reserve · Nairobi',
         price: 3700,
@@ -107,6 +149,13 @@ export const tours = [
         id: 7,
         code: 'CBZ',
         title: 'Egypt & Jordan',
+        gallery: [
+            indiaImg, // Main large photo (Step 1)
+            templeImg, // Smaller photo (Step 2)
+            desert, // Smaller photo (Step 3)
+            templeImg  // Smaller photo (Step 4)
+        ],
+        fullDescription: "Experience the perfect blend of ancient tradition and futuristic technology...",
         duration: '15 Days 14 Nights',
         cities: 'Cairo · Luxor · Nile Cruise · Esna · Edfu · Kom ombo · Aswan · Cairo · Amman · Jerash · Petra · Wadi rum · Amman',
         price: 4550,
@@ -123,6 +172,13 @@ export const tours = [
         id: 8,
         code: 'RCB',
         title: 'India',
+        gallery: [
+            indiaImg, // Main large photo (Step 1)
+            templeImg, // Smaller photo (Step 2)
+            desert, // Smaller photo (Step 3)
+            templeImg  // Smaller photo (Step 4)
+        ],
+        fullDescription: "Experience the perfect blend of ancient tradition and futuristic technology...",
         duration: '8 Days 7 Nights',
         cities: 'Delhi · Mumbai · Jaipur · Agra · Goa · Rishikesh',
         price: 4500,
