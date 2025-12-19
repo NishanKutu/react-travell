@@ -6,6 +6,7 @@ import PopularDestination from './components/PopularDestination';
 import About from './pages/About';
 import Destinations from './pages/Destinations';
 import ContactPage from './pages/ContactPage';
+import PackageDetails from './pages/PackageDetails';
 
 const MyRout = () => {
   return (
@@ -23,6 +24,8 @@ const MyRout = () => {
       <Route path="/about" element={<About />} />
       <Route path = "/destinations" element = {<Destinations/>} />
       <Route path="/contact" element={<ContactPage/>} />
+      <Route path="/tour/:id" element={<PackageDetails />} />
+
     </Routes>
   );
 };
