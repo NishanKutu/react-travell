@@ -67,10 +67,8 @@ const PackageDetail = () => {
                             {tour.gallery ? (
                                 tour.gallery.map((img, index) => (
                                     <div key={index} className={`relative overflow-hidden rounded-lg shadow-md ${index === 0 ? 'col-span-2 h-72' : 'h-48'}`}>
-                                        <img src={img} alt={`Step ${index + 1}`} className="w-full h-full object-cover hover:scale-105 transition-all" />
-                                        <div className="absolute bottom-3 left-3 bg-black/60 text-white text-[10px] px-2 py-1 rounded uppercase font-bold">
-                                            Step {index + 1}
-                                        </div>
+                                        <img src={img} alt = "img" className="w-full h-full object-cover hover:scale-105 transition-all" />
+                                        
                                     </div>
                                 ))
                             ) : (

@@ -7,6 +7,7 @@ import About from './pages/About';
 import Destinations from './pages/Destinations';
 import ContactPage from './pages/ContactPage';
 import PackageDetails from './pages/PackageDetails';
+import FaqPage from './pages/FaqPage';
 
 const MyRout = () => {
   return (
@@ -25,6 +26,7 @@ const MyRout = () => {
       <Route path = "/destinations" element = {<Destinations/>} />
       <Route path="/contact" element={<ContactPage/>} />
       <Route path="/tour/:id" element={<PackageDetails />} />
+      <Route path = "/faq" element = {<FaqPage/>} />
 
     </Routes>
   );

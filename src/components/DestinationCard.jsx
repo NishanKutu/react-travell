@@ -11,10 +11,7 @@ const DestinationCard = ({ tour }) => {
   return (
     <div 
       onClick={() => navigate(`/tour/${id}`)}
-      /* 1. 'flex flex-col h-full': Standardizes height across the grid row.
-         2. 'min-h-[500px]': Replaces min-h-137.5 with a standard value to ensure a base size.
-      */
-      className="bg-white border border-gray-200 rounded-sm overflow-hidden group cursor-pointer shadow-sm hover:shadow-md transition-all flex flex-col h-full min-h-[500px]"
+      className="bg-white border border-gray-200 rounded-sm overflow-hidden group cursor-pointer shadow-sm hover:shadow-md transition-all flex flex-col h-full min-h-125"
     >
       <div className="relative h-64 shrink-0 overflow-hidden">
         <img
@@ -50,29 +47,25 @@ const DestinationCard = ({ tour }) => {
         )}
       </div>
 
-      {/* 'flex-grow': This container expands to fill available space, 
-          pushing the price section (mt-auto) to the bottom.
-      */}
-      <div className="p-6 flex flex-col flex-grow">
+   
+      <div className="p-6 flex flex-col grow">
         <span className="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-1 rounded tracking-widest uppercase w-fit">
           Code: {code}
-        </span>
+        </span>  
         
-        {/* 'min-h-[4rem]': Ensures cards with 1-line titles stay the same height as 2-line titles.
-            'line-clamp-2': Prevents titles from becoming 3+ lines and breaking the layout.
-        */}
-        <h3 className="text-xl font-serif text-gray-900 leading-tight mt-3 mb-1 min-h-[3.5rem] flex items-center">
+
+        <h3 className="text-xl font-serif text-gray-900 leading-tight mt-3 mb-1 min-h-14 flex items-center">
           {title}
         </h3>
         
         <p className="font-bold text-sm text-gray-800">{duration}</p>
         
-        {/* 'line-clamp-2': Standardizes the height of the cities list. */}
-        <p className="text-gray-400 text-xs mt-1 leading-relaxed line-clamp-2 min-h-[2rem]">
+        
+        <p className="text-gray-400 text-xs mt-1 leading-relaxed line-clamp-2 min-h-8">
           {cities}
         </p>
 
-        {/* 'mt-auto': Forces the price block to the bottom of the card. */}
+      
         <div className="mt-auto pt-5">
           <hr className="mb-4 border-gray-100" />
           <div className="flex items-baseline gap-1">
