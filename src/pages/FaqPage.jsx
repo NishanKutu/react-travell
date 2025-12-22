@@ -71,7 +71,7 @@ const FaqPage = () => {
       {/* Header Section */}
       <header className="py-16 px-4 text-center">
         <nav className="text-sm text-gray-500 mb-8">
-          <span className="hover:underline cursor-pointer text-teal-700">Home</span> / FAQs
+          <span className="hover:underline cursor-pointer text-teal-700" onClick = {() => navigate('/')}>Home</span> / FAQs
         </nav>
         <h1 className="text-5xl font-serif mb-12 text-[#1a3a3a]">How can we help?</h1>
         
@@ -84,7 +84,7 @@ const FaqPage = () => {
               className="grow p-3 border-none focus:ring-0"
               placeholder=""
             />
-            <button className="bg-[#1a3a3a] text-white px-8 py-3 font-bold uppercase tracking-widest text-sm">
+            <button className="bg-[#004d4d] text-white px-8 py-3 font-bold uppercase tracking-widest text-sm hover:bg-[#003333] cursor-pointer">
               Search
             </button>
           </div>

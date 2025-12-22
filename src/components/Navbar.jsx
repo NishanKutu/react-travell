@@ -33,6 +33,7 @@ const Navbar = () => {
         { name: 'Destinations', path: '/destinations' },
         { name: 'About', path: '/about' },
         { name: 'Contact', path: '/contact' },
+        {name: 'faq', path: '/faq' },
     ];
 
     const handleChange = () => setMenu(!menu);
