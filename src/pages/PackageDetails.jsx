@@ -4,7 +4,14 @@ import { tours } from '../data/toursData';
 
 const PackageDetail = () => {
     const { id } = useParams();
-    const [activeTab, setActiveTab] = useState('itinerary');
+    const [activeTab, setActiveTab] = useState('overview');
+    const [isOpen, setIsOpen] = useState(false);
+    const [currentImgIndex, setCurrentImgIndex] = useState(0);
+
+    const openLightbox = (index) => {
+        setCurrentImgIndex(index);
+        setIsOpen(true);
+    };
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -41,16 +48,15 @@ const PackageDetail = () => {
             </div>
 
             {/* 3. Navigation Tabs */}
-            <div className="flex justify-center border-b bg-gray-50 sticky top-[73px] z-30">
+            <div className="flex justify-center border-b bg-gray-50 sticky top-18.25 z-30">
                 {['Overview', 'Itinerary', 'Inclusions'].map((tab) => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab.toLowerCase())}
-                        className={`px-6 py-4 text-xs font-bold uppercase tracking-widest transition-all ${
-                            activeTab === tab.toLowerCase()
-                                ? 'border-b-2 border-[#004d4d] text-[#004d4d]'
-                                : 'text-gray-400 hover:text-black'
-                        }`}
+                        className={`px-6 py-4 text-xs font-bold uppercase tracking-widest transition-all ${activeTab === tab.toLowerCase()
+                            ? 'border-b-2 border-[#004d4d] text-[#004d4d]'
+                            : 'text-gray-400 hover:text-black'
+                            }`}
                     >
                         {tab}
                     </button>
@@ -59,18 +65,40 @@ const PackageDetail = () => {
 
             {/* 4. Content Section */}
             <div className="max-w-6xl mx-auto py-12 px-6">
-                
+
                 {/* OVERVIEW TAB */}
                 {activeTab === 'overview' && (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
                         <div className="grid grid-cols-2 gap-4">
-                            {tour.gallery ? (
-                                tour.gallery.map((img, index) => (
-                                    <div key={index} className={`relative overflow-hidden rounded-lg shadow-md ${index === 0 ? 'col-span-2 h-72' : 'h-48'}`}>
-                                        <img src={img} alt = "img" className="w-full h-full object-cover hover:scale-105 transition-all" />
-                                        
-                                    </div>
-                                ))
+                            {tour.gallery && tour.gallery.length > 0 ? (
+                                tour.gallery.slice(0, 5).map((img, index) => {
+                                    const isLastVisible = index === 4;
+                                    const hasMore = tour.gallery.length > 5;
+
+                                    return (
+                                        <div
+                                            key={index}
+                                            onClick={() => openLightbox(index)}
+                                            className={`relative overflow-hidden rounded-lg shadow-md 
+                                ${index === 0 ? 'col-span-2 h-72' : 'h-48'}`}
+                                        >
+                                            <img
+                                                src={img}
+                                                alt={`Gallery ${index}`}
+                                                className="w-full h-full object-cover hover:scale-105 transition-all"
+                                            />
+
+                                            {/* Dark Overlay for the 5th image if more images exist */}
+                                            {isLastVisible && hasMore && (
+                                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center pointer-events-none ">
+                                                    <span className="text-white text-3xl font-bold">
+                                                        +{tour.gallery.length - 4}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })
                             ) : (
                                 <div className="col-span-2 bg-gray-100 h-96 flex items-center justify-center rounded-lg border-2 border-dashed text-gray-400">
                                     Gallery images coming soon
@@ -79,7 +107,7 @@ const PackageDetail = () => {
                         </div>
 
                         <div className="space-y-6">
-                            <h2 className="text-4xl font-serif">Experience {tour.title}</h2>
+                            <h2 className="text-4xl font-serif"> {tour.title}</h2>
                             <p className="text-gray-600 leading-relaxed text-lg">
                                 {tour.fullDescription || "Embark on an unforgettable journey through breathtaking landscapes."}
                             </p>
@@ -147,6 +175,46 @@ const PackageDetail = () => {
                     </div>
                 )}
             </div>
+            {/* LIGHTBOX MODAL */}
+            {isOpen && (
+                <div className="fixed inset-0 z-100 bg-black/95 flex items-center justify-center p-4 md:p-10">
+                    {/* Close Button */}
+                    <button
+                        onClick={() => setIsOpen(false)}
+                        className="absolute top-5 right-5 text-white text-4xl z-110 hover:text-gray-300"
+                    >
+                        &times;
+                    </button>
+
+                    {/* Previous Button */}
+                    <button
+                        onClick={() => setCurrentImgIndex((currentImgIndex + tour.gallery.length - 1) % tour.gallery.length)}
+                        className="absolute left-5 text-white text-4xl hover:scale-110 transition-transform"
+                    >
+                        &#10094;
+                    </button>
+
+                    {/* Main Image */}
+                    <div className="max-w-5xl max-h-full flex flex-col items-center">
+                        <img
+                            src={tour.gallery[currentImgIndex]}
+                            alt="Full size"
+                            className="max-w-full max-h-[80vh] object-contain rounded shadow-2xl"
+                        />
+                        <p className="text-white mt-4 font-mono">
+                            {currentImgIndex + 1} / {tour.gallery.length}
+                        </p>
+                    </div>
+
+                    {/* Next Button */}
+                    <button
+                        onClick={() => setCurrentImgIndex((currentImgIndex + 1) % tour.gallery.length)}
+                        className="absolute right-5 text-white text-4xl hover:scale-110 transition-transform"
+                    >
+                        &#10095;
+                    </button>
+                </div>
+            )}
         </div>
     );
 };

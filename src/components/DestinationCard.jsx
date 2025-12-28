@@ -29,12 +29,7 @@ const DestinationCard = ({ tour }) => {
           </div>
         )}
 
-        {discount && (
-          <div className="absolute top-4 right-4 z-20 bg-[#bd8157] text-white rounded-full w-14 h-14 flex flex-col items-center justify-center text-center leading-tight shadow-lg border-2 border-white/20">
-            <span className="text-[8px] uppercase font-bold">Save</span>
-            <span className="text-xs font-bold">${discount}</span>
-          </div>
-        )}
+        
 
         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
           <span className="text-white text-xl font-bold border-b-2 border-white pb-1">View tour &rsaquo;</span>

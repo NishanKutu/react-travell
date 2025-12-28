@@ -5,6 +5,12 @@ import indiaImg from '../assets/img/India.webp';
 import templeImg from '../assets/img/temple.jpg';
 import deerImg from '../assets/img/deer.webp';
 import desert from '../assets/img/Desert.jpg';
+import japan1 from '../assets/img/Japan/Mount Fuji.jpg';
+import japan2 from '../assets/img/Japan/Kyoto Monument Cluster.jpg';
+import japan3 from '../assets/img/Japan/Tokyo tower.jpg';
+import japan4 from '../assets/img/Japan/Nara.jpg';
+import japan5 from '../assets/img/Japan/Himeji Castle.jpg';
+import nepal1 from '../assets/img/Nepal/pokhara.jpg';
 
 export const tours = [
     {
@@ -12,10 +18,12 @@ export const tours = [
         code: 'RAJ',
         title: 'Best Of Japan',
         gallery: [
-            indiaImg, // Main large photo (Step 1)
-            templeImg, // Smaller photo (Step 2)
-            desert, // Smaller photo (Step 3)
-            templeImg  // Smaller photo (Step 4)
+            japan1, 
+            japan2, 
+            japan3, 
+            japan4, 
+            japan5,
+            nepal1,
         ],
         fullDescription: "Experience the perfect blend of ancient tradition and futuristic technology...",
         duration: '9 Days 7 Nights',
@@ -36,10 +44,11 @@ export const tours = [
         code: 'RDY',
         title: 'Yangtze Essence',
         gallery: [
-            indiaImg, // Main large photo (Step 1)
-            templeImg, // Smaller photo (Step 2)
-            desert, // Smaller photo (Step 3)
-            templeImg  // Smaller photo (Step 4)
+            indiaImg, 
+            templeImg,
+            desert, 
+            templeImg,
+            japan5,
         ],
         fullDescription: "Experience the perfect blend of ancient tradition and futuristic technology...",
         duration: '13 Days 11 Nights',
@@ -59,10 +68,11 @@ export const tours = [
         code: 'CDN',
         title: 'Gems of Europe',
         gallery: [
-            indiaImg, // Main large photo (Step 1)
-            templeImg, // Smaller photo (Step 2)
-            desert, // Smaller photo (Step 3)
-            templeImg  // Smaller photo (Step 4)
+            indiaImg,
+            templeImg,
+            desert, 
+            templeImg,
+            japan5,
         ],
         fullDescription: "Experience the perfect blend of ancient tradition and futuristic technology...",
         duration: '12 Days 10 Nights',
@@ -82,10 +92,11 @@ export const tours = [
         code: 'EBC',
         title: 'Classic China',
         gallery: [
-            indiaImg, // Main large photo (Step 1)
-            templeImg, // Smaller photo (Step 2)
-            desert, // Smaller photo (Step 3)
-            templeImg  // Smaller photo (Step 4)
+            indiaImg,
+            templeImg,
+            desert, 
+            templeImg,
+            japan5,
         ],
         fullDescription: "Experience the perfect blend of ancient tradition and futuristic technology...",
         duration: '12 Days 11 Nights',
@@ -105,10 +116,11 @@ export const tours = [
         code: 'DRD',
         title: 'Majestic India & Scenic Sri Lanka',
         gallery: [
-            indiaImg, // Main large photo (Step 1)
-            templeImg, // Smaller photo (Step 2)
-            desert, // Smaller photo (Step 3)
-            templeImg  // Smaller photo (Step 4)
+            indiaImg,
+            templeImg,
+            desert, 
+            templeImg,
+            japan5,
         ],
         fullDescription: "Experience the perfect blend of ancient tradition and futuristic technology...",
         duration: '15 Days 14 Nights',
@@ -127,10 +139,11 @@ export const tours = [
         code: 'CNB',
         title: 'Magical Kenya Safari',
         gallery: [
-            indiaImg, // Main large photo (Step 1)
-            templeImg, // Smaller photo (Step 2)
-            desert, // Smaller photo (Step 3)
-            templeImg  // Smaller photo (Step 4)
+            indiaImg,
+            templeImg,
+            desert,
+            japan5,
+
         ],
         fullDescription: "Experience the perfect blend of ancient tradition and futuristic technology...",
         duration: '9 Days 8 Nights',
@@ -150,10 +163,11 @@ export const tours = [
         code: 'CBZ',
         title: 'Egypt & Jordan',
         gallery: [
-            indiaImg, // Main large photo (Step 1)
-            templeImg, // Smaller photo (Step 2)
-            desert, // Smaller photo (Step 3)
-            templeImg  // Smaller photo (Step 4)
+            indiaImg,
+            templeImg,
+            desert, 
+            templeImg,
+            japan5,
         ],
         fullDescription: "Experience the perfect blend of ancient tradition and futuristic technology...",
         duration: '15 Days 14 Nights',
@@ -173,10 +187,11 @@ export const tours = [
         code: 'RCB',
         title: 'India',
         gallery: [
-            indiaImg, // Main large photo (Step 1)
-            templeImg, // Smaller photo (Step 2)
-            desert, // Smaller photo (Step 3)
-            templeImg  // Smaller photo (Step 4)
+            indiaImg,
+            templeImg,
+            desert, 
+            templeImg,
+            japan5,
         ],
         fullDescription: "Experience the perfect blend of ancient tradition and futuristic technology...",
         duration: '8 Days 7 Nights',

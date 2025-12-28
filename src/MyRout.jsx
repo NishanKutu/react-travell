@@ -8,26 +8,34 @@ import Destinations from './pages/Destinations';
 import ContactPage from './pages/ContactPage';
 import PackageDetails from './pages/PackageDetails';
 import FaqPage from './pages/FaqPage';
+import AdminLayout from './layout/AdminLayout';
+import AdminDashboard from './pages/AdminDashboard';
+import MainLayout from './layout/MainLayout';
 
 const MyRout = () => {
   return (
     <Routes>
-      <Route path="/" element={
-        <>
-          <Home />
-          <Features />
-          <PopularDestination />
-        </>
-      } />
+      {/* Public Pages with Navbar and Footer*/}
+      <Route element={<MainLayout />}>
+        <Route path="/" element={
+          <>
+            <Home />
+            <Features />
+            <PopularDestination />
+          </>
+        } />
+        <Route path="/about" element={<About />} />
+        <Route path="/destinations" element={<Destinations />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/tour/:id" element={<PackageDetails />} />
+        <Route path="/faq" element={<FaqPage />} />
+      </Route>
 
-      
-      <Route path="/features" element={<Features />} />
-      <Route path="/about" element={<About />} />
-      <Route path = "/destinations" element = {<Destinations/>} />
-      <Route path="/contact" element={<ContactPage/>} />
-      <Route path="/tour/:id" element={<PackageDetails />} />
-      <Route path = "/faq" element = {<FaqPage/>} />
+      {/*Admin Pages*/}
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<AdminDashboard />} />
 
+      </Route>
     </Routes>
   );
 };
