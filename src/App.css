@@ -55,7 +55,6 @@
   }
 }
 
-/* Custom classes to apply the animation */
 .animate-slide-left {
   animation: slideInLeft 2s ease-out forwards;
 }

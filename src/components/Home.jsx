@@ -5,10 +5,12 @@ import { Link } from 'react-scroll';
 import img from '../assets/img/Hero.jpg';
 import SearchBar from './SearchBar';
 import { HiOutlinePhone } from 'react-icons/hi';
+import { useNavigate } from 'react-router-dom';
 
 const Home = () => {
+    const navigate = useNavigate();
     return (
-        <div className = "bg-white">
+        <div className="bg-white">
             <section
                 className="relative min-h-screen lg:min-h-[90vh] bg-cover bg-center bg-no-repeat flex items-center"
                 style={{ backgroundImage: `url(${img})` }}
@@ -44,7 +46,7 @@ const Home = () => {
                     {/* Left Section: Text */}
                     <div className="text-white text-center md:text-left">
                         <h2 className="text-4xl md:text-5xl font-serif font-bold mb-2">
-                            Contact <span className = "text-[#bd8157]">Us</span>
+                            Contact <span className="text-[#bd8157]">Us</span>
                         </h2>
                         <p className="text-lg opacity-90 font-medium">
                             Questions? Call us or your travel advisor.
@@ -62,7 +64,9 @@ const Home = () => {
 
                         <div className="hidden md:block h-12 w-px bg-white"></div>
 
-                        <button className="bg-white text-black px-8 py-4 rounded-md font-bold text-sm uppercase tracking-widest hover:bg-[#bd8157] transition-colors whitespace-nowrap">
+                        <button className="bg-white text-black px-8 py-4 rounded-md font-bold text-sm uppercase tracking-widest hover:bg-[#bd8157] transition-colors whitespace-nowrap cursor-pointer"
+                            onClick={() => navigate('/contact')}
+                        >
                             Send an Inquiry
                         </button>
                     </div>
