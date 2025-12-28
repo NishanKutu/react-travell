@@ -46,7 +46,7 @@ const Destination = () => {
     return (
         <>
             <PopularDestination />
-            <div className="max-w-7xl mx-auto px-4 py-10 flex flex-col md:flex-row gap-10 font-sans text-gray-800">
+            <div className="max-w-7xl mx-auto px-4 py-10  flex flex-col md:flex-row gap-10 font-sans text-gray-800">
                 <aside className="w-full md:w-64 shrink-0">
                     <div className="flex justify-between items-end mb-6">
                         <h2 className="text-xl font-bold">Filter:</h2>

@@ -32,3 +32,34 @@
 .animate-pop-up {
   animation: popUp 0.8s ease-out forwards;
 }
+
+@keyframes slideInLeft {
+  0% {
+      transform: translateX(-100%);
+      opacity: 0;
+  }
+  100% {
+      transform: translateX(0);
+      opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  0% {
+      transform: translateX(100%);
+      opacity: 0;
+  }
+  100% {
+      transform: translateX(0);
+      opacity: 1;
+  }
+}
+
+/* Custom classes to apply the animation */
+.animate-slide-left {
+  animation: slideInLeft 2s ease-out forwards;
+}
+
+.animate-slide-right {
+  animation: slideInRight 2s ease-out forwards;
+}
