@@ -1,13 +1,16 @@
 import React from 'react';
+import "../App.css";
 import Button from '../layout/Button';
 import { Link } from 'react-scroll';
 import img from '../assets/img/Hero.jpg';
 import SearchBar from './SearchBar';
 import { HiOutlinePhone } from 'react-icons/hi';
+import { useNavigate } from 'react-router-dom';
 
 const Home = () => {
+    const navigate = useNavigate();
     return (
-        <div className = "bg-white">
+        <div className="bg-white">
             <section
                 className="relative min-h-screen lg:min-h-[90vh] bg-cover bg-center bg-no-repeat flex items-center"
                 style={{ backgroundImage: `url(${img})` }}
@@ -16,11 +19,11 @@ const Home = () => {
 
                 <div className="relative z-10 w-full max-w-7xl mx-auto px-5 md:px-32">
                     <div className="text-center mx-auto p-4 ">
-                        <h1 className="font-serif text-6xl md:text-7xl text-white leading-tight">
+                        <h1 className="font-serif text-6xl md:text-7xl text-white leading-tight animate-pop-up">
                             Discover the Best Destinations
                         </h1>
 
-                        <p className="mt-6 text-lg md:text-2xl text-white">
+                        <p className="mt-6 text-lg md:text-2xl text-white animate-pop-up">
                             Experience the Dream with TravelForU the best tourist destinations
                             that we have to offer
                         </p>
@@ -43,7 +46,7 @@ const Home = () => {
                     {/* Left Section: Text */}
                     <div className="text-white text-center md:text-left">
                         <h2 className="text-4xl md:text-5xl font-serif font-bold mb-2">
-                            Contact <span className = "text-[#bd8157]">Us</span>
+                            Contact <span className="text-[#bd8157]">Us</span>
                         </h2>
                         <p className="text-lg opacity-90 font-medium">
                             Questions? Call us or your travel advisor.
@@ -61,7 +64,9 @@ const Home = () => {
 
                         <div className="hidden md:block h-12 w-px bg-white"></div>
 
-                        <button className="bg-white text-black px-8 py-4 rounded-md font-bold text-sm uppercase tracking-widest hover:bg-[#bd8157] transition-colors whitespace-nowrap">
+                        <button className="bg-white text-black px-8 py-4 rounded-md font-bold text-sm uppercase tracking-widest hover:bg-[#bd8157] transition-colors whitespace-nowrap cursor-pointer"
+                            onClick={() => navigate('/contact')}
+                        >
                             Send an Inquiry
                         </button>
                     </div>
