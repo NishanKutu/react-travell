@@ -20,7 +20,7 @@ app.get('/',(req, res)=>{
     res.send("SERVER IS RUNNING")
 })
 
-app.use('/api', UserRoute)
+app.use('/api/user', UserRoute)
 
 
 const port = process.env.PORT || 5000

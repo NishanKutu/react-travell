@@ -1,11 +1,11 @@
 import React from 'react';
-import MyRout from './MyRout';
+import MyRoutes from './MyRoutes';
 
 
 const App = () => {
   return (
 
-        <MyRout />
+        <MyRoutes />
 
   );
 };
