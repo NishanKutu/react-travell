@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import {BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './components/Home';
 import Features from './components/Features';
 import PopularDestination from './components/PopularDestination';
@@ -12,35 +12,42 @@ import AdminLayout from './layout/AdminLayout';
 import AdminDashboard from './pages/AdminDashboard';
 import MainLayout from './layout/MainLayout';
 import VerifyEmail from './pages/VerifyEmail';
+import AdminRoutes from './protectedRoutes/AdminRoutes';
+import PageNotFound from './pages/PageNotFound';
 
 const MyRoutes = () => {
   return (
-    <Routes>
-      {/* Public Pages with Navbar and Footer*/}
-      <Route element={<MainLayout />}>
-        <Route path="/" element={
-          <>
-            <Home />
-            <Features />
-            <PopularDestination />
-          </>
-        } />
-        <Route path="/about" element={<About />} />
-        <Route path="/features" element={<Features />} />
-        <Route path="/destinations" element={<Destinations />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/tour/:id" element={<PackageDetails />} />
-        <Route path="/faq" element={<FaqPage />} />
-        <Route path='verify/:token' element={<VerifyEmail />} />
+    <BrowserRouter>
+      <Routes>
+        {/* Public Pages with Navbar and Footer*/}
+        <Route element={<MainLayout />}>
+          <Route path="/" element={
+            <>
+              <Home />
+              <Features />
+              <PopularDestination />
+            </>
+          } />
+          <Route path="/about" element={<About />} />
+          <Route path="/features" element={<Features />} />
+          <Route path="/destinations" element={<Destinations />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/tour/:id" element={<PackageDetails />} />
+          <Route path="/faq" element={<FaqPage />} />
+          <Route path='verify/:token' element={<VerifyEmail />} />
+          <Route path='*' element = {<PageNotFound/>}/>
 
-      </Route>
+        </Route>
 
-      {/*Admin Pages*/}
-      <Route path="/admin" element={<AdminLayout />}>
-        <Route path='dashboard' element={<AdminDashboard />} />
+        {/*Admin Pages*/}
+        <Route path='/' element={<AdminRoutes />}>
+          <Route path="admin" element={<AdminLayout />}>
+            <Route path='dashboard' element={<AdminDashboard />} />
 
-      </Route>
-    </Routes>
+          </Route>
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 };
 

@@ -28,7 +28,7 @@ const LoginPage = ({ isOpen, onClose, switchToSignup }) => {
 
         const role = Number(data?.user?.role);   // ⬅️ normalize role
 
-        if (role === 0) {
+        if (role === 1) {
           navigate('/admin/dashboard', { replace: true });
         } else {
           navigate('/', { replace: true });

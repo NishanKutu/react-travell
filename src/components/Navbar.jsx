@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import Button from '../layout/Button';
 import { AiOutlineMenu, AiOutlineClose } from 'react-icons/ai';
-import LoginPage from '../pages/LoginPage'; 
+import LoginPage from '../pages/LoginPage';
 import SignupPage from '..//pages/Signup';
+import { isLoggedIn } from '../api/authAPI';
 
 const Navbar = () => {
     const [menu, setMenu] = useState(false);
     const [isLoginOpen, setIsLoginOpen] = useState(false);
     const [isSignupOpen, setIsSignupOpen] = useState(false);
+
+    let auth = isLoggedIn()
+    let navigate = useNavigate()
 
     const openLogin = () => {
         setIsLoginOpen(true);
@@ -27,13 +31,18 @@ const Navbar = () => {
         setIsSignupOpen(false);
     };
 
+    const handleSignout = () => {
+        localStorage.removeItem('auth')
+        navigate('/')
+    }
+
     const navItems = [
         { name: 'Home', path: '/' },
         { name: 'Features', path: '/features' },
         { name: 'Destinations', path: '/destinations' },
         { name: 'About', path: '/about' },
         { name: 'Contact', path: '/contact' },
-        {name: 'faq', path: '/faq' },
+        { name: 'faq', path: '/faq' },
     ];
 
     const handleChange = () => setMenu(!menu);
@@ -57,7 +66,7 @@ const Navbar = () => {
                         <NavLink
                             key={item.name}
                             to={item.path}
-                            className={({ isActive }) => 
+                            className={({ isActive }) =>
                                 `${desktopLinkBase} ${isActive ? desktopActive : "after:w-0"}`
                             }
                         >
@@ -68,12 +77,38 @@ const Navbar = () => {
 
                 {/* Desktop Buttons */}
                 <div className="hidden lg:flex flex-row items-center gap-4">
-                    <div onClick={openLogin}>
-                        <Button title="Login" variant="secondary" />
-                    </div>
-                    <div onClick={openSignup}>
-                        <Button title="Signup" isPrimary={true} />
-                    </div>
+                    {
+                        auth ?
+                            auth.user.role == 1 ?
+                                <>
+                                    <div >
+                                        <Link to={'/admin/dashboard'}>
+                                        <Button title="Dashboard" variant="secondary" />
+                                        </Link>
+                                    </div>
+                                    <div onClick={handleSignout}>
+                                        <Button title="Sign Out" isPrimary={true} />
+                                    </div>
+                                </>
+                                :
+                                <>
+
+                                    <div >
+                                        <Button title="Profile" variant="secondary" />
+                                    </div>
+                                    <div onClick={handleSignout}>
+                                        <Button title="Sign Out" isPrimary={true} />
+                                    </div></>
+                            :
+                            <>
+                                <div onClick={openLogin}>
+                                    <Button title="Login" variant="secondary" />
+                                </div>
+                                <div onClick={openSignup}>
+                                    <Button title="Signup" isPrimary={true} />
+                                </div>
+                            </>
+                    }
                 </div>
 
                 {/* Mobile Menu Icon */}
@@ -90,7 +125,7 @@ const Navbar = () => {
                         <NavLink
                             key={item.name}
                             to={item.path}
-                            className={({ isActive }) => 
+                            className={({ isActive }) =>
                                 `transition-all duration-300 ${isActive ? 'text-amber-400 font-bold scale-110' : 'hover:text-amber-400'}`
                             }
                             onClick={() => setMenu(false)}
@@ -111,15 +146,15 @@ const Navbar = () => {
                 </div>
             </div>
 
-            <LoginPage 
-                isOpen={isLoginOpen} 
-                onClose={closeAll} 
-                switchToSignup={openSignup} 
+            <LoginPage
+                isOpen={isLoginOpen}
+                onClose={closeAll}
+                switchToSignup={openSignup}
             />
-            <SignupPage 
-                isOpen={isSignupOpen} 
-                onClose={closeAll} 
-                switchToLogin={openLogin} 
+            <SignupPage
+                isOpen={isSignupOpen}
+                onClose={closeAll}
+                switchToLogin={openLogin}
             />
         </header>
     );
