@@ -1,5 +1,5 @@
 const UserModel = require('../models/userModel')
-const bcrypt = require('bcrypt')
+const bcrypt = require('bcryptjs')
 const saltRounds = 10
 const TokenModel = require('../models/tokenModel')
 const crypto = require('crypto')
@@ -7,8 +7,10 @@ const emailSender = require('../utils/emailSender')
 
 const jwt = require('jsonwebtoken')
 
-// register
+
+// Register
 exports.register = async (req, res) => {
+    console.log(req.body)
     let { username, email, password } = req.body
 
     let usernameExists = await UserModel.findOne({ username })
@@ -48,7 +50,80 @@ exports.register = async (req, res) => {
         to: email,
         subject: 'Email Verification',
         text: 'Click on the following link to verify your account',
-        html: `<a href='${URL}'><button>Verify Now</button></a>`
+        html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Verify Your Email - Hikehub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body style="margin:0; padding:0; background-color:#f4f6f8; font-family: Arial, Helvetica, sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f8; padding: 40px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background-color:#1f7a4f; padding:20px; text-align:center;">
+              <h1 style="margin:0; color:#ffffff;">Hikehub</h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:30px; color:#333333;">
+              <h2 style="margin-top:0;">Verify your email address</h2>
+              <p>
+                Thanks for joining <strong>Hikehub</strong>!  
+                Please confirm your email address to activate your account.
+              </p>
+
+              <div style="text-align:center; margin:30px 0;">
+                <a href="${URL}"
+                   style="
+                     background-color:#1f7a4f;
+                     color:#ffffff;
+                     padding:14px 28px;
+                     text-decoration:none;
+                     border-radius:6px;
+                     font-weight:bold;
+                     display:inline-block;
+                   ">
+                  Verify Email
+                </a>
+              </div>
+
+              <p style="font-size:14px; color:#666666;">
+                If the button doesn’t work, copy and paste this link into your browser:
+              </p>
+              <p style="font-size:13px; word-break:break-all; color:#1f7a4f;">
+                ${URL}
+              </p>
+
+              <p style="margin-top:30px;">
+                Happy hiking! 🌄<br />
+                <strong>The Hikehub Team</strong>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#f0f0f0; padding:15px; text-align:center; font-size:12px; color:#888888;">
+              © 2025 Hikehub. All rights reserved.
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
+`
     })
 
     res.send({ userToRegister, success: true, message: "User registered successfully." })
@@ -71,6 +146,8 @@ exports.verifyEmail = async (req, res) => {
     if (!userToVerify) {
         return res.status(400).json({ error: "Failed to verify. Try again later" })
     }
+    await TokenModel.findByIdAndDelete(tokenToVerify._id);
+
     res.send({ success: true, message: "User verified successfully." })
 }
 
@@ -95,7 +172,80 @@ exports.resendVerification = async (req, res) => {
         to: userToVerify.email,
         subject: "Verification Email",
         text: "Click on the following link to verify your email",
-        html: `<a href='${URL}'><button>Verify Email</button></a>`
+        html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Verify Your Email - Hikehub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body style="margin:0; padding:0; background-color:#f4f6f8; font-family: Arial, Helvetica, sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f8; padding: 40px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background-color:#1f7a4f; padding:20px; text-align:center;">
+              <h1 style="margin:0; color:#ffffff;">Hikehub</h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:30px; color:#333333;">
+              <h2 style="margin-top:0;">Verify your email address</h2>
+              <p>
+                Thanks for joining <strong>Hikehub</strong>!  
+                Please confirm your email address to activate your account.
+              </p>
+
+              <div style="text-align:center; margin:30px 0;">
+                <a href="${URL}"
+                   style="
+                     background-color:#1f7a4f;
+                     color:#ffffff;
+                     padding:14px 28px;
+                     text-decoration:none;
+                     border-radius:6px;
+                     font-weight:bold;
+                     display:inline-block;
+                   ">
+                  Verify Email
+                </a>
+              </div>
+
+              <p style="font-size:14px; color:#666666;">
+                If the button doesn’t work, copy and paste this link into your browser:
+              </p>
+              <p style="font-size:13px; word-break:break-all; color:#1f7a4f;">
+                ${URL}
+              </p>
+
+              <p style="margin-top:30px;">
+                Happy hiking! 🌄<br />
+                <strong>The Hikehub Team</strong>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#f0f0f0; padding:15px; text-align:center; font-size:12px; color:#888888;">
+              © 2025 Hikehub. All rights reserved.
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
+`
     })
     res.send({ success: true, message: "verification link has been sent to your email." })
 }
@@ -119,30 +269,138 @@ exports.forgetPassword = async (req, res) => {
         to: req.body.email,
         subject: `Password reset link`,
         text: `click on the following link to  reset your meail`,
-        html: `<a href='${URL}'><button>Forget Password</button></a>`
+        html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Reset Your Password - Hikehub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body style="margin:0; padding:0; background-color:#f4f6f8; font-family: Arial, Helvetica, sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f8; padding: 40px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background-color:#1f7a4f; padding:20px; text-align:center;">
+              <h1 style="margin:0; color:#ffffff;">Hikehub</h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:30px; color:#333333;">
+              <h2 style="margin-top:0;">Reset your password</h2>
+              <p>
+                We received a request to reset your <strong>Hikehub</strong> account password.
+              </p>
+              <p>
+                Click the button below to create a new password. This link will expire soon for your security.
+              </p>
+
+              <div style="text-align:center; margin:30px 0;">
+                <a href="${URL}"
+                   style="
+                     background-color:#e5533d;
+                     color:#ffffff;
+                     padding:14px 28px;
+                     text-decoration:none;
+                     border-radius:6px;
+                     font-weight:bold;
+                     display:inline-block;
+                   ">
+                  Reset Password
+                </a>
+              </div>
+
+              <p style="font-size:14px; color:#666666;">
+                If you did not request a password reset, please ignore this email.  
+                Your account will remain secure.
+              </p>
+
+              <p style="font-size:14px; color:#666666;">
+                If the button doesn’t work, copy and paste this link into your browser:
+              </p>
+              <p style="font-size:13px; word-break:break-all; color:#1f7a4f;">
+                ${URL}
+              </p>
+
+              <p style="margin-top:30px;">
+                Stay safe and happy hiking! 🏕️<br />
+                <strong>The Hikehub Team</strong>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#f0f0f0; padding:15px; text-align:center; font-size:12px; color:#888888;">
+              © 2025 Hikehub. All rights reserved.
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
+`
     })
 
-    res.send('message: "Password reset link has been sent to your email')
+    res.status(200).json({
+        success: true,
+        message: "Password reset link has been sent to your email"
+    });
 }
 
 // reset password
 exports.resetPassword = async (req, res) => {
-    let token = await TokenModel.findOne({ token: req.params.token })
-    if (!token) {
-        return res.status(400).json({ error: "Invalid token or token may have expired" })
-    }
-    let user = await UserModel.findById(token.user)
-    if (!user) {
-        return res.status(400).json({ error: "Something went wrong" })
-    }
-    let salt = await bcrypt.genSalt(saltRounds)
-    let hashed_password = await bcrypt.hash(req.body.password, salt)
-    user.password = hashed_password
-    user = await user.save()
+  try {
+      // 1. Validate that a password was actually sent
+      const { password } = req.body;
+      if (!password) {
+          return res.status(400).json({ error: "Password is required" });
+      }
 
-    return res.send({ message: " password reset successfully " })
+      // 2. Find the token in the database
+      let token = await TokenModel.findOne({ token: req.params.token });
+      if (!token) {
+          return res.status(400).json({ error: "Invalid token or token may have expired" });
+      }
+
+      // 3. Find the user associated with that token
+      let user = await UserModel.findById(token.user);
+      if (!user) {
+          return res.status(400).json({ error: "User no longer exists" });
+      }
+
+      // 4. Hash the new password
+      // Note: Use a standard saltRounds (usually 10)
+      let salt = await bcrypt.genSalt(10);
+      let hashed_password = await bcrypt.hash(password, salt);
+      
+      // 5. Update user password
+      user.password = hashed_password;
+      await user.save();
+
+      // 6. Security: Delete the token so it cannot be used again
+      await TokenModel.findByIdAndDelete(token._id);
+
+      return res.status(200).json({ 
+          success: true, 
+          message: "Password reset successfully. You can now login." 
+      });
+
+  } catch (error) {
+      console.error("Reset Password Error:", error);
+      return res.status(500).json({ error: "Internal Server Error" });
+  }
 }
-
 
 // login
 exports.login = async (req, res) => {
