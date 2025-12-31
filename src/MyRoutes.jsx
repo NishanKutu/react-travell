@@ -14,6 +14,7 @@ import MainLayout from './layout/MainLayout';
 import VerifyEmail from './pages/VerifyEmail';
 import AdminRoutes from './protectedRoutes/AdminRoutes';
 import PageNotFound from './pages/PageNotFound';
+import ResetPassword from './pages/ResetPassword';
 
 const MyRoutes = () => {
   return (
@@ -35,6 +36,8 @@ const MyRoutes = () => {
           <Route path="/tour/:id" element={<PackageDetails />} />
           <Route path="/faq" element={<FaqPage />} />
           <Route path='verify/:token' element={<VerifyEmail />} />
+          <Route path='/resetpassword/:token' element={<ResetPassword />} />
+
           <Route path='*' element = {<PageNotFound/>}/>
 
         </Route>

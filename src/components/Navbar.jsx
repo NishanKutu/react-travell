@@ -56,7 +56,7 @@ const Navbar = () => {
             <div className="flex flex-row justify-between p-5 md:px-32 px-5 bg-[#004d4d] text-white shadow-[0_3px_10px_rgb(0,0,0,0.2)]">
                 <div className="flex items-center">
                     <Link to="/" className="cursor-pointer" onClick={() => setMenu(false)}>
-                        <h1 className="font-semibold text-xl tracking-tight">TravelForU</h1>
+                        <h1 className="font-semibold text-xl tracking-tight">HikeHub</h1>
                     </Link>
                 </div>
 

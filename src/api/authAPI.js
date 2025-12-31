@@ -1,43 +1,120 @@
-const API = `http://localhost:5000/api/user`
+const API = `http://localhost:8000/api/user`;
 
-export const register = (user) => {
-    console.log(API)
-    return fetch(`${API}/register`, {
-        method: "POST",
-        headers: {
-            Accept: 'application/json',
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(user)
-    })
-        .then(response => response.json())
-        .catch(error => console.log(error))
-}
+// 1. Centralized Response Handler
+const handleResponse = async (response) => {
+    const data = await response.json();
+    if (!response.ok) {
+        throw new Error(data.error || data.message || 'Something went wrong');
+    }
+    return data;
+};
 
-export const verify = token => {
-    return fetch(`${API}/verify/${token}`)
-        .then(response => response.json())
-        .catch(error => console.log(error))
-}
+export const register = async (user) => {
+    try {
+        const response = await fetch(`${API}/register`, {
+            method: "POST",
+            headers: {
+                "Accept": 'application/json',
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(user)
+        });
+        return await handleResponse(response);
+    } catch (error) {
+        console.error("Registration error:", error.message);
+        throw error; 
+    }
+};
 
-export const signin = (user) => {
-    return fetch(`${API}/login`, {
-        method: "POST",
-        headers: {
-            Accept: 'application/json',
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(user)
-    })
-        .then(response => response.json())
-        .catch(error => console.log(error))
-}
+export const verify = async (token) => {
+    try {
+        const response = await fetch(`${API}/verify/${token}`);
+        return await handleResponse(response);
+    } catch (error) {
+        console.error("Verification error:", error.message);
+        throw error;
+    }
+};
 
-export const keepLoggedIn = data => {
-    localStorage.setItem("auth", JSON.stringify(data))
+export const signin = async (user) => {
+    try {
+        const response = await fetch(`${API}/login`, {
+            method: "POST",
+            headers: {
+                "Accept": 'application/json',
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(user)
+        });
+        return await handleResponse(response);
+    } catch (error) {
+        console.error("Login error:", error.message);
+        throw error;
+    }
+};
 
-}
+export const forgetPassword = async (email) => {
+    try {
+        const response = await fetch(`${API}/forgetpassword`, {
+            method: "POST",
+            headers: {
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email }) // Backend expects { email }
+        });
+        return await handleResponse(response);
+    } catch (error) {
+        console.error("Forget Password error:", error.message);
+        throw error;
+    }
+};
+
+export const resetPassword = async (token, password) => {
+    try {
+        const response = await fetch(`${API}/resetpassword/${token}`, {
+            method: "POST",
+            headers: {
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ password }) // Backend expects { password }
+        });
+        return await handleResponse(response);
+    } catch (error) {
+        console.error("Reset Password error:", error.message);
+        throw error;
+    }
+};
+
+export const resendVerification = async (email) => {
+    try {
+        const response = await fetch(`${API}/resendverification`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email })
+        });
+        return await handleResponse(response);
+    } catch (error) {
+        throw error;
+    }
+};
+
+// 2. Session Management
+export const keepLoggedIn = (data) => {
+    if (typeof window !== "undefined") {
+        localStorage.setItem("auth", JSON.stringify(data));
+    }
+};
 
 export const isLoggedIn = () => {
-    return localStorage.getItem('auth') ? JSON.parse(localStorage.getItem('auth')) : false
-}
+    if (typeof window === "undefined") return false;
+    const auth = localStorage.getItem('auth');
+    return auth ? JSON.parse(auth) : false;
+};
+
+export const logout = () => {
+    if (typeof window !== "undefined") {
+        localStorage.removeItem("auth");
+    }
+};

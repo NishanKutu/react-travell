@@ -4,18 +4,20 @@ import { register } from '../api/authAPI';
 
 const SignupPage = ({ isOpen, onClose, switchToLogin }) => {
   const [username, setUsername] = useState('');
-  const [email, setEmail]     = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
       const data = await register({ username, email, password });
 
-      if (data?.error) {
+      if (data.error) {
         alert(data.error);
       } else {
         alert('User registered successfully. Check email for verification link.');
@@ -25,15 +27,17 @@ const SignupPage = ({ isOpen, onClose, switchToLogin }) => {
         onClose();
       }
     } catch (err) {
-      console.error(err);
-      alert('Something went wrong. Please try again.');
+      console.error("Registration failed:", err.message);
+      alert(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="bg-white text-black w-full max-w-md mx-4 p-8 rounded-2xl shadow-2xl relative animate-in fade-in zoom-in duration-300">
-        
+
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-black"
@@ -47,7 +51,7 @@ const SignupPage = ({ isOpen, onClose, switchToLogin }) => {
         <p className="text-center text-gray-500 mb-6">
           Join TravelForU today!
         </p>
-        
+
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           <div>
             <label className="block mb-1 font-medium text-sm">Username</label>
