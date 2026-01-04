@@ -6,7 +6,7 @@ const DestinationCard = ({ tour }) => {
 
   if (!tour) return null;
 
-  const { _id, images, title, location, duration, price, discount, isbestSeller, isnewTrip, ispromo, cities } = tour;
+  const { _id, images, title, location, duration, price, discount, isbestSeller, isnewTrip, ispromo, cities, groupSize } = tour;
 
   const imageUrl = images && images.length > 0
     ? `http://localhost:8000/uploads/${images[0]}`
@@ -65,8 +65,9 @@ const DestinationCard = ({ tour }) => {
         </h3>
 
         <p className="font-bold text-sm text-gray-800">{duration}</p>
+        <hr className="mb-4 border-gray-100" />
 
-        <p className="font-bold text-sm text-gray-800">{group}</p>
+        <p className="font-bold text-sm text-gray-800">Group of {groupSize} </p>
 
 
         {/* <p className="text-gray-400 text-xs mt-1 leading-relaxed line-clamp-2 min-h-8">
