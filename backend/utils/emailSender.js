@@ -1,6 +1,6 @@
 const nodemailer = require("nodemailer");
 
-// Create a test account or replace with real credentials.
+
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: process.env.SMTP_PORT,
@@ -20,11 +20,10 @@ transporter.verify(function (error, success) {
   }
 });
 
-// Wrap in an async IIFE so we can use await.
 const emailSender = async (mailOptions) => {
   try {
     const info = await transporter.sendMail({
-      from: mailOptions.from || '"HikeHub" <no-reply@hikehub.com>', // Add a default sender
+      from: mailOptions.from || '"HikeHub" <no-reply@hikehub.com>', // Adding a default sender
       to: mailOptions.to,
       subject: mailOptions.subject,
       text: mailOptions.text,
@@ -35,7 +34,7 @@ const emailSender = async (mailOptions) => {
     return info; 
   } catch (error) {
     console.error("Error sending email:", error);
-    throw error; // throw the error so your controller knows it failed
+    throw error; 
   }
 }
 

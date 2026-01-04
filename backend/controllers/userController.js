@@ -450,3 +450,36 @@ exports.getUserDetails = async (req, res) => {
     res.send(user)
 }
 
+// delete user
+exports.deleteUser = async (req, res) => {
+  try {
+      const user = await UserModel.findByIdAndDelete(req.params.id);
+      if (!user) {
+          return res.status(404).json({ error: "User not found" });
+      }
+      res.status(200).json({ success: true, message: "User deleted successfully" });
+  } catch (error) {
+      res.status(500).json({ error: "Internal Server Error" });
+  }
+}
+
+// Toggle user role (Admin/Client)
+exports.toggleUserRole = async (req, res) => {
+  try {
+      const user = await UserModel.findById(req.params.id);
+      if (!user) return res.status(404).json({ error: "User not found" });
+
+      // Toggle: if role is 1 (Admin), set to 0 (Client), and vice versa
+      user.role = user.role === 1 ? 0 : 1;
+      await user.save();
+
+      res.status(200).json({ 
+          success: true, 
+          message: `User role updated to ${user.role === 1 ? 'Admin' : 'Client'}`,
+          role: user.role 
+      });
+  } catch (error) {
+      res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+

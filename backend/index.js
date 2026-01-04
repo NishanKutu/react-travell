@@ -1,10 +1,13 @@
 const express = require('express')
+const path = require('path');
 require('dotenv').config()
 require('./db/connection')
 const morgan = require('morgan')
 const cors = require('cors')
 
 const UserRoute = require('./routes/userRoute')
+const destinationRoutes = require("./routes/destinationRoutes");
+
 
 
 const app = express()
@@ -13,7 +16,7 @@ app.use(express.json())
 app.use(morgan('dev'))
 app.use(cors())
 
-
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 
 app.get('/',(req, res)=>{
@@ -21,9 +24,9 @@ app.get('/',(req, res)=>{
 })
 
 app.use('/api/user', UserRoute)
+app.use('/api/destinations', destinationRoutes)
 
-
-const port = process.env.PORT || 5000
+const port = process.env.PORT || 8000
 
 app.listen(port, ()=>{
     console.log(`APP STARTED SUCCESSFULLY AT PORT ${port}`)
