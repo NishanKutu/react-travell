@@ -15,6 +15,10 @@ import VerifyEmail from './pages/VerifyEmail';
 import AdminRoutes from './protectedRoutes/AdminRoutes';
 import PageNotFound from './pages/PageNotFound';
 import ResetPassword from './pages/ResetPassword';
+import AddDestination from './pages/admin/AddDestination';
+import UsersListPage from './pages/admin/UsersListPage';
+import DestinationsList from './pages/admin/DestinationsList';
+import EditDestination from './pages/admin/EditDestination';
 
 const MyRoutes = () => {
   return (
@@ -46,6 +50,10 @@ const MyRoutes = () => {
         <Route path='/' element={<AdminRoutes />}>
           <Route path="admin" element={<AdminLayout />}>
             <Route path='dashboard' element={<AdminDashboard />} />
+            <Route path="destinations" element = {<DestinationsList />} />
+            <Route path='add-destination' element = {<AddDestination />}/>
+            <Route path = 'users' element = {<UsersListPage />}/>
+            <Route path="edit-destination/:id" element = {<EditDestination />} />
 
           </Route>
         </Route>

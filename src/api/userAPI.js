@@ -1,0 +1,34 @@
+const API = `http://localhost:8000/api/user`
+
+export const getAllUsers = (token) => {
+    return fetch(`${API}/getallusers`,{
+        headers: {
+            authorization: token
+        }
+    })
+    .then(res=> res.json())
+    .catch(error=> console.log(error))
+}
+
+export const deleteUser = (id, token) => {
+    return fetch(`${API}/deleteuser/${id}`, {
+        method: "DELETE",
+        headers: {
+            authorization: `Bearer ${token}` 
+        }
+    })
+    .then(res => res.json())
+    .catch(error => console.log(error));
+}
+
+export const toggleUserRole = (id, token) => {
+    return fetch(`${API}/togglerole/${id}`, {
+        method: "PUT",
+        headers: {
+            authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+        }
+    })
+    .then(res => res.json())
+    .catch(error => console.log(error));
+};

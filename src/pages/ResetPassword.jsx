@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { resetPassword } from '../api/authAPI'; 
-// Import icons (if using react-icons) or use text as shown below
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'; 
 
 const ResetPassword = () => {
   const { token } = useParams();
