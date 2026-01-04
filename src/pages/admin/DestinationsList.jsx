@@ -11,7 +11,7 @@ const DestinationsList = () => {
     const fetchTrips = async () => {
         try {
             const response = await getAllDestinations();
-            setTrips(response.data); // data contains the array from your controller
+            setTrips(response.data); 
             setLoading(false);
         } catch (error) {
             alert(error.message);

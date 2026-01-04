@@ -61,7 +61,7 @@ export const forgetPassword = async (email) => {
                 "Accept": "application/json",
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ email }) // Backend expects { email }
+            body: JSON.stringify({ email }) 
         });
         return await handleResponse(response);
     } catch (error) {
@@ -78,7 +78,7 @@ export const resetPassword = async (token, password) => {
                 "Accept": "application/json",
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ password }) // Backend expects { password }
+            body: JSON.stringify({ password }) 
         });
         return await handleResponse(response);
     } catch (error) {

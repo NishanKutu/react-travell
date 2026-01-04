@@ -42,7 +42,6 @@ export const updateDestination = async (id, destinationData, token) => {
   const response = await fetch(`${BASE_URL}/updatedestination/${id}`, {
     method: "PUT",
     headers: {
-      // If destinationData is FormData (for images), don't set Content-Type
       "Authorization": `Bearer ${token}`
     },
     body: destinationData

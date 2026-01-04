@@ -36,6 +36,16 @@ const destinationSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    status: {
+        type: String,
+        enum: ['active', 'not-active'],
+        default: 'active'
+    },
+    availability: [{
+        type: String,
+        enum: ['Autumn', 'Spring', 'Winter', 'Monsoon'],
+        required: true
+    }],
     isBestSeller: {
         type: Boolean,
         default: false

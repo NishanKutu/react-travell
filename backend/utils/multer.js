@@ -7,7 +7,7 @@ const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         const uploadPath = 'public/uploads';
         
-        // This check creates the folder automatically if it doesn't exist
+        // checks and creates the folder automatically if it doesn't exist
         if (!fs.existsSync(uploadPath)) {
             fs.mkdirSync(uploadPath, { recursive: true });
         }

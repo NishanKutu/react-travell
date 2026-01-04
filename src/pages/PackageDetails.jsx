@@ -1,222 +1,410 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { tours } from '../data/toursData';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { getDestinationById } from "../api/destinationApi";
 
 const PackageDetail = () => {
-    const { id } = useParams();
-    const [activeTab, setActiveTab] = useState('overview');
-    const [isOpen, setIsOpen] = useState(false);
-    const [currentImgIndex, setCurrentImgIndex] = useState(0);
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [tour, setTour] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentImgIndex, setCurrentImgIndex] = useState(0);
 
-    const openLightbox = (index) => {
-        setCurrentImgIndex(index);
-        setIsOpen(true);
+  const IMG_URL = "http://localhost:8000/uploads";
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    const fetchTour = async () => {
+      try {
+        const response = await getDestinationById(id);
+        setTour(response.data);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching package:", error);
+        setLoading(false);
+      }
     };
+    fetchTour();
+  }, [id]);
 
-    useEffect(() => {
-        window.scrollTo(0, 0);
-    }, [id]);
+  const openLightbox = (index) => {
+    setCurrentImgIndex(index);
+    setIsOpen(true);
+  };
 
-    // Find the specific tour based on the ID in the URL
-    const tour = tours.find((item) => item.id === parseInt(id));
-
-    // Handle case where ID doesn't exist
-    if (!tour) {
-        return <div className="text-center py-20 text-2xl">Tour Not Found</div>;
-    }
-
+  if (loading)
     return (
-        <div className="bg-white min-h-screen font-sans">
-            {/* 1. Hero Image */}
-            <div className="relative h-[50vh] w-full">
-                <img src={tour.image} alt={tour.title} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-white">
-                    <h1 className="text-5xl font-serif italic mb-2">{tour.title}</h1>
-                    <p className="text-xl tracking-widest uppercase">{tour.duration}</p>
-                </div>
-            </div>
-
-            {/* 2. Sticky Info Bar */}
-            <div className="sticky top-0 z-40 bg-white border-b shadow-sm py-4 px-5 md:px-32 flex justify-between items-center">
-                <div>
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Price starting from</p>
-                    <p className="text-2xl font-bold text-[#004d4d]">${tour.price}</p>
-                </div>
-                <button className="bg-[#004d4d] text-white px-10 py-3 rounded-md font-bold hover:bg-[#003333] transition-all">
-                    BOOK NOW
-                </button>
-            </div>
-
-            {/* 3. Navigation Tabs */}
-            <div className="flex justify-center border-b bg-gray-50 sticky top-18.25 z-30">
-                {['Overview', 'Itinerary', 'Inclusions'].map((tab) => (
-                    <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab.toLowerCase())}
-                        className={`px-6 py-4 text-xs font-bold uppercase tracking-widest transition-all ${activeTab === tab.toLowerCase()
-                            ? 'border-b-2 border-[#004d4d] text-[#004d4d]'
-                            : 'text-gray-400 hover:text-black'
-                            }`}
-                    >
-                        {tab}
-                    </button>
-                ))}
-            </div>
-
-            {/* 4. Content Section */}
-            <div className="max-w-6xl mx-auto py-12 px-6">
-
-                {/* OVERVIEW TAB */}
-                {activeTab === 'overview' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-                        <div className="grid grid-cols-2 gap-4">
-                            {tour.gallery && tour.gallery.length > 0 ? (
-                                tour.gallery.slice(0, 5).map((img, index) => {
-                                    const isLastVisible = index === 4;
-                                    const hasMore = tour.gallery.length > 5;
-
-                                    return (
-                                        <div
-                                            key={index}
-                                            onClick={() => openLightbox(index)}
-                                            className={`relative overflow-hidden rounded-lg shadow-md 
-                                ${index === 0 ? 'col-span-2 h-72' : 'h-48'}`}
-                                        >
-                                            <img
-                                                src={img}
-                                                alt={`Gallery ${index}`}
-                                                className="w-full h-full object-cover hover:scale-105 transition-all"
-                                            />
-
-                                            {/* Dark Overlay for the 5th image if more images exist */}
-                                            {isLastVisible && hasMore && (
-                                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center pointer-events-none ">
-                                                    <span className="text-white text-3xl font-bold">
-                                                        +{tour.gallery.length - 4}
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })
-                            ) : (
-                                <div className="col-span-2 bg-gray-100 h-96 flex items-center justify-center rounded-lg border-2 border-dashed text-gray-400">
-                                    Gallery images coming soon
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="space-y-6">
-                            <h2 className="text-4xl font-serif"> {tour.title}</h2>
-                            <p className="text-gray-600 leading-relaxed text-lg">
-                                {tour.fullDescription || "Embark on an unforgettable journey through breathtaking landscapes."}
-                            </p>
-                            <div className="grid grid-cols-2 gap-6 pt-6 border-t">
-                                <div><h4 className="text-xs font-bold uppercase text-gray-400">Destinations</h4><p>{tour.cities}</p></div>
-                                <div><h4 className="text-xs font-bold uppercase text-gray-400">Trip Type</h4><p>{tour.category || 'Discovery'}</p></div>
-                                <div><h4 className="text-xs font-bold uppercase text-gray-400">Code</h4><p>{tour.code}</p></div>
-                                <div><h4 className="text-xs font-bold uppercase text-gray-400">Group Size</h4><p>15 People</p></div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* ITINERARY TAB */}
-                {activeTab === 'itinerary' && (
-                    <div className="space-y-12">
-                        <h2 className="text-4xl font-serif border-b pb-4">Itinerary at a glance</h2>
-                        {tour.itinerary ? (
-                            tour.itinerary.map((item) => (
-                                <div key={item.day} className="flex gap-8 group">
-                                    <div className="flex flex-col items-center">
-                                        <div className="w-14 h-14 rounded-full border-2 border-[#004d4d] flex flex-col items-center justify-center bg-white group-hover:bg-[#004d4d] group-hover:text-white transition-colors">
-                                            <span className="text-[10px] font-bold uppercase leading-none">Day</span>
-                                            <span className="text-lg font-bold">{item.day}</span>
-                                        </div>
-                                        <div className="w-0.5 h-full bg-gray-200 mt-2"></div>
-                                    </div>
-                                    <div className="pb-12">
-                                        <h3 className="text-xl font-bold text-gray-800 mb-2">{item.title}</h3>
-                                        <p className="text-gray-600 leading-relaxed">{item.desc}</p>
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <p className="text-gray-400 italic">No itinerary data available.</p>
-                        )}
-                    </div>
-                )}
-
-                {/* INCLUSIONS TAB */}
-                {activeTab === 'inclusions' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                        <div>
-                            <h3 className="text-2xl font-serif mb-6 text-[#004d4d]">What's Included</h3>
-                            <ul className="space-y-4">
-                                {tour.inclusions?.map((inc, i) => (
-                                    <li key={i} className="flex items-start gap-3">
-                                        <span className="text-green-600">✓</span>
-                                        <span className="text-gray-700">{inc}</span>
-                                    </li>
-                                )) || <li className="text-gray-400">Inclusions list coming soon.</li>}
-                            </ul>
-                        </div>
-                        <div>
-                            <h3 className="text-2xl font-serif mb-6 text-red-800">What's Not Included</h3>
-                            <ul className="space-y-4">
-                                {tour.exclusions?.map((exc, i) => (
-                                    <li key={i} className="flex items-start gap-3">
-                                        <span className="text-red-600">✕</span>
-                                        <span className="text-gray-700">{exc}</span>
-                                    </li>
-                                )) || <li className="text-gray-400">Exclusions list coming soon.</li>}
-                            </ul>
-                        </div>
-                    </div>
-                )}
-            </div>
-            {/* LIGHTBOX MODAL */}
-            {isOpen && (
-                <div className="fixed inset-0 z-100 bg-black/95 flex items-center justify-center p-4 md:p-10">
-                    {/* Close Button */}
-                    <button
-                        onClick={() => setIsOpen(false)}
-                        className="absolute top-5 right-5 text-white text-4xl z-110 hover:text-gray-300"
-                    >
-                        &times;
-                    </button>
-
-                    {/* Previous Button */}
-                    <button
-                        onClick={() => setCurrentImgIndex((currentImgIndex + tour.gallery.length - 1) % tour.gallery.length)}
-                        className="absolute left-5 text-white text-4xl hover:scale-110 transition-transform"
-                    >
-                        &#10094;
-                    </button>
-
-                    {/* Main Image */}
-                    <div className="max-w-5xl max-h-full flex flex-col items-center">
-                        <img
-                            src={tour.gallery[currentImgIndex]}
-                            alt="Full size"
-                            className="max-w-full max-h-[80vh] object-contain rounded shadow-2xl"
-                        />
-                        <p className="text-white mt-4 font-mono">
-                            {currentImgIndex + 1} / {tour.gallery.length}
-                        </p>
-                    </div>
-
-                    {/* Next Button */}
-                    <button
-                        onClick={() => setCurrentImgIndex((currentImgIndex + 1) % tour.gallery.length)}
-                        className="absolute right-5 text-white text-4xl hover:scale-110 transition-transform"
-                    >
-                        &#10095;
-                    </button>
-                </div>
-            )}
-        </div>
+      <div className="text-center py-20 italic text-gray-500">
+        Loading adventure details...
+      </div>
     );
+  if (!tour)
+    return (
+      <div className="text-center py-20 text-2xl font-serif">
+        Package Not Found
+      </div>
+    );
+
+  return (
+    <div className="bg-white min-h-screen font-sans">
+      {/* 1. Hero Image */}
+      <div className="relative h-[60vh] w-full group overflow-hidden">
+        <img
+          src={
+            tour.images?.[0]
+              ? `${IMG_URL}/${tour.images[0]}`
+              : "/placeholder.jpg"
+          }
+          alt={tour.title}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+        />
+        <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white">
+          <div className="text-center px-4">
+            {/* Dynamic Badges Container */}
+            <div className="absolute top-6 right-6 flex flex-col gap-2 z-20">
+              {/* Status Label */}
+              {tour.status && (
+                <div
+                  className={`px-4 py-2 text-[10px] font-black rounded-sm uppercase tracking-widest shadow-2xl ${
+                    tour.status.toLowerCase().includes("active") &&
+                    !tour.status.toLowerCase().includes("not")
+                      ? "bg-emerald-600 text-white"
+                      : "bg-red-600 text-white"
+                  }`}
+                >
+                  {tour.status.toLowerCase().includes("active") &&
+                  !tour.status.toLowerCase().includes("not")
+                    ? "● Trip Active"
+                    : "● Not-Active"}
+                </div>
+              )}
+              {tour.isBestSeller && (
+                <div className="bg-white text-black text-[10px] font-black px-4 py-3 rounded-bl-full uppercase tracking-tighter shadow-xl flex items-center gap-1.5">
+                  <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span>
+                  Best Seller
+                </div>
+              )}
+
+              {tour.isNewTrip && (
+                <div className="bg-[#004d4d] text-white text-[10px] font-black px-4 py-3 rounded-bl-full uppercase tracking-tighter shadow-xl flex items-center gap-1.5">
+                  <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                  New Trip
+                </div>
+              )}
+
+              {tour.isPromo && (
+                <div className="bg-rose-600 text-white text-[10px] font-black px-4 py-3 rounded-bl-full uppercase tracking-tighter shadow-xl flex items-center gap-1.5">
+                  <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                  Promo Active
+                </div>
+              )}
+            </div>
+            <h1 className="text-4xl md:text-6xl font-serif italic mb-2 drop-shadow-lg">
+              {tour.title}
+            </h1>
+            {/* DURATION & SEASONS CONTAINER */}
+            <div className="flex flex-col items-center gap-3">
+              <p className="text-lg md:text-xl tracking-[0.3em] uppercase font-light opacity-90 border-b border-white/30 pb-2">
+                {tour.duration}
+              </p>
+
+              {/* Dynamic Season Badges */}
+              <div className="flex gap-2">
+                {(() => {
+                  // Logic to ensure 'seasons' is always an array
+                  let seasons = [];
+                  if (Array.isArray(tour.availability)) {
+                    seasons = tour.availability;
+                  } else if (typeof tour.availability === "string") {
+                    try {
+                      seasons = JSON.parse(tour.availability);
+                    } catch (e) {
+                      seasons = [tour.availability]; // Fallback if it's just a single string
+                    }
+                  }
+
+                  return seasons.map((season) => (
+                    <span
+                      key={season}
+                      className="text-[9px] border border-white/60 px-2 py-0.5 rounded-full uppercase tracking-widest bg-white/10 backdrop-blur-sm"
+                    >
+                      {season}
+                    </span>
+                  ));
+                })()}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Sticky Info Bar */}
+      <div className="sticky top-0 z-40 bg-white border-b shadow-sm py-4 px-5 md:px-32 flex justify-between items-center">
+        <div>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+            Price
+          </p>
+          <p className="text-2xl font-bold text-[#004d4d]">
+            ${tour.price}
+            {tour.discount > 0 && (
+              <span className="text-sm text-rose-500 line-through ml-2 font-normal">
+                ${Math.round(tour.price * (1 + tour.discount / 100))}
+              </span>
+            )}
+          </p>
+        </div>
+        <button className="bg-[#004d4d] text-white px-8 md:px-12 py-3 rounded-sm font-bold hover:bg-black transition-all text-sm tracking-widest">
+          RESERVE NOW
+        </button>
+      </div>
+
+      {/* 3. Navigation Tabs */}
+      <div className="flex justify-center border-b bg-gray-50 sticky top-18.25 z-30">
+        {["Overview", "Itinerary", "Inclusions"].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab.toLowerCase())}
+            className={`px-8 py-4 text-[10px] font-bold uppercase tracking-[0.2em] transition-all ${
+              activeTab === tab.toLowerCase()
+                ? "border-b-2 border-[#004d4d] text-[#004d4d]"
+                : "text-gray-400 hover:text-black"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {/* 4. Content Section */}
+      <div className="max-w-6xl mx-auto py-16 px-6">
+        {/* OVERVIEW TAB */}
+        {activeTab === "overview" && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+            {/* Image Grid - Mapping tour.images */}
+            <div className="grid grid-cols-2 gap-4">
+              {tour.images?.map((img, index) => {
+                if (index > 4) return null; // Only show first 5
+                const isLastVisible = index === 4;
+                const hasMore = tour.images.length > 5;
+
+                return (
+                  <div
+                    key={index}
+                    onClick={() => openLightbox(index)}
+                    className={`relative overflow-hidden cursor-pointer group 
+                                            ${
+                                              index === 0
+                                                ? "col-span-2 h-80"
+                                                : "h-48"
+                                            }`}
+                  >
+                    <img
+                      src={`${IMG_URL}/${img}`}
+                      alt={`Gallery ${index}`}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    />
+                    {isLastVisible && hasMore && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <span className="text-white text-3xl font-light">
+                          +{tour.images.length - 4}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="space-y-8">
+              <div className="inline-block border-l-4 border-[#004d4d] pl-4">
+                <h2 className="text-4xl font-serif text-gray-800">
+                  The Experience
+                </h2>
+              </div>
+              <p className="text-gray-600 leading-relaxed text-lg font-light">
+                {tour.descriptions}
+              </p>
+              <div className="grid grid-cols-2 gap-y-8 pt-8 border-t border-gray-100">
+                <div>
+                  <h4 className="text-[10px] font-bold uppercase text-gray-400 tracking-widest mb-1">
+                    Location
+                  </h4>
+                  <p className="text-gray-800 font-medium">{tour.location}</p>
+                </div>
+                <div>
+                  <h4 className="text-[10px] font-bold uppercase text-gray-400 tracking-widest mb-1">
+                    Season:
+                  </h4>
+                  <p className="text-gray-800 font-medium capitalize">
+                    {(() => {
+                      let seasons = [];
+                      // 1. Handle actual Array
+                      if (Array.isArray(tour.availability)) {
+                        seasons = tour.availability;
+                      }
+                      // 2. Handle stringified JSON array
+                      else if (
+                        typeof tour.availability === "string" &&
+                        tour.availability.startsWith("[")
+                      ) {
+                        try {
+                          seasons = JSON.parse(tour.availability);
+                        } catch (e) {
+                          seasons = [];
+                        }
+                      }
+                      // 3. Handle single string value
+                      else if (tour.availability) {
+                        seasons = [tour.availability];
+                      }
+                      
+                      return seasons.length > 0
+                        ? seasons.join(" & ")
+                        : "Year Round";
+                    })()}
+                  </p>
+                </div>
+                <div>
+                  <h4 className="text-[10px] font-bold uppercase text-gray-400 tracking-widest mb-1">
+                    Group Size
+                  </h4>
+                  <p className="text-gray-800 font-medium">
+                    {tour.groupSize} Guests
+                  </p>
+                </div>
+                <div>
+                  <h4 className="text-[10px] font-bold uppercase text-gray-400 tracking-widest mb-1">
+                    Current Status
+                  </h4>
+                  <p
+                    className={`font-bold uppercase text-xs ${
+                      tour.status?.toLowerCase().includes("active") &&
+                      !tour.status?.toLowerCase().includes("not")
+                        ? "text-emerald-600"
+                        : "text-red-600"
+                    }`}
+                  >
+                    {tour.status?.toLowerCase().includes("active") &&
+                    !tour.status?.toLowerCase().includes("not")
+                      ? "Active"
+                      : "Not-Active"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ITINERARY TAB */}
+        {activeTab === "itinerary" && (
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-4xl font-serif mb-12 text-center">
+              Your Journey
+            </h2>
+            <div className="space-y-2">
+              {tour.itinerary?.map((item) => (
+                <div key={item.day} className="flex gap-8 group">
+                  <div className="flex flex-col items-center">
+                    <div className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center bg-white group-hover:border-[#004d4d] transition-colors">
+                      <span className="text-sm font-bold">{item.day}</span>
+                    </div>
+                    <div className="w-px h-full bg-gray-100 group-last:bg-transparent"></div>
+                  </div>
+                  <div className="pb-12 pt-2">
+                    <h3 className="text-lg font-bold text-gray-800 mb-3 tracking-tight uppercase">
+                      {item.title}
+                    </h3>
+                    <p className="text-gray-500 leading-relaxed font-light">
+                      {item.descriptions}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* INCLUSIONS TAB */}
+        {activeTab === "inclusions" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 bg-gray-50 p-10 rounded-sm">
+            <div>
+              <h3 className="text-xl font-serif mb-8 text-[#004d4d] uppercase tracking-widest">
+                Included Services
+              </h3>
+              <ul className="space-y-4">
+                {tour.inclusions?.included.map((inc, i) => (
+                  <li
+                    key={i}
+                    className="flex items-center gap-4 text-sm text-gray-600"
+                  >
+                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+                    {inc}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-xl font-serif mb-8 text-rose-900 uppercase tracking-widest">
+                Exclusions
+              </h3>
+              <ul className="space-y-4">
+                {tour.inclusions?.notIncluded.map((exc, i) => (
+                  <li
+                    key={i}
+                    className="flex items-center gap-4 text-sm text-gray-500 italic"
+                  >
+                    <span className="w-1.5 h-1.5 bg-gray-300 rounded-full"></span>
+                    {exc}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* LIGHTBOX MODAL */}
+      {isOpen && (
+        <div className="fixed inset-0 z-100 bg-black flex items-center justify-center p-4">
+          <button
+            onClick={() => setIsOpen(false)}
+            className="absolute top-8 right-8 text-white text-2xl hover:scale-125 transition-transform"
+          >
+            &times;
+          </button>
+          <button
+            onClick={() =>
+              setCurrentImgIndex(
+                (currentImgIndex + tour.images.length - 1) % tour.images.length
+              )
+            }
+            className="absolute left-8 text-white text-3xl hover:text-emerald-400"
+          >
+            &#10094;
+          </button>
+          <div className="relative">
+            <img
+              src={`${IMG_URL}/${tour.images[currentImgIndex]}`}
+              className="max-w-full max-h-[85vh] object-contain shadow-2xl"
+              alt="Lightbox"
+            />
+            <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-white/50 text-xs tracking-widest uppercase">
+              {currentImgIndex + 1} / {tour.images.length}
+            </div>
+          </div>
+          <button
+            onClick={() =>
+              setCurrentImgIndex((currentImgIndex + 1) % tour.images.length)
+            }
+            className="absolute right-8 text-white text-3xl hover:text-emerald-400"
+          >
+            &#10095;
+          </button>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default PackageDetail;

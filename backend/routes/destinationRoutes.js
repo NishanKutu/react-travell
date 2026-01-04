@@ -12,7 +12,7 @@ const {
     deleteDestinationImage
 } = require("../controllers/destinationController");
 
-// Create & Get all
+
 router.post('/createdestination', isAdmin, upload.array('images', 5), createDestination);
 router.get('/getalldestination', getAllDestinations);
 router.get('/getdestination/:id', getDestinationById);

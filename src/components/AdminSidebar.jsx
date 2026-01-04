@@ -12,7 +12,7 @@ const AdminSidebar = () => {
         fontSize: '14px',
         fontWeight: '500',
         transition: 'all 0.2s',
-        backgroundColor: isActive ? '#334155' : 'transparent', // slate-700 when active
+        backgroundColor: isActive ? '#334155' : 'transparent', 
         color: isActive ? '#f8fafc' : '#94a3b8', 
     });
 

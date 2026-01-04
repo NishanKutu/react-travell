@@ -102,7 +102,7 @@ exports.updateDestination = async (req, res) => {
     if (req.body.itinerary) updateData.itinerary = JSON.parse(req.body.itinerary);
     if (req.body.inclusions) updateData.inclusions = JSON.parse(req.body.inclusions);
 
-    // 3. APPEND new images to existing ones instead of replacing
+    // 3. APPEND new images 
     if (req.files && req.files.length > 0) {
       const newImageNames = req.files.map(file => file.filename);
       updateData.images = [...currentDoc.images, ...newImageNames];
@@ -126,14 +126,14 @@ exports.deleteDestinationImage = async (req, res) => {
   try {
       const { id, filename } = req.params;
 
-      // 1. Remove the filename from the MongoDB array
+      // 1. Removes the filename from the MongoDB array
       const destination = await Destination.findByIdAndUpdate(
           id,
           { $pull: { images: filename } }, // $pull removes the specific string from the array
           { new: true }
       );
 
-      // 2. Delete the actual file from the 'public/uploads' folder
+      // 2. Deletes the actual file from the 'public/uploads' folder
       const filePath = path.join(__dirname, '../public/uploads', filename);
       if (fs.existsSync(filePath)) {
           fs.unlinkSync(filePath);
