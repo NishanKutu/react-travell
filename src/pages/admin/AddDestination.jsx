@@ -144,7 +144,13 @@ const AddDestination = () => {
       "isPromo",
       "status",
     ];
-    textFields.forEach((field) => data.append(field, formData[field]));
+    textFields.forEach((field) => {
+      const value =
+        field === "price" || field === "discount" || field === "groupSize"
+          ? Number(formData[field])
+          : formData[field];
+      data.append(field, value);
+    });
 
     const cleanInclusions = {
       included: formData.inclusions.included.filter(
@@ -216,8 +222,8 @@ const AddDestination = () => {
                   onChange={handleChange}
                   className="border p-3 rounded-md focus:ring-2 focus:ring-[#004d4d] outline-none bg-white"
                 >
-                  <option value="Active">Active </option>
-                  <option value="Not-Active">Not-Active</option>
+                  <option value="active">Active </option>
+                  <option value="not-active">Not-Active</option>
                 </select>
               </div>
 

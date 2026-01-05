@@ -5,8 +5,8 @@ import { getAllDestinations } from '../api/destinationApi';
 
 const Destination = () => {
     const [tours, setTours] = useState([]);
-    const [filteredTours, setFilteredTours] = useState([]); // State for filtered results
-    const [selectedLocations, setSelectedLocations] = useState([]); // Track checked locations
+    const [filteredTours, setFilteredTours] = useState([]); 
+    const [selectedLocations, setSelectedLocations] = useState([]); 
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
 
