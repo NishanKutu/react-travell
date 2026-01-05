@@ -13,11 +13,11 @@ const {
 } = require("../controllers/destinationController");
 
 
-router.post('/createdestination', isAdmin, upload.array('images', 5), createDestination);
+router.post('/createdestination', isAdmin, upload.array('images'), createDestination);
 router.get('/getalldestination', getAllDestinations);
 router.get('/getdestination/:id', getDestinationById);
 
-router.put('/updatedestination/:id', isAdmin, upload.array("images", 5), updateDestination);
+router.put('/updatedestination/:id', isAdmin, upload.array("images"), updateDestination);
 
 router.delete('/deletedestination/:id', isAdmin, deleteDestination);
 router.delete('/deleteimage/:id/:filename', isAdmin, deleteDestinationImage);
