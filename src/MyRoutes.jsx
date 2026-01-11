@@ -19,6 +19,7 @@ import AddDestination from './pages/admin/AddDestination';
 import UsersListPage from './pages/admin/UsersListPage';
 import DestinationsList from './pages/admin/DestinationsList';
 import EditDestination from './pages/admin/EditDestination';
+import BookingPage from './pages/BookingPage';
 
 const MyRoutes = () => {
   return (
@@ -41,6 +42,7 @@ const MyRoutes = () => {
           <Route path="/faq" element={<FaqPage />} />
           <Route path='verify/:token' element={<VerifyEmail />} />
           <Route path='/resetpassword/:token' element={<ResetPassword />} />
+          <Route path = "/booking/:id" element = {<BookingPage />} />
 
           <Route path='*' element = {<PageNotFound/>}/>
 

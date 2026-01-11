@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getDestinationById } from "../api/destinationApi";
+import BookingPage from './BookingPage';
 
 const PackageDetail = () => {
   const { id } = useParams();
@@ -154,7 +155,7 @@ const PackageDetail = () => {
             )}
           </p>
         </div>
-        <button className="bg-[#004d4d] text-white px-8 md:px-12 py-3 rounded-sm font-bold hover:bg-black transition-all text-sm tracking-widest">
+        <button className="bg-[#004d4d] text-white px-8 md:px-12 py-3 rounded-sm font-bold hover:bg-black transition-all text-sm tracking-widest" onClick={() => navigate(`/booking/${tour._id}`)}>
           RESERVE NOW
         </button>
       </div>

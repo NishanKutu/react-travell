@@ -92,23 +92,23 @@ exports.updateDestination = async (req, res) => {
   try {
     const { id } = req.params;
     
-    // 1. Get current destination to access existing images
+    // Get current destination to access existing images
     const currentDoc = await Destination.findById(id);
     if (!currentDoc) return res.status(404).json({ message: "Not found" });
 
     let updateData = { ...req.body };
 
-    // 2. Safely parse JSON
+    // Safely parse JSON
     if (req.body.itinerary) updateData.itinerary = JSON.parse(req.body.itinerary);
     if (req.body.inclusions) updateData.inclusions = JSON.parse(req.body.inclusions);
 
-    // 3. APPEND new images 
+    // APPEND new images 
     if (req.files && req.files.length > 0) {
       const newImageNames = req.files.map(file => file.filename);
       updateData.images = [...currentDoc.images, ...newImageNames];
     }
 
-    // 4. Update the document
+    // Update the document
     const destination = await Destination.findByIdAndUpdate(
       id,
       updateData,
