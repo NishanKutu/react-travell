@@ -20,6 +20,7 @@ import UsersListPage from './pages/admin/UsersListPage';
 import DestinationsList from './pages/admin/DestinationsList';
 import EditDestination from './pages/admin/EditDestination';
 import BookingPage from './pages/BookingPage';
+import PaymentSuccess from './components/PaymentSuccess';
 
 const MyRoutes = () => {
   return (
@@ -43,6 +44,7 @@ const MyRoutes = () => {
           <Route path='verify/:token' element={<VerifyEmail />} />
           <Route path='/resetpassword/:token' element={<ResetPassword />} />
           <Route path = "/booking/:id" element = {<BookingPage />} />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
 
           <Route path='*' element = {<PageNotFound/>}/>
 

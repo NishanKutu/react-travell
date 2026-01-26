@@ -28,7 +28,8 @@ exports.initiateEsewaPayment = async (req, res) => {
     const cleanAmount = String(amount);
 
     // eSewa Test Credentials (from documentation)
-    const secretKey = "8g8M!&8(HdaiT!set";
+    // 8g8M!&8(HdaiT!set
+    const secretKey = "8gBm/:&EnhH.1/q";
     const productCode = "EPAYTEST";
 
     // Message string MUST follow this exact order
@@ -67,7 +68,7 @@ exports.verifyEsewaPayment = async (req, res) => {
         status: "confirmed",
         transactionId: decodedData.transaction_code,
       });
-      res.redirect("http://localhost:5173/dashboard?payment=success");
+      res.redirect("http://localhost:5173/payment-success?payment=success");
     } else {
       res.redirect("http://localhost:5173/payment-failure");
     }
