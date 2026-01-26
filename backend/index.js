@@ -7,6 +7,7 @@ const cors = require('cors')
 
 const UserRoute = require('./routes/userRoute')
 const destinationRoutes = require("./routes/destinationRoutes");
+const bookingRoutes = require("./routes/bookingRoute");
 
 
 
@@ -26,6 +27,8 @@ app.get('/',(req, res)=>{
 
 app.use('/api/user', UserRoute)
 app.use('/api/destinations', destinationRoutes)
+app.use("/api/bookings", bookingRoutes);
+
 
 const port = process.env.PORT || 8000
 
