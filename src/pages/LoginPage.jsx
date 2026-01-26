@@ -64,7 +64,7 @@ const LoginPage = ({ isOpen, onClose, switchToSignup }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="bg-white text-black w-full max-w-md mx-4 p-8 rounded-xl shadow-2xl relative animate-in fade-in zoom-in duration-300">
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-black transition-colors">
           <AiOutlineClose size={24} />

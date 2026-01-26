@@ -1,13 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getDestinationById } from "../api/destinationApi"; 
+import { isLoggedIn } from "../api/authAPI";
+import { getDestinationById } from "../api/destinationApi";
+import PaymentModal from "./PaymentModal";
+import { createBooking, getEsewaSignature } from "../api/bookingApi";
+import { useNavigate } from "react-router-dom";
 
 const BookingPage = () => {
+  const { user } = isLoggedIn();
   const { id } = useParams();
+  const navigate = useNavigate();
   const [destination, setDestination] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   // 1. Convert travelerCount to STATE
   const [travelerCount, setTravelerCount] = useState(1);
 
@@ -27,14 +35,90 @@ const BookingPage = () => {
     fetchDestination();
   }, [id]);
 
-  if (loading) return <div className="text-center p-10 font-sans">Loading...</div>;
-  if (error) return <div className="text-center p-10 text-red-500 font-sans italic">{error}</div>;
-  if (!destination) return <div className="text-center p-10">Destination not found.</div>;
+  if (loading)
+    return <div className="text-center p-10 font-sans">Loading...</div>;
+  if (error)
+    return (
+      <div className="text-center p-10 text-red-500 font-sans italic">
+        {error}
+      </div>
+    );
+  if (!destination)
+    return <div className="text-center p-10">Destination not found.</div>;
 
   // 2. Financial Calculations (Now reactive to travelerCount state)
-  const subtotal = destination.price * travelerCount;
-  const totalDiscount = (destination.discount || 0) * travelerCount;
+  const price = Number(destination.price) || 0;
+  const discountPerPerson = Number(destination.discount) || 0;
+
+  const subtotal = price * travelerCount;
+  const totalDiscount = discountPerPerson * travelerCount;
   const finalTotal = subtotal - totalDiscount;
+
+  // Handler for payment
+  const handlePaymentSelection = async (method) => {
+    if (method === "esewa") {
+      try {
+        const amountToSend = Number(finalTotal).toFixed(0);
+        // 1. Create a pending booking first
+        const bookingRes = await createBooking({
+          destinationId: id,
+          travelerCount: travelerCount,
+          totalPrice: amountToSend,
+        });
+
+        if (!bookingRes || !bookingRes.success) {
+          throw new Error(
+            bookingRes?.message ||
+              "Failed to create booking. Are you logged in?"
+          );
+        }
+
+        const bookingId = bookingRes.data._id;
+
+        // 2. Get the signature from your backend
+        const sigRes = await getEsewaSignature({
+          amount: amountToSend,
+          productId: bookingRes.data._id,
+        });
+
+        // 3. Create a hidden form and submit it to eSewa
+        const formDetails = {
+          amount: amountToSend,
+          tax_amount: "0",
+          total_amount: amountToSend,
+          transaction_uuid: bookingId,
+          product_code: "EPAYTEST",
+          product_service_charge: "0",
+          product_delivery_charge: "0",
+          success_url: "http://localhost:8000/api/bookings/verify-esewa",
+          failure_url: "http://localhost:5173/payment-failure",
+          signed_field_names: "total_amount,transaction_uuid,product_code",
+          signature: sigRes.signature,
+        };
+
+        submitFormToEsewa(formDetails);
+      } catch (err) {
+        alert("eSewa Initiation Failed: " + err.message);
+      }
+    }
+  };
+
+  const submitFormToEsewa = (formData) => {
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = "https://rc-epay.esewa.com.np/api/epay/main/v2/form"; // Test URL
+
+    Object.entries(formData).forEach(([key, value]) => {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = key;
+      input.value = value;
+      form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+  };
 
   // 3. Handler for input changes
   const handleTravelerChange = (e) => {
@@ -57,13 +141,21 @@ const BookingPage = () => {
         </h2>
         <div className="flex gap-4">
           <img
-            src={destination.images?.[0] ? `http://localhost:8000/uploads/${destination.images[0]}` : "https://via.placeholder.com/300"}
+            src={
+              destination.images?.[0]
+                ? `http://localhost:8000/uploads/${destination.images[0]}`
+                : "https://via.placeholder.com/300"
+            }
             alt={destination.title}
             className="w-24 h-24 rounded-lg object-cover"
           />
           <div className="flex flex-col justify-center space-y-2 text-sm text-gray-600">
-            <div className="flex items-start gap-2"><span>📍</span> <p>{destination.location}</p></div>
-            <div className="flex items-start gap-2"><span>⏱️</span> <p>{destination.duration}</p></div>
+            <div className="flex items-start gap-2">
+              <span>📍</span> <p>{destination.location}</p>
+            </div>
+            <div className="flex items-start gap-2">
+              <span>⏱️</span> <p>{destination.duration}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -71,16 +163,21 @@ const BookingPage = () => {
       {/* Traveler Input Section */}
       <div className="bg-orange-50/30 p-6 space-y-4 text-sm border-t border-b border-orange-100">
         <div className="flex justify-between items-center">
-          <label htmlFor="travelers" className="text-gray-700 font-bold uppercase tracking-wider text-xs">
+          <label
+            htmlFor="travelers"
+            className="text-gray-700 font-bold uppercase tracking-wider text-xs"
+          >
             Number of Travelers:
           </label>
           <div className="flex items-center border rounded-md bg-white">
-            <button 
+            <button
               onClick={() => setTravelerCount(Math.max(1, travelerCount - 1))}
               className="px-3 py-1 hover:bg-gray-100 text-lg font-bold border-r"
-            >-</button>
-            <input 
-              type="number" 
+            >
+              -
+            </button>
+            <input
+              type="number"
               id="travelers"
               value={travelerCount}
               onChange={handleTravelerChange}
@@ -88,16 +185,30 @@ const BookingPage = () => {
               min="1"
               max={destination.groupSize}
             />
-            <button 
-              onClick={() => setTravelerCount(Math.min(destination.groupSize, travelerCount + 1))}
+            <button
+              onClick={() =>
+                setTravelerCount(
+                  Math.min(destination.groupSize, travelerCount + 1)
+                )
+              }
               className="px-3 py-1 hover:bg-gray-100 text-lg font-bold border-l"
-            >+</button>
+            >
+              +
+            </button>
           </div>
         </div>
-        
+
         <div className="flex justify-between text-xs">
-          <span className="text-gray-500 italic">Max Capacity: {destination.groupSize} guests</span>
-          <span className={`font-bold ${destination.status === "active" ? "text-green-600" : "text-red-600"}`}>
+          <span className="text-gray-500 italic">
+            Max Capacity: {destination.groupSize} guests
+          </span>
+          <span
+            className={`font-bold ${
+              destination.status === "active"
+                ? "text-green-600"
+                : "text-red-600"
+            }`}
+          >
             {destination.status.toUpperCase()}
           </span>
         </div>
@@ -117,7 +228,9 @@ const BookingPage = () => {
           <span className="text-sm font-medium">Tour Fare Adult</span>
           <div className="flex gap-12 text-sm">
             <span className="w-8 text-center">{travelerCount}</span>
-            <span className="font-semibold w-16 text-right">${subtotal.toLocaleString()}</span>
+            <span className="font-semibold w-16 text-right">
+              ${subtotal.toLocaleString()}
+            </span>
           </div>
         </div>
       </div>
@@ -133,15 +246,35 @@ const BookingPage = () => {
       {/* Total Section */}
       <div className="bg-teal-900 p-6 flex justify-between items-center text-white">
         <span className="text-lg font-bold">Total:</span>
-        <span className="text-3xl font-bold">${finalTotal.toLocaleString()}</span>
+        <span className="text-3xl font-bold">
+          ${finalTotal.toLocaleString()}
+        </span>
       </div>
 
       {/* Optional: Call to Action */}
       <div className="p-4 bg-gray-50">
-        <button className="w-full bg-[#004d4d] text-white py-3 rounded-md font-bold hover:bg-black transition-colors">
-          CONFIRM BOOKING FOR {travelerCount}
-        </button>
+        {!user ? (
+          <button
+            onClick={() => navigate("/login")}
+            className="w-full bg-orange-500 text-white py-3"
+          >
+            LOGIN TO BOOK
+          </button>
+        ) : (
+          <button
+            onClick={() => setIsModalOpen(true)} // Open Modal here
+            className="w-full bg-[#004d4d] text-white py-3 rounded-md font-bold hover:bg-black transition-colors"
+          >
+            CONFIRM BOOKING FOR {travelerCount}
+          </button>
+        )}
       </div>
+      <PaymentModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        amount={finalTotal}
+        onSelectPayment={handlePaymentSelection}
+      />
     </div>
   );
 };
