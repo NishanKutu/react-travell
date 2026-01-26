@@ -8,7 +8,7 @@ exports.createBooking = async (req, res) => {
   try {
     const { destinationId, travelerCount, totalPrice } = req.body;
     const newBooking = new Booking({
-      userId: req.user.id, // From authMiddleware
+      userId: req.user.id, 
       destinationId,
       travelerCount,
       totalPrice,
@@ -28,11 +28,11 @@ exports.initiateEsewaPayment = async (req, res) => {
     const cleanAmount = String(amount);
 
     // eSewa Test Credentials (from documentation)
-    // 8g8M!&8(HdaiT!set
+
     const secretKey = "8gBm/:&EnhH.1/q";
     const productCode = "EPAYTEST";
 
-    // Message string MUST follow this exact order
+
     const message = `total_amount=${cleanAmount},transaction_uuid=${productId},product_code=${productCode}`;
 
     // Generate HMAC-SHA256 Signature
@@ -41,7 +41,7 @@ exports.initiateEsewaPayment = async (req, res) => {
       .update(message)
       .digest("base64");
 
-    console.log("Generated Message:", message); // Debugging: Check terminal for this
+    console.log("Generated Message:", message); 
     console.log("Generated Signature:", signature);
 
     res.status(200).json({

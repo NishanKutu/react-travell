@@ -16,7 +16,7 @@ const BookingPage = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // 1. Convert travelerCount to STATE
+  // Convert travelerCount to STATE
   const [travelerCount, setTravelerCount] = useState(1);
 
   useEffect(() => {
@@ -46,7 +46,7 @@ const BookingPage = () => {
   if (!destination)
     return <div className="text-center p-10">Destination not found.</div>;
 
-  // 2. Financial Calculations (Now reactive to travelerCount state)
+  // Financial Calculations (Now reactive to travelerCount state)
   const price = Number(destination.price) || 0;
   const discountPerPerson = Number(destination.discount) || 0;
 
@@ -75,13 +75,13 @@ const BookingPage = () => {
 
         const bookingId = bookingRes.data._id;
 
-        // 2. Get the signature from your backend
+        // Get the signature from your backend
         const sigRes = await getEsewaSignature({
           amount: amountToSend,
           productId: bookingRes.data._id,
         });
 
-        // 3. Create a hidden form and submit it to eSewa
+        // Create a hidden form and submit it to eSewa
         const formDetails = {
           amount: amountToSend,
           tax_amount: "0",
@@ -120,13 +120,13 @@ const BookingPage = () => {
     form.submit();
   };
 
-  // 3. Handler for input changes
+  // Handler for input changes
   const handleTravelerChange = (e) => {
     const value = parseInt(e.target.value);
     if (isNaN(value) || value < 1) {
       setTravelerCount(1);
     } else if (value > destination.groupSize) {
-      setTravelerCount(destination.groupSize); // Cap at max group size
+      setTravelerCount(destination.groupSize); 
     } else {
       setTravelerCount(value);
     }
@@ -251,7 +251,7 @@ const BookingPage = () => {
         </span>
       </div>
 
-      {/* Optional: Call to Action */}
+
       <div className="p-4 bg-gray-50">
         {!user ? (
           <button
@@ -262,7 +262,7 @@ const BookingPage = () => {
           </button>
         ) : (
           <button
-            onClick={() => setIsModalOpen(true)} // Open Modal here
+            onClick={() => setIsModalOpen(true)} 
             className="w-full bg-[#004d4d] text-white py-3 rounded-md font-bold hover:bg-black transition-colors"
           >
             CONFIRM BOOKING FOR {travelerCount}

@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { CheckCircle } from "lucide-react"; // Optional: for a nice icon
+import { CheckCircle } from "lucide-react"; 
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
@@ -8,7 +8,6 @@ const PaymentSuccess = () => {
   const paymentStatus = searchParams.get("payment");
 
   useEffect(() => {
-    // If someone tries to access this page without a success param, send them away
     if (paymentStatus !== "success") {
       navigate("/");
     }

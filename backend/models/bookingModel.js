@@ -10,22 +10,22 @@ const bookingSchema = new mongoose.Schema({
   // Reference to the Trek/Destination being booked
   destinationId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Destinations', // Ensure this matches your model name in destinationModel.js
+    ref: 'Destinations', 
     required: true
   },
-  // Number of people (updated dynamically from your frontend state)
+  // Number of people 
   travelerCount: {
     type: Number,
     required: true,
     min: 1,
     default: 1
   },
-  // Total price after discounts (e.g., $601 or $590)
+  // Total price after discounts 
   totalPrice: {
     type: Number,
     required: true
   },
-  // Status management for Admin Panel (Pending, Confirmed, Cancelled)
+  // Status management for Admin Panel 
   status: {
     type: String,
     enum: ['pending', 'confirmed', 'cancelled'],
@@ -49,7 +49,7 @@ const bookingSchema = new mongoose.Schema({
     default: Date.now
   }
 }, {
-  timestamps: true // Automatically creates createdAt and updatedAt fields
+  timestamps: true 
 });
 
 const Booking = mongoose.model("Booking", bookingSchema);
