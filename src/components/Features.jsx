@@ -1,6 +1,6 @@
 import React from 'react';
 import FeatureCard from '../layout/FeatureCard';
-import img from '../assets/img/feature.jpg';
+import img from '../assets/img/namaste.png';
 import png1 from '../assets/img/png1.png';
 import png2 from '../assets/img/png2.png';
 import png3 from '../assets/img/png3.png';

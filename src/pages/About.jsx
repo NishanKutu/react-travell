@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import beach from '../assets/img/Beach.jpg';
+import sun from '../assets/img/sun.png';
 import "../App.css";
 
 // Swiper Imports
@@ -15,7 +15,7 @@ const About = () => {
       {/* --- HERO SECTION --- */}
       <div
         className="relative h-[40vh] flex items-center justify-center bg-cover bg-center"
-        style={{ backgroundImage: `url(${beach})` }}
+        style={{ backgroundImage: `url(${sun})` }}
       >
         <div className="absolute inset-0 bg-black/30"></div>
         <h1 className="relative z-10 text-white text-6xl md:text-8xl font-serif animate-pop-up">

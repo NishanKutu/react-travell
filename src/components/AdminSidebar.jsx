@@ -43,10 +43,16 @@ const AdminSidebar = () => {
                 <NavLink to="/admin/users" style={getLinkStyle}>
                     👥 Users List
                 </NavLink>
+
+                <NavLink to="/admin/booking-list" style={getLinkStyle}>
+                    📒 Booking List
+                </NavLink>
                 
                 <NavLink to="/admin/add-destination" style={getLinkStyle}>
                     ➕ Add New Trip
                 </NavLink>
+
+                
             </nav>
 
             <div style={{ padding: '20px', borderTop: '1px solid #334155' }}>

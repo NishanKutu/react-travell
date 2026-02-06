@@ -21,6 +21,8 @@ import DestinationsList from './pages/admin/DestinationsList';
 import EditDestination from './pages/admin/EditDestination';
 import BookingPage from './pages/BookingPage';
 import PaymentSuccess from './components/PaymentSuccess';
+import BookingList from './pages/admin/BookingList';
+import MyBookings from './pages/MyBookings';
 
 const MyRoutes = () => {
   return (
@@ -44,6 +46,7 @@ const MyRoutes = () => {
           <Route path='verify/:token' element={<VerifyEmail />} />
           <Route path='/resetpassword/:token' element={<ResetPassword />} />
           <Route path = "/booking/:id" element = {<BookingPage />} />
+          <Route path="/my-bookings" element={<MyBookings />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
 
           <Route path='*' element = {<PageNotFound/>}/>
@@ -58,6 +61,7 @@ const MyRoutes = () => {
             <Route path='add-destination' element = {<AddDestination />}/>
             <Route path = 'users' element = {<UsersListPage />}/>
             <Route path="edit-destination/:id" element = {<EditDestination />} />
+            <Route path="booking-list" element = {<BookingList />} />
 
           </Route>
         </Route>

@@ -2,7 +2,7 @@ import React from 'react';
 import "../App.css";
 import Button from '../layout/Button';
 import { Link } from 'react-scroll';
-import img from '../assets/img/Hero.jpg';
+import img from '../assets/img/beauty.jpg';
 import SearchBar from './SearchBar';
 import { HiOutlinePhone } from 'react-icons/hi';
 import { useNavigate } from 'react-router-dom';
