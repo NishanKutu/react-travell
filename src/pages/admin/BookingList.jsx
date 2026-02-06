@@ -110,16 +110,24 @@ const BookingList = () => {
                       <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
                         <div className="flex items-center">
                           <div className="ml-3">
-                            {/* Handle cases where user might be deleted (null check) */}
-                            <p className="text-gray-900 whitespace-no-wrap">
-                              {booking.userId
-                                ? booking.userId.username ||
-                                  booking.userId.name ||
-                                  "User"
-                                : "Unknown User"}
-                            </p>
+                            {/* Dynamic Role & Name Logic */}
+                            <div className="flex items-center gap-2">
+                              <p className="text-gray-900 font-bold whitespace-no-wrap">
+                                {booking.userId?.role === 1
+                                  ? "Admin"
+                                  : booking.userId?.username || "User"}
+                              </p>
+
+                              {/* Optional: Add a small badge for Admins to make it pop */}
+                              {booking.userId?.role === 1 && (
+                                <span className="px-2 py-0.5 text-[10px] bg-purple-100 text-purple-700 rounded-full font-bold uppercase">
+                                  Staff
+                                </span>
+                              )}
+                            </div>
+
                             <p className="text-gray-500 text-xs">
-                              {booking.userId?.email}
+                              {booking.userId?.email || "No email available"}
                             </p>
                           </div>
                         </div>
