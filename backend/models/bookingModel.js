@@ -10,7 +10,7 @@ const bookingSchema = new mongoose.Schema({
   // Reference to the Trek/Destination being booked
   destinationId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Destinations', 
+    ref: 'Destination', 
     required: true
   },
   // Number of people 

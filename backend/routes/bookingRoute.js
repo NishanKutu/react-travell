@@ -3,12 +3,20 @@ const router = express.Router();
 const { 
     createBooking, 
     initiateEsewaPayment, 
-    verifyEsewaPayment 
+    verifyEsewaPayment ,
+    getAllBookings,
+    deleteBooking
 } = require("../controllers/bookingController");
 const { isLoggedIn } = require("../middleware/authMiddleware");
 
 // Create a pending booking
 router.post("/confirm", isLoggedIn, createBooking);
+
+// Get all bookings
+router.get("/all", isLoggedIn, getAllBookings);
+
+// Delete a booking
+router.delete("/:id", isLoggedIn, deleteBooking);
 
 // Initiate eSewa Signature
 router.post("/initiate-esewa", isLoggedIn, initiateEsewaPayment);
