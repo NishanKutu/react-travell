@@ -5,12 +5,24 @@ const crypto = require("crypto");
 // 1. Create Initial Booking
 exports.createBooking = async (req, res) => {
   try {
-    const { destinationId, travelerCount, totalPrice } = req.body;
-    const newBooking = new Booking({
-      userId: req.user._id, 
+    const {
       destinationId,
       travelerCount,
       totalPrice,
+      hasGuide,
+      hasPorter,
+      guideCost,
+      porterCost,
+    } = req.body;
+    const newBooking = new Booking({
+      userId: req.user._id,
+      destinationId,
+      travelerCount,
+      totalPrice,
+      hasGuide: hasGuide || false,
+      hasPorter: hasPorter || false,
+      guideCost: guideCost || 0,
+      porterCost: porterCost || 0,
       status: "pending",
     });
     const savedBooking = await newBooking.save();
@@ -20,14 +32,49 @@ exports.createBooking = async (req, res) => {
   }
 };
 
-// 2. Get All Bookings 
+// Admin Manual Booking
+exports.adminCreateBooking = async (req, res) => {
+  try {
+    const { 
+      userId, // Admin selects the customer
+      destinationId, 
+      travelerCount, 
+      totalPrice, 
+      hasGuide, 
+      hasPorter, 
+      guideCost, 
+      porterCost,
+      status 
+    } = req.body;
+
+    const newBooking = new Booking({
+      userId, 
+      destinationId,
+      travelerCount,
+      totalPrice,
+      hasGuide,
+      hasPorter,
+      guideCost,
+      porterCost,
+      status: status || "confirmed", 
+      paymentMethod: "esewa" 
+    });
+
+    const savedBooking = await newBooking.save();
+    res.status(201).json({ success: true, data: savedBooking });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// 2. Get All Bookings
 exports.getAllBookings = async (req, res) => {
   try {
     const query = req.user.role === 1 ? {} : { userId: req.user._id };
 
     const bookings = await Booking.find(query)
-      .populate("userId", "username email role") 
-      .populate("destinationId", "title")
+      .populate("userId", "username email role")
+      .populate("destinationId", "title price location")
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -45,9 +92,13 @@ exports.deleteBooking = async (req, res) => {
   try {
     const booking = await Booking.findByIdAndDelete(req.params.id);
     if (!booking) {
-      return res.status(404).json({ success: false, message: "Booking not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Booking not found" });
     }
-    res.status(200).json({ success: true, message: "Booking deleted successfully" });
+    res
+      .status(200)
+      .json({ success: true, message: "Booking deleted successfully" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -81,14 +132,14 @@ exports.initiateEsewaPayment = async (req, res) => {
 
 // Verify eSewa Payment
 exports.verifyEsewaPayment = async (req, res) => {
-  const { data } = req.query; 
+  const { data } = req.query;
   try {
     const decodedData = JSON.parse(
       Buffer.from(data, "base64").toString("utf-8")
     );
 
     const transactionUuid = decodedData.transaction_uuid;
-    const bookingId = transactionUuid.split('-')[0];
+    const bookingId = transactionUuid.split("-")[0];
 
     if (decodedData.status === "COMPLETE") {
       await Booking.findByIdAndUpdate(bookingId, {

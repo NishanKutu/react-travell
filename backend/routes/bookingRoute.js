@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const { 
-    createBooking, 
+    createBooking,
+    adminCreateBooking,
     initiateEsewaPayment, 
     verifyEsewaPayment ,
     getAllBookings,
@@ -11,6 +12,8 @@ const { isLoggedIn } = require("../middleware/authMiddleware");
 
 // Create a pending booking
 router.post("/confirm", isLoggedIn, createBooking);
+
+router.post("/admin-confirm", isLoggedIn, adminCreateBooking);
 
 // Get all bookings
 router.get("/all", isLoggedIn, getAllBookings);

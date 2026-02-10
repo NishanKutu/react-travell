@@ -33,6 +33,15 @@ export const createBooking = async (bookingData) => {
   return response.json();
 };
 
+export const adminCreateBooking = async (bookingData) => {
+  const response = await fetch(`${BASE_URL}/admin-confirm`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(bookingData),
+  });
+  return response.json();
+};
+
 export const getAllBookings = async () => {
   const response = await fetch(`${BASE_URL}/all`, {
     method: "GET",

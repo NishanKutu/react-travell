@@ -1,39 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import Button from "../layout/Button";
 import { AiOutlineMenu, AiOutlineClose } from "react-icons/ai";
 import LoginPage from "../pages/LoginPage";
-import SignupPage from "..//pages/Signup";
-import { getAllBookings } from "../api/bookingApi";
+import SignupPage from "../pages/Signup";
 import { isLoggedIn } from "../api/authAPI";
 
 const Navbar = () => {
   const [menu, setMenu] = useState(false);
-  const [hasBookings, setHasBookings] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isSignupOpen, setIsSignupOpen] = useState(false);
 
   let auth = isLoggedIn();
   let navigate = useNavigate();
-
-  // Check for bookings whenever the user logs in
-  useEffect(() => {
-    const checkBookings = async () => {
-      if (auth) {
-        try {
-          const response = await getAllBookings();
-          if (response.success && response.data.length > 0) {
-            setHasBookings(true);
-          } else {
-            setHasBookings(false);
-          }
-        } catch (error) {
-          console.error("Error checking bookings:", error);
-        }
-      }
-    };
-    checkBookings();
-  }, [auth]);
 
   const openLogin = () => {
     setIsLoginOpen(true);
@@ -54,7 +33,9 @@ const Navbar = () => {
 
   const handleSignout = () => {
     localStorage.removeItem("auth");
+    setMenu(false); // Close mobile menu on signout
     navigate("/");
+    window.location.reload(); // Refresh to update auth state across components
   };
 
   const navItems = [
@@ -63,7 +44,7 @@ const Navbar = () => {
     { name: "Destinations", path: "/destinations" },
     { name: "About", path: "/about" },
     { name: "Contact", path: "/contact" },
-    { name: "faq", path: "/faq" },
+    { name: "FAQ", path: "/faq" },
   ];
 
   const handleChange = () => setMenu(!menu);
@@ -74,14 +55,9 @@ const Navbar = () => {
 
   return (
     <header className="sticky top-0 z-50">
-      {/* Main Navbar Container */}
       <div className="flex flex-row justify-between p-5 md:px-32 px-5 bg-[#004d4d] text-white shadow-[0_3px_10px_rgb(0,0,0,0.2)]">
         <div className="flex items-center">
-          <Link
-            to="/"
-            className="cursor-pointer"
-            onClick={() => setMenu(false)}
-          >
+          <Link to="/" className="cursor-pointer" onClick={() => setMenu(false)}>
             <h1 className="font-semibold text-xl tracking-tight">HikeHub</h1>
           </Link>
         </div>
@@ -105,43 +81,20 @@ const Navbar = () => {
         <div className="hidden lg:flex flex-row items-center gap-4">
           {auth ? (
             <>
-              {/* 1. If Admin: Show Dashboard & Sign Out */}
               {auth.user.role === 1 ? (
-                <>
-                  <Link to={"/admin/dashboard"}>
-                    <Button title="Dashboard" variant="secondary" />
-                  </Link>
-                  <div onClick={handleSignout}>
-                    <Button title="Sign Out" isPrimary={true} />
-                  </div>
-                </>
+                <Link to={"/admin/dashboard"}>
+                  <Button title="Dashboard" variant="secondary" />
+                </Link>
               ) : (
-                /* 2. If User: Show Emoji and Booking Button ONLY if hasBookings is true */
-                <>
-                  {hasBookings && (
-                    <>
-                      <Link
-                        to="/my-bookings"
-                        title="My Bookings"
-                        className="text-2xl hover:scale-110 transition-transform cursor-pointer px-2"
-                      >
-                        📖
-                      </Link>
-
-                      <Link to={"/my-bookings"}>
-                        <Button title="Booking" variant="secondary" />
-                      </Link>
-                    </>
-                  )}
-
-                  <div onClick={handleSignout}>
-                    <Button title="Sign Out" isPrimary={true} />
-                  </div>
-                </>
+                <Link to={"/profile"}>
+                  <Button title="Profile" variant="secondary" />
+                </Link>
               )}
+              <div onClick={handleSignout}>
+                <Button title="Sign Out" isPrimary={true} />
+              </div>
             </>
           ) : (
-            /* 3. If Not Logged In: Show Login/Signup */
             <>
               <div onClick={openLogin}>
                 <Button title="Login" variant="secondary" />
@@ -152,31 +105,25 @@ const Navbar = () => {
             </>
           )}
         </div>
+
         {/* Mobile Menu Icon */}
-        <div
-          className="lg:hidden flex items-center p-2 cursor-pointer"
-          onClick={handleChange}
-        >
+        <div className="lg:hidden flex items-center p-2 cursor-pointer" onClick={handleChange}>
           {menu ? <AiOutlineClose size={25} /> : <AiOutlineMenu size={25} />}
         </div>
 
         {/* Mobile Sidebar Menu */}
         <div
           className={`
-                    ${menu ? "translate-x-0" : "-translate-x-full"} 
-                    lg:hidden flex flex-col absolute z-50 bg-[#004d4d]/95 backdrop-blur-md text-white left-0 top-18 text-2xl text-center pt-8 pb-10 gap-8 w-full h-fit transition-transform duration-300 ease-in-out
-                `}
+            ${menu ? "translate-x-0" : "-translate-x-full"} 
+            lg:hidden flex flex-col absolute z-50 bg-[#004d4d]/95 backdrop-blur-md text-white left-0 top-full text-2xl text-center pt-8 pb-10 gap-8 w-full h-screen transition-transform duration-300 ease-in-out
+          `}
         >
           {navItems.map((item) => (
             <NavLink
               key={item.name}
               to={item.path}
               className={({ isActive }) =>
-                `transition-all duration-300 ${
-                  isActive
-                    ? "text-amber-400 font-bold scale-110"
-                    : "hover:text-amber-400"
-                }`
+                `transition-all duration-300 ${isActive ? "text-amber-400 font-bold" : "hover:text-amber-400"}`
               }
               onClick={() => setMenu(false)}
             >
@@ -184,28 +131,38 @@ const Navbar = () => {
             </NavLink>
           ))}
 
-          {/* Mobile Login/Signup Buttons */}
           <div className="flex flex-col items-center gap-4 mt-4">
-            <div onClick={openLogin}>
-              <Button title="Login" variant="secondary" />
-            </div>
-            <div onClick={openSignup}>
-              <Button title="Signup" isPrimary={true} />
-            </div>
+            {auth ? (
+              <>
+                {auth.user.role === 1 ? (
+                  <Link to="/admin/dashboard" onClick={() => setMenu(false)}>
+                    <Button title="Dashboard" variant="secondary" />
+                  </Link>
+                ) : (
+                  <Link to="/profile" onClick={() => setMenu(false)}>
+                    <Button title="Profile" variant="secondary" />
+                  </Link>
+                )}
+                <div onClick={handleSignout}>
+                  <Button title="Sign Out" isPrimary={true} />
+                </div>
+              </>
+            ) : (
+              <>
+                <div onClick={openLogin}>
+                  <Button title="Login" variant="secondary" />
+                </div>
+                <div onClick={openSignup}>
+                  <Button title="Signup" isPrimary={true} />
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
 
-      <LoginPage
-        isOpen={isLoginOpen}
-        onClose={closeAll}
-        switchToSignup={openSignup}
-      />
-      <SignupPage
-        isOpen={isSignupOpen}
-        onClose={closeAll}
-        switchToLogin={openLogin}
-      />
+      <LoginPage isOpen={isLoginOpen} onClose={closeAll} switchToSignup={openSignup} />
+      <SignupPage isOpen={isSignupOpen} onClose={closeAll} switchToLogin={openLogin} />
     </header>
   );
 };

@@ -20,7 +20,27 @@ const bookingSchema = new mongoose.Schema({
     min: 1,
     default: 1
   },
-  // Total price after discounts 
+
+  // --- ADD-ONS SECTION ---
+  hasGuide: {
+    type: Boolean,
+    default: false
+  },
+  hasPorter: {
+    type: Boolean,
+    default: false
+  },
+
+  guideCost: {
+    type: Number,
+    default: 0
+  },
+  porterCost: {
+    type: Number,
+    default: 0
+  },
+
+  // Total price after discounts and add-ons
   totalPrice: {
     type: Number,
     required: true

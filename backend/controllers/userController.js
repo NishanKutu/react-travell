@@ -483,3 +483,27 @@ exports.toggleUserRole = async (req, res) => {
   }
 };
 
+exports.manualVerifyUser = async (req, res) => {
+  try {
+      const user = await UserModel.findById(req.params.id);
+      if (!user) return res.status(404).json({ error: "User not found" });
+
+      if (user.isVerified) {
+          return res.status(400).json({ error: "User is already verified" });
+      }
+
+      user.isVerified = true;
+      await user.save();
+
+      // Optional: Clean up any existing verification tokens for this user
+      await TokenModel.deleteMany({ user: user._id });
+
+      res.status(200).json({ 
+          success: true, 
+          message: "User verified successfully by administrator" 
+      });
+  } catch (error) {
+      res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+

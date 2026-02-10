@@ -1,13 +1,13 @@
 const API = `http://localhost:8000/api/user`
 
 export const getAllUsers = (token) => {
-    return fetch(`${API}/getallusers`,{
+    return fetch(`${API}/getallusers`, {
         headers: {
-            authorization: token
+            "Authorization": `Bearer ${token}`
         }
     })
-    .then(res=> res.json())
-    .catch(error=> console.log(error))
+    .then(res => res.json())
+    .catch(error => console.log(error))
 }
 
 export const deleteUser = (id, token) => {
@@ -23,6 +23,18 @@ export const deleteUser = (id, token) => {
 
 export const toggleUserRole = (id, token) => {
     return fetch(`${API}/togglerole/${id}`, {
+        method: "PUT",
+        headers: {
+            authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+        }
+    })
+    .then(res => res.json())
+    .catch(error => console.log(error));
+};
+
+export const manualVerifyUser = (id, token) => {
+    return fetch(`${API}/manual-verify/${id}`, {
         method: "PUT",
         headers: {
             authorization: `Bearer ${token}`,

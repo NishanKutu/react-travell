@@ -47,6 +47,10 @@ const AdminSidebar = () => {
                 <NavLink to="/admin/booking-list" style={getLinkStyle}>
                     📒 Booking List
                 </NavLink>
+
+                <NavLink to="/admin/add-booking" style={getLinkStyle}>
+                    ➕ Add Booking
+                </NavLink>
                 
                 <NavLink to="/admin/add-destination" style={getLinkStyle}>
                     ➕ Add New Trip

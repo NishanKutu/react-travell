@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getDestinationById } from "../api/destinationApi";
-import BookingPage from './BookingPage';
+
 
 const PackageDetail = () => {
   const { id } = useParams();
