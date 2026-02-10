@@ -13,7 +13,7 @@ exports.isLoggedIn = async (req, res, next) => {
     const token = authHeader.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Ensure you attach the user to req.user for the controller to use
+
     const user = await UserModel.findById(decoded._id || decoded.id);
     if (!user)
       return res
@@ -29,21 +29,7 @@ exports.isLoggedIn = async (req, res, next) => {
     });
   }
 };
-// exports.isAdmin = async (req, res, next) => {
-//     let token = await req.headers["authorization"]
-//     if (!token) {
-//         return res.status(401).json({ error: "User not logged in" })
-//     }
-//     let decoded = jwt.verify(token, process.env.JWT_SECRET)
-//     let user = await UserModel.findById(decoded._id)
-//     // if (!user) {
-//     //     return res.status(401).json({ error: "User not logged in" })
-//     // }
-//     if(user.role !== 1){
-//         return res.status(403).json({error:"You must be admin to access this resource"})
-//     }
-//     next()
-// }
+
 exports.isAdmin = async (req, res, next) => {
   try {
     let authHeader = req.headers.authorization;

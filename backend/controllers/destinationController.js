@@ -2,11 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const Destination = require("../models/destinationModel");
 
-/**
- * @desc    Create a new destination
- * @route   POST /api/destinations
- * @access  Public / Admin
- */
+
 exports.createDestination = async (req, res) => {
   try {
     // Get the filenames of the uploaded files
@@ -34,11 +30,6 @@ exports.createDestination = async (req, res) => {
   }
 };
 
-/**
- * @desc    Get all destinations
- * @route   GET /api/destinations
- * @access  Public
- */
 exports.getAllDestinations = async (req, res) => {
   try {
     const destinations = await Destination.find().sort({ createdAt: -1 });
@@ -55,11 +46,7 @@ exports.getAllDestinations = async (req, res) => {
   }
 };
 
-/**
- * @desc    Get single destination by ID
- * @route   GET /api/destinations/:id
- * @access  Public
- */
+
 exports.getDestinationById = async (req, res) => {
   try {
     const destination = await Destination.findById(req.params.id);
@@ -83,11 +70,7 @@ exports.getDestinationById = async (req, res) => {
   }
 };
 
-/**
- * @desc    Update destination
- * @route   PUT /api/destinations/:id
- * @access  Admin
- */
+
 exports.updateDestination = async (req, res) => {
   try {
     const { id } = req.params;
@@ -145,11 +128,6 @@ exports.deleteDestinationImage = async (req, res) => {
   }
 };
 
-/**
- * @desc    Delete destination
- * @route   DELETE /api/destinations/:id
- * @access  Admin
- */
 exports.deleteDestination = async (req, res) => {
   try {
     const destination = await Destination.findById(req.params.id);

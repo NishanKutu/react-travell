@@ -495,7 +495,6 @@ exports.manualVerifyUser = async (req, res) => {
       user.isVerified = true;
       await user.save();
 
-      // Optional: Clean up any existing verification tokens for this user
       await TokenModel.deleteMany({ user: user._id });
 
       res.status(200).json({ 
