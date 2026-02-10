@@ -67,7 +67,7 @@ const ProfilePage = () => {
           product_code: "EPAYTEST",
           product_service_charge: "0",
           product_delivery_charge: "0",
-          success_url: "http://localhost:8000/api/bookings/verify-esewa", // Your backend verify route
+          success_url: "http://localhost:8000/api/bookings/verify-esewa", // backend verify route
           failure_url: "http://localhost:5173/payment-failure",
           signed_field_names: "total_amount,transaction_uuid,product_code",
           signature: res.signature,
@@ -90,11 +90,10 @@ const ProfilePage = () => {
   };
 
   const handleDelete = async (e, id) => {
-    e.stopPropagation(); // Prevents navigating to the tour details page
+    e.stopPropagation(); 
     if (window.confirm("Are you sure you want to cancel?")) {
       const res = await deleteBooking(id); // Deletes from Backend
       if (res.success) {
-        // Deletes from Frontend UI immediately
         setBookings(bookings.filter((b) => b._id !== id));
       }
     }

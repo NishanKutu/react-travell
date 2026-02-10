@@ -235,7 +235,7 @@ const UsersListPage = () => {
 
                       <td className="p-5 text-center">
                         <div className="flex justify-center gap-1">
-                          {/* --- NEW VERIFY BUTTON --- */}
+                          {/* --- VERIFY BUTTON --- */}
                           {!user.isVerified && (
                             <button
                               onClick={() =>
@@ -244,7 +244,6 @@ const UsersListPage = () => {
                               className="text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 p-2 rounded-lg transition-all"
                               title="Verify User Manually"
                             >
-                              {/* Checkmark Circle Icon */}
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 className="h-5 w-5"
@@ -261,9 +260,8 @@ const UsersListPage = () => {
                               </svg>
                             </button>
                           )}
-                          {/* ------------------------- */}
 
-                          {/* Existing Role Toggle Button */}
+                          {/* Role Toggle Button */}
                           <button
                             onClick={() => handleRoleToggle(user._id)}
                             className="text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors p-2 rounded-lg"
@@ -285,7 +283,7 @@ const UsersListPage = () => {
                             </svg>
                           </button>
 
-                          {/* Existing Delete Button */}
+                          {/* Delete Button */}
                           <button
                             onClick={() => handleDelete(user._id)}
                             className={`p-2 rounded-lg transition-all ${

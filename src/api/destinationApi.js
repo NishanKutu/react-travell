@@ -32,17 +32,10 @@ export const getAllDestinations = async () => {
 };
 
 // Get single destination
-// export const getDestinationById = async (id) => {
-//   const response = await fetch(`${BASE_URL}/getdestination/${id}`);
-//   const data = await response.json();
-//   if (!response.ok) throw new Error(data.message || "Failed to fetch destination");
-//   return data;
-// };
 export const getDestinationById = async (id) => {
-  // 1. Safety Guard: Stop the request if the ID is missing or "undefined"
+  // Stop the request if the ID is missing or "undefined"
   if (!id || id === "undefined" || id === null) {
     console.warn("getDestinationById: ID is invalid, skipping fetch.");
-    // Return an object that won't crash your 'if (res.success)' checks
     return { success: false, message: "Invalid ID", data: null };
   }
 
@@ -51,7 +44,6 @@ export const getDestinationById = async (id) => {
     const data = await response.json();
 
     if (!response.ok) {
-      // Corrected syntax for Error constructor
       throw new Error(data.message || "Failed to fetch destination");
     }
 
