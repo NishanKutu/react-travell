@@ -9,15 +9,15 @@ const handleResponse = async (response) => {
     return data;
 };
 
-export const register = async (user) => {
+export const register = async (formData) => {
     try {
         const response = await fetch(`${API}/register`, {
             method: "POST",
             headers: {
                 "Accept": 'application/json',
-                "Content-Type": "application/json"
+                // "Content-Type": "application/json"
             },
-            body: JSON.stringify(user)
+            body: formData
         });
         return await handleResponse(response);
     } catch (error) {

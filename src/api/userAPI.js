@@ -21,13 +21,14 @@ export const deleteUser = (id, token) => {
     .catch(error => console.log(error));
 }
 
-export const toggleUserRole = (id, token) => {
+export const toggleUserRole = (id, token, role) => {
     return fetch(`${API}/togglerole/${id}`, {
         method: "PUT",
         headers: {
             authorization: `Bearer ${token}`,
             "Content-Type": "application/json"
-        }
+        },
+        body: JSON.stringify({role})
     })
     .then(res => res.json())
     .catch(error => console.log(error));
