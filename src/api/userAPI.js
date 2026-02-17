@@ -11,7 +11,7 @@ export const getAllUsers = (token) => {
 }
 
 export const getAllGuides = () => {
-    return fetch(`${API}/getallguides`) // No token needed if you made it public
+    return fetch(`${API}/getallguides`) 
     .then(res => res.json())
     .catch(error => console.log(error));
 }
@@ -45,7 +45,6 @@ export const updateProfile = (id, userData, token) => {
         method: "PUT",
         headers: {
             "Authorization": `Bearer ${token}`
-            // Note: If sending FormData (for images), don't set Content-Type header manually
         },
         body: userData
     })

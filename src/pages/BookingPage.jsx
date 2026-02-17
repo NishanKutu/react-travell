@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { isLoggedIn } from "../api/authAPI";
 import { getDestinationById } from "../api/destinationApi";
 import { createBooking, getEsewaSignature } from "../api/bookingApi";
-import { getAllGuides } from "../api/userApi"; // Assuming this is where it is imported
+import { getAllGuides } from "../api/userApi"; 
 import PaymentModal from "./PaymentModal";
 
 const BookingPage = () => {
@@ -24,7 +24,6 @@ const BookingPage = () => {
   const [hasGuide, setHasGuide] = useState(false);
   const [hasPorter, setHasPorter] = useState(false);
 
-  // Removed static GUIDE_PRICE
   const PORTER_PRICE = 30;
 
   useEffect(() => {
@@ -56,8 +55,6 @@ const BookingPage = () => {
   const discountPerPerson = Number(destination?.discount) || 0;
   const subtotal = price * travelerCount;
   const totalDiscount = discountPerPerson * travelerCount;
-
-  // DYNAMIC CALCULATION: Only add price if a guide is selected
   const guideTotal =
     hasGuide && selectedGuide ? Number(selectedGuide.dailyRate) || 0 : 0;
   const porterTotal = hasPorter ? PORTER_PRICE : 0;
@@ -80,7 +77,7 @@ const BookingPage = () => {
           totalPrice: amountToSend,
           hasGuide,
           hasPorter,
-          guideCost: guideTotal, // Sending the specific guide's rate
+          guideCost: guideTotal, 
           porterCost: porterTotal,
           guideId: selectedGuide?._id,
         });
@@ -142,7 +139,7 @@ const BookingPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20 font-sans">
-      {/* Hero Header remains same... */}
+      {/* Hero Header */}
       <div className="relative w-full h-[40vh] bg-gray-900">
         <img
           src={

@@ -46,7 +46,6 @@ exports.register = async (req, res) => {
     dailyRate: req.body.dailyRate || 0,
     bio,
     specialization,
-    image: req.file ? req.file.filename : "",
   });
 
   if (!userToRegister) {
@@ -503,6 +502,8 @@ exports.login = async (req, res) => {
       image: user.image, 
       experience: user.experience, 
       age: user.age,
+      dailyRate: user.dailyRate,
+      dailyRate: user.dailyRate,
       bio: user.bio,
       specialization: user.specialization,
     },

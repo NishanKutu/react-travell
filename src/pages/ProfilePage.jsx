@@ -5,7 +5,7 @@ import {
   getAllBookings,
   deleteBooking,
   getEsewaSignature,
-  updateBookingStatus, // Ensure this is exported from your bookingApi.js
+  updateBookingStatus, 
 } from "../api/bookingApi";
 import { getAllDestinations } from "../api/destinationApi";
 import { updateProfile } from "../api/userApi";
@@ -90,7 +90,7 @@ const ProfilePage = () => {
     }
   };
 
-  // --- NEW: MARK AS COMPLETED LOGIC ---
+  // MARK AS COMPLETED LOGIC 
   const handleStatusUpdate = async (id, newStatus) => {
     if (
       !window.confirm(
@@ -175,9 +175,8 @@ const ProfilePage = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-6 lg:p-12 font-sans">
       <div className="max-w-7xl mx-auto">
-        {/* Profile Card UI Code ... (Keep your current profile card code here) ... */}
         <div className="bg-white rounded-3xl p-8 mb-10 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-8 items-center relative overflow-hidden">
-          {/* ... (Existing Profile Header Content) ... */}
+          {/* Profile Header Content */}
           <div className="absolute top-0 right-0 w-32 h-32 bg-[#004d4d]/5 rounded-bl-full -mr-10 -mt-10"></div>
           <div className="flex flex-col items-center gap-3">
             <div className="w-40 h-40 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden border-4 border-[#004d4d]/10 shadow-inner relative group">

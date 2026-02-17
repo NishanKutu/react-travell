@@ -3,15 +3,12 @@
 const BASE_URL = "http://localhost:8000/api/bookings";
 
 const getHeaders = () => {
-  // 1. Get the 'auth' string from localStorage
   const authData = localStorage.getItem("auth");
   let token = "";
 
   if (authData) {
     try {
-      // 2. Parse the JSON string into an object
       const parsedAuth = JSON.parse(authData);
-      // 3. Access the token inside that object
       token = parsedAuth.token;
     } catch (error) {
       console.error("Error parsing auth data:", error);

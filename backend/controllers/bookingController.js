@@ -38,7 +38,7 @@ exports.createBooking = async (req, res) => {
 exports.adminCreateBooking = async (req, res) => {
   try {
     const { 
-      userId, // Admin selects the customer
+      userId, 
       destinationId, 
       travelerCount, 
       totalPrice, 
