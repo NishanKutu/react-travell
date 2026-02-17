@@ -13,6 +13,7 @@ exports.createBooking = async (req, res) => {
       hasPorter,
       guideCost,
       porterCost,
+      guideId,
     } = req.body;
     const newBooking = new Booking({
       userId: req.user._id,
@@ -23,6 +24,7 @@ exports.createBooking = async (req, res) => {
       hasPorter: hasPorter || false,
       guideCost: guideCost || 0,
       porterCost: porterCost || 0,
+      guideId: hasGuide ? guideId : null,
       status: "pending",
     });
     const savedBooking = await newBooking.save();
@@ -68,20 +70,58 @@ exports.adminCreateBooking = async (req, res) => {
 };
 
 // 2. Get All Bookings
+// exports.getAllBookings = async (req, res) => {
+//   try {
+//     const query = req.user.role === 1 ? {} : { userId: req.user._id };
+
+//     const bookings = await Booking.find(query)
+//       .populate("userId", "username email role")
+//       .populate("destinationId", "title price location")
+//       .sort({ createdAt: -1 });
+
+//     res.status(200).json({
+//       success: true,
+//       count: bookings.length,
+//       data: bookings,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
 exports.getAllBookings = async (req, res) => {
   try {
-    const query = req.user.role === 1 ? {} : { userId: req.user._id };
+    let query = {};
+    if (req.user.role === 1) { // Admin
+      query = {};
+    } else if (req.user.role === 2) { // Guide
+      query = { guideId: req.user._id };
+    } else { // Client
+      query = { userId: req.user._id };
+    }
 
     const bookings = await Booking.find(query)
-      .populate("userId", "username email role")
+      .populate("userId", "username email")
       .populate("destinationId", "title price location")
+      .populate("guideId", "username image")
       .sort({ createdAt: -1 });
 
-    res.status(200).json({
-      success: true,
-      count: bookings.length,
-      data: bookings,
-    });
+    res.status(200).json({ success: true, count: bookings.length, data: bookings });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.updateBookingStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) return res.status(404).json({ success: false, message: "Booking not found" });
+
+    booking.status = status;
+    await booking.save();
+
+    res.status(200).json({ success: true, message: `Status updated to ${status}`, data: booking });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

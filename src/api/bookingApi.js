@@ -50,6 +50,15 @@ export const getAllBookings = async () => {
   return response.json();
 };
 
+export const updateBookingStatus = async (id, status) => {
+  const response = await fetch(`${BASE_URL}/status/${id}`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify({ status }),
+  });
+  return response.json();
+};
+
 export const deleteBooking = async (id) => {
     const response = await fetch(`${BASE_URL}/${id}`, {
       method: "DELETE",

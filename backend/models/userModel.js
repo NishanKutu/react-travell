@@ -37,6 +37,10 @@ const userSchema = new mongoose.Schema(
     age: {
       type: Number,
     },
+    dailyRate: {
+      type: Number,
+      default: 0
+    },
     bio: {
       type: String,
     },

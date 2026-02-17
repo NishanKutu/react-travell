@@ -44,7 +44,7 @@ const PaymentSuccess = () => {
             </button>
           ) : (
             <button
-              onClick={() => navigate("/my-bookings")}
+              onClick={() => navigate("/profile")}
               className="w-full flex items-center justify-center gap-2 bg-teal-800 text-white py-3 rounded-lg font-bold hover:bg-teal-900 transition-all transform hover:scale-[1.02]"
             >
               View My Bookings <ArrowRight size={18} />

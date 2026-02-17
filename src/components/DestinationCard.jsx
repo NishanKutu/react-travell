@@ -114,12 +114,12 @@ const DestinationCard = ({ tour }) => {
           <div className="flex flex-col">
             {hasDiscount && (
               <span className="text-xs text-red-500 line-through font-medium">
-                Was ${Number(safePrice).toLocaleString()}
+                Was Rs {Number(safePrice).toLocaleString()}
               </span>
             )}
             <div className="flex items-baseline gap-1">
               <span className="font-bold text-xl text-gray-900">
-                ${Number(finalPrice).toLocaleString()}
+                Rs {Number(finalPrice).toLocaleString()}
               </span>
               <span className="text-[10px] font-normal text-gray-400 uppercase">
                 per person

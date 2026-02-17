@@ -43,6 +43,7 @@ exports.register = async (req, res) => {
     image: req.file ? req.file.filename : "",
     experience,
     age,
+    dailyRate: req.body.dailyRate || 0,
     bio,
     specialization,
     image: req.file ? req.file.filename : "",
@@ -146,6 +147,42 @@ exports.register = async (req, res) => {
     success: true,
     message: "User registered successfully.",
   });
+};
+
+// Update Profile Data
+exports.updateProfile = async (req, res) => {
+  try {
+    const { username, experience, age, bio, specialization, dailyRate } = req.body;
+    
+    // Prepare update object
+    const updateData = {
+      username,
+      experience,
+      age,
+      bio,
+      specialization,
+      dailyRate: Number(dailyRate) || 0
+    };
+
+    // If a new image is uploaded
+    if (req.file) {
+      updateData.image = req.file.filename;
+    }
+
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      req.params.id,
+      { $set: updateData },
+      { new: true } // Returns the updated document
+    ).select("-password");
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user: updatedUser
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 };
 
 exports.verifyEmail = async (req, res) => {
@@ -473,11 +510,35 @@ exports.login = async (req, res) => {
 };
 // get all users
 exports.getAllUsers = async (req, res) => {
-  let users = await UserModel.find();
-  if (!users) {
-    return res.status(400).json({ error: "Something went wrong" });
+  try {
+    // We find all users. If you want to exclude sensitive data like passwords, 
+    // you can use .select("-password")
+    let users = await UserModel.find().select("-password");
+
+    if (!users) {
+      return res.status(400).json({ success: false, error: "No users found" });
+    }
+
+    // Wrapping in a 'data' object is best practice for consistency
+    res.status(200).json({
+      success: true,
+      data: users
+    });
+  } catch (error) {
+    console.error("Get All Users Error:", error);
+    res.status(500).json({ success: false, error: "Internal Server Error" });
   }
-  res.send(users);
+};
+
+// for guide
+exports.getAllGuides = async (req, res) => {
+  try {
+    // Specifically find users with role 2
+    let guides = await UserModel.find({ role: 2 }).select("-password");
+    res.status(200).json({ success: true, data: guides });
+  } catch (error) {
+    res.status(500).json({ success: false, error: "Internal Server Error" });
+  }
 };
 
 // get user details

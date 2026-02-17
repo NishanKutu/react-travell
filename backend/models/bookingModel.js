@@ -30,7 +30,11 @@ const bookingSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-
+  guideId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
   guideCost: {
     type: Number,
     default: 0
@@ -48,7 +52,7 @@ const bookingSchema = new mongoose.Schema({
   // Status management for Admin Panel 
   status: {
     type: String,
-    enum: ['pending', 'confirmed', 'cancelled'],
+    enum: ['pending', 'confirmed', 'cancelled', 'completed'],
     default: 'pending'
   },
   // eSewa specific fields for tracking the transaction

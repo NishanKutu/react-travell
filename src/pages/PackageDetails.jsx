@@ -147,10 +147,10 @@ const PackageDetail = () => {
             Price
           </p>
           <p className="text-2xl font-bold text-[#004d4d]">
-            ${tour.price}
+            Rs {tour.price}
             {tour.discount > 0 && (
               <span className="text-sm text-rose-500 line-through ml-2 font-normal">
-                ${Math.round(tour.price * (1 + tour.discount / 100))}
+                Rs {Math.round(tour.price * (1 + tour.discount / 100))}
               </span>
             )}
           </p>
