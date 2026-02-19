@@ -423,13 +423,13 @@ exports.forgetPassword = async (req, res) => {
 // reset password
 exports.resetPassword = async (req, res) => {
   try {
-    // 1. Validate that a password was actually sent
+    // Validate that a password was actually sent
     const { password } = req.body;
     if (!password) {
       return res.status(400).json({ error: "Password is required" });
     }
 
-    // 2. Find the token in the database
+    // Find the token in the database
     let token = await TokenModel.findOne({ token: req.params.token });
     if (!token) {
       return res
@@ -437,22 +437,21 @@ exports.resetPassword = async (req, res) => {
         .json({ error: "Invalid token or token may have expired" });
     }
 
-    // 3. Find the user associated with that token
+    // Find the user associated with that token
     let user = await UserModel.findById(token.user);
     if (!user) {
       return res.status(400).json({ error: "User no longer exists" });
     }
 
-    // 4. Hash the new password
-    // Note: Use a standard saltRounds (usually 10)
+    // Hash the new password
     let salt = await bcrypt.genSalt(10);
     let hashed_password = await bcrypt.hash(password, salt);
 
-    // 5. Update user password
+    // Update user password
     user.password = hashed_password;
     await user.save();
 
-    // 6. Security: Delete the token so it cannot be used again
+    // Security: Delete the token so it cannot be used again
     await TokenModel.findByIdAndDelete(token._id);
 
     return res.status(200).json({
@@ -509,18 +508,15 @@ exports.login = async (req, res) => {
     },
   });
 };
+
 // get all users
 exports.getAllUsers = async (req, res) => {
   try {
-    // We find all users. If you want to exclude sensitive data like passwords, 
-    // you can use .select("-password")
     let users = await UserModel.find().select("-password");
 
     if (!users) {
       return res.status(400).json({ success: false, error: "No users found" });
     }
-
-    // Wrapping in a 'data' object is best practice for consistency
     res.status(200).json({
       success: true,
       data: users

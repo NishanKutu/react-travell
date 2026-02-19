@@ -10,7 +10,6 @@ const AdminAddBooking = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Form State
   const [formData, setFormData] = useState({
     userId: "",
     destinationId: "",
@@ -107,7 +106,7 @@ const AdminAddBooking = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* 1. Select User */}
+          {/* Select User */}
           <div>
             <label className="block text-xs font-bold uppercase text-gray-500 mb-2">
               Select Customer
@@ -128,7 +127,7 @@ const AdminAddBooking = () => {
             </select>
           </div>
 
-          {/* 2. Select Trip */}
+          {/* Select Trip */}
           <div>
             <label className="block text-xs font-bold uppercase text-gray-500 mb-2">
               Select Destination
@@ -160,7 +159,7 @@ const AdminAddBooking = () => {
                 : "opacity-100"
             }`}
           >
-            {/* 3. Traveler Count - DISABLED until trip selected */}
+            {/* Traveler Count */}
             <div>
               <label className="block text-xs font-bold uppercase text-gray-500 mb-2">
                 Number of Travelers{" "}
@@ -182,7 +181,7 @@ const AdminAddBooking = () => {
               />
             </div>
 
-            {/* 4. Booking Status */}
+            {/* Booking Status */}
             <div>
               <label className="block text-xs font-bold uppercase text-gray-500 mb-2">
                 Status
@@ -201,7 +200,7 @@ const AdminAddBooking = () => {
             </div>
           </div>
 
-          {/* 5. Add-ons Section - DISABLED until trip selected */}
+          {/* Add-ons Section */}
           <div
             className={`bg-gray-50 p-4 rounded-lg border border-dashed border-gray-300 transition-opacity ${
               !isDestinationSelected ? "opacity-40" : "opacity-100"
@@ -248,7 +247,7 @@ const AdminAddBooking = () => {
             </div>
           </div>
 
-          {/* 6. Financial Summary */}
+          {/* Financial Summary */}
           <div className="bg-blue-50 p-4 rounded-lg flex justify-between items-center border border-blue-100">
             <div>
               <p className="text-xs text-blue-600 font-bold uppercase">

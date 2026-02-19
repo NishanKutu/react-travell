@@ -377,7 +377,6 @@ const ProfilePage = () => {
         <div className="flex flex-col lg:flex-row gap-10">
           {/* Recommended Destinations Sidebar (Left) */}
           <div className="flex-1 order-2 lg:order-1">
-            {/* ... (Existing Suggestions Content) ... */}
             <h2 className="text-2xl font-bold mb-6 text-slate-800 flex items-center gap-3">
               <span className="w-10 h-1 bg-[#004d4d] rounded-full"></span>
               Recommended
@@ -481,7 +480,7 @@ const ProfilePage = () => {
                                 }
                                 alt="Guide"
                                 className="w-full h-full object-cover"
-                                title={booking.guideId?.username} // Hover shows name
+                                title={booking.guideId?.username}
                               />
                             </div>
                           </div>

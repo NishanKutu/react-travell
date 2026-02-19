@@ -5,7 +5,6 @@ export const createDestination = async (destinationData, token) => {
   const response = await fetch(`${BASE_URL}/createdestination`, {
     method: "POST",
     headers: {
-      // "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
     body: destinationData,

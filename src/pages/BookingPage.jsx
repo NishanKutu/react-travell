@@ -3,8 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { isLoggedIn } from "../api/authAPI";
 import { getDestinationById } from "../api/destinationApi";
 import { createBooking, getEsewaSignature } from "../api/bookingApi";
-import { getAllGuides } from "../api/userApi"; 
+import { getAllGuides } from "../api/userApi";
 import PaymentModal from "./PaymentModal";
+import { FaCalendarAlt } from "react-icons/fa";
 
 const BookingPage = () => {
   const { user, token } = isLoggedIn();
@@ -20,6 +21,7 @@ const BookingPage = () => {
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [travelerCount, setTravelerCount] = useState(1);
+  const [bookingDate, setBookingDate] = useState("");
 
   const [hasGuide, setHasGuide] = useState(false);
   const [hasPorter, setHasPorter] = useState(false);
@@ -50,7 +52,7 @@ const BookingPage = () => {
     fetchData();
   }, [id]);
 
-  // Handle dynamic price calculations
+  // Handle price calculations
   const price = Number(destination?.price) || 0;
   const discountPerPerson = Number(destination?.discount) || 0;
   const subtotal = price * travelerCount;
@@ -68,6 +70,7 @@ const BookingPage = () => {
   };
 
   const handlePaymentSelection = async (method) => {
+    console.log("Current Booking Date State:", bookingDate);
     if (method === "esewa") {
       try {
         const amountToSend = Number(finalTotal).toFixed(0);
@@ -77,9 +80,10 @@ const BookingPage = () => {
           totalPrice: amountToSend,
           hasGuide,
           hasPorter,
-          guideCost: guideTotal, 
+          guideCost: guideTotal,
           porterCost: porterTotal,
           guideId: selectedGuide?._id,
+          bookingDate: bookingDate,
         });
 
         if (!bookingRes?.success)
@@ -197,7 +201,32 @@ const BookingPage = () => {
               </div>
             </div>
 
-            {/* 2. Guide & Porter Section */}
+            {/* Date Selection Section */}
+            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+              <h3 className="text-xl font-bold mb-6 text-gray-800 flex items-center gap-2">
+                2. Select Trekking Date
+              </h3>
+              <div className="relative p-5 bg-teal-50 rounded-xl border border-teal-100 flex items-center gap-4">
+                <div className="bg-white p-3 rounded-lg shadow-sm text-teal-600">
+                  <FaCalendarAlt size={24} />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-[10px] font-black text-teal-800 uppercase tracking-widest mb-1">
+                    Departure Date
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    min={new Date().toISOString().split("T")[0]} // Prevent past dates
+                    value={bookingDate}
+                    onChange={(e) => setBookingDate(e.target.value)}
+                    className="w-full bg-white border border-teal-200 rounded-lg px-4 py-2 font-bold text-gray-800 focus:ring-2 focus:ring-teal-500 outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Guide & Porter Section */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="p-6 border-b bg-gray-50/50">
                 <h3 className="text-xl font-bold text-gray-800">

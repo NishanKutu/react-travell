@@ -14,6 +14,7 @@ exports.createBooking = async (req, res) => {
       guideCost,
       porterCost,
       guideId,
+      bookingDate,
     } = req.body;
     const newBooking = new Booking({
       userId: req.user._id,
@@ -25,6 +26,7 @@ exports.createBooking = async (req, res) => {
       guideCost: guideCost || 0,
       porterCost: porterCost || 0,
       guideId: hasGuide ? guideId : null,
+      bookingDate: bookingDate,
       status: "pending",
     });
     const savedBooking = await newBooking.save();
@@ -46,6 +48,8 @@ exports.adminCreateBooking = async (req, res) => {
       hasPorter, 
       guideCost, 
       porterCost,
+      guideId,
+      bookingDate,
       status 
     } = req.body;
 
@@ -58,6 +62,8 @@ exports.adminCreateBooking = async (req, res) => {
       hasPorter,
       guideCost,
       porterCost,
+      guideId: hasGuide ? guideId : null,
+      bookingDate: bookingDate,
       status: status || "confirmed", 
       paymentMethod: "esewa" 
     });
@@ -70,24 +76,6 @@ exports.adminCreateBooking = async (req, res) => {
 };
 
 // 2. Get All Bookings
-// exports.getAllBookings = async (req, res) => {
-//   try {
-//     const query = req.user.role === 1 ? {} : { userId: req.user._id };
-
-//     const bookings = await Booking.find(query)
-//       .populate("userId", "username email role")
-//       .populate("destinationId", "title price location")
-//       .sort({ createdAt: -1 });
-
-//     res.status(200).json({
-//       success: true,
-//       count: bookings.length,
-//       data: bookings,
-//     });
-//   } catch (error) {
-//     res.status(500).json({ success: false, message: error.message });
-//   }
-// };
 exports.getAllBookings = async (req, res) => {
   try {
     let query = {};

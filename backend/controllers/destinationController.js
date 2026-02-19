@@ -8,7 +8,7 @@ exports.createDestination = async (req, res) => {
     // Get the filenames of the uploaded files
     const imagePaths = req.files ? req.files.map(file => file.filename) : [];
 
-    // 2. Wrap JSON.parse in a check to prevent crash if strings are malformed
+    // Wrap JSON.parse in a check to prevent crash if strings are malformed
     const itinerary = req.body.itinerary ? JSON.parse(req.body.itinerary) : [];
     const inclusions = req.body.inclusions ? JSON.parse(req.body.inclusions) : { included: [], notIncluded: [] };
 
@@ -109,14 +109,14 @@ exports.deleteDestinationImage = async (req, res) => {
   try {
       const { id, filename } = req.params;
 
-      // 1. Removes the filename from the MongoDB array
+      //  Removes the filename from the MongoDB array
       const destination = await Destination.findByIdAndUpdate(
           id,
           { $pull: { images: filename } }, // $pull removes the specific string from the array
           { new: true }
       );
 
-      // 2. Deletes the actual file from the 'public/uploads' folder
+      // Deletes the actual file from the 'public/uploads' folder
       const filePath = path.join(__dirname, '../public/uploads', filename);
       if (fs.existsSync(filePath)) {
           fs.unlinkSync(filePath);

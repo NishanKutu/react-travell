@@ -20,6 +20,11 @@ const bookingSchema = new mongoose.Schema({
     min: 1,
     default: 1
   },
+  // Date for booking
+  bookingDate: {
+    type: Date,
+    required: [true, "Trekking date is required"],
+  },
 
   // --- ADD-ONS SECTION ---
   hasGuide: {

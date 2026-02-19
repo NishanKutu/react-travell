@@ -140,7 +140,7 @@ const PackageDetail = () => {
         </div>
       </div>
 
-      {/* 2. Sticky Info Bar */}
+      {/* Sticky Info Bar */}
       <div className="sticky top-0 z-40 bg-white border-b shadow-sm py-4 px-5 md:px-32 flex justify-between items-center">
         <div>
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
@@ -160,7 +160,7 @@ const PackageDetail = () => {
         </button>
       </div>
 
-      {/* 3. Navigation Tabs */}
+      {/* Navigation Tabs */}
       <div className="flex justify-center border-b bg-gray-50 sticky top-18.25 z-30">
         {["Overview", "Itinerary", "Inclusions"].map((tab) => (
           <button
@@ -177,7 +177,7 @@ const PackageDetail = () => {
         ))}
       </div>
 
-      {/* 4. Content Section */}
+      {/* Content Section */}
       <div className="max-w-6xl mx-auto py-16 px-6">
         {/* OVERVIEW TAB */}
         {activeTab === "overview" && (
@@ -240,11 +240,9 @@ const PackageDetail = () => {
                   <p className="text-gray-800 font-medium capitalize">
                     {(() => {
                       let seasons = [];
-                      // 1. Handle actual Array
                       if (Array.isArray(tour.availability)) {
                         seasons = tour.availability;
                       }
-                      // 2. Handle stringified JSON array
                       else if (
                         typeof tour.availability === "string" &&
                         tour.availability.startsWith("[")
@@ -255,7 +253,6 @@ const PackageDetail = () => {
                           seasons = [];
                         }
                       }
-                      // 3. Handle single string value
                       else if (tour.availability) {
                         seasons = [tour.availability];
                       }

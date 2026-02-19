@@ -30,7 +30,7 @@ const EditDestination = () => {
     inclusions: { included: [], notIncluded: [] },
   });
 
-  // --- FIX 1: handle image delete using fetch ---
+  // --- handle image delete using fetch ---
   const handleDeleteImage = async (filename) => {
     if (window.confirm("Remove this image permanently?")) {
       try {
@@ -166,7 +166,7 @@ const EditDestination = () => {
     });
   };
 
-  // --- FIX 2: Corrected Submit URL and Header handling ---
+  // --- Submit URL and Header handling ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     const data = new FormData();
@@ -205,7 +205,7 @@ const EditDestination = () => {
           method: "PUT",
           headers: {
             Authorization: `Bearer ${token}`,
-            // Note: Do NOT set Content-Type header when sending FormData
+  
           },
           body: data,
         }
