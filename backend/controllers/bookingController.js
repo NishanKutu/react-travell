@@ -2,7 +2,7 @@ const Booking = require("../models/bookingModel");
 const Destination = require("../models/destinationModel");
 const crypto = require("crypto");
 
-// 1. Create Initial Booking
+// Create Initial Booking
 exports.createBooking = async (req, res) => {
   try {
     const {

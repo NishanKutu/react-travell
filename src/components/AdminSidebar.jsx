@@ -60,6 +60,14 @@ const AdminSidebar = () => {
           📒 Booking List
         </NavLink>
 
+        <NavLink to="/admin/admin-review" style={getLinkStyle}>
+          📖 Reviews
+        </NavLink>
+
+        <NavLink to="/admin/admin-faq" style={getLinkStyle}>
+          🙋🏻 FAQ
+        </NavLink>
+
         <NavLink to="/admin/add-booking" style={getLinkStyle}>
           ➕ Add Booking
         </NavLink>

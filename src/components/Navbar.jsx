@@ -6,7 +6,6 @@ import LoginPage from "../pages/LoginPage";
 import SignupPage from "../pages/Signup";
 import { isLoggedIn } from "../api/authAPI";
 
-
 const Navbar = () => {
   const [menu, setMenu] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -16,10 +15,10 @@ const Navbar = () => {
   let navigate = useNavigate();
 
   const HikeHubLogo = () => (
-    <div className="flex items-center justify-center bg-[#bd8157] p-1.5 rounded-xl shadow-lg group-hover:rotate-45 transition-transform">
+    <div className="flex items-center justify-center bg-[#bd8157] p-1.5 rounded-xl shadow-lg group-hover:rotate-12 transition-transform flex-shrink-0">
       <svg
-        width="35"
-        height="35"
+        width="30"
+        height="30"
         viewBox="0 0 100 100"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -59,9 +58,9 @@ const Navbar = () => {
 
   const handleSignout = () => {
     localStorage.removeItem("auth");
-    setMenu(false); // Close mobile menu on signout
+    setMenu(false);
     navigate("/");
-    window.location.reload(); // Refresh to update auth state across components
+    window.location.reload();
   };
 
   const navItems = [
@@ -70,46 +69,29 @@ const Navbar = () => {
     { name: "Destinations", path: "/destinations" },
     { name: "About", path: "/about" },
     { name: "Contact", path: "/contact" },
-    { name: "FAQ", path: "/faq" },
+    { name: "Testimonials", path: "/testimonials" },
   ];
 
   const handleChange = () => setMenu(!menu);
 
   const desktopLinkBase =
-    "relative pb-1 text-white transition-all cursor-pointer after:content-[''] after:absolute after:left-0 after:bottom-0 after:h-0.5 after:bg-white after:transition-all after:duration-300 hover:after:w-full";
+    "relative pb-1 text-white transition-all cursor-pointer whitespace-nowrap after:content-[''] after:absolute after:left-0 after:bottom-0 after:h-0.5 after:bg-white after:transition-all after:duration-300 hover:after:w-full";
   const desktopActive = "font-bold after:w-full";
 
   return (
-    <header className="sticky top-0 z-50">
-      <div className="flex flex-row justify-between p-5 md:px-32 px-5 bg-[#004d4d] text-white shadow-[0_3px_10px_rgb(0,0,0,0.2)]">
-        <div className="flex items-center">
-          <Link to="/" className="flex items-center gap-3 group">
+    <header className="sticky top-0 z-50 w-full">
+      <div className="flex flex-row justify-between items-center p-5 px-5 md:px-10 lg:px-16 xl:px-32 bg-[#004d4d] text-white shadow-md">
+        {/* Logo Section */}
+        <div className="flex items-center flex-shrink-0">
+          <Link to="/" className="flex items-center gap-2 lg:gap-3 group">
             <HikeHubLogo />
-            <h1 className="text-2xl font-black text-[#bd8157] tracking-tighter">
+            <h1 className="text-xl lg:text-2xl font-black text-[#bd8157] tracking-tighter">
               HIKE<span className="text-[#ffffff]">HUB</span>
             </h1>
           </Link>
-          {/* <Link 
-        to="/" 
-        className="flex items-center gap-2 cursor-pointer group" 
-        onClick={() => setMenu(false)}
-      > */}
-          {/* Logo Image */}
-          {/* <img 
-          src={logoImg} 
-          alt="HikeHub Logo" 
-          className=" w-20 object-cover rounded-lg shadow-sm group-hover:scale-105 transition-transform" 
-        /> */}
-
-          {/* Brand Name */}
-          {/* <h1 className="font-bold text-2xl tracking-tight">
-          HikeHub
-        </h1> */}
-          {/* </Link> */}
         </div>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden lg:flex flex-row items-center gap-8">
+        <nav className="hidden lg:flex flex-row items-center gap-4 xl:gap-8 mx-4">
           {navItems.map((item) => (
             <NavLink
               key={item.name}
@@ -123,19 +105,15 @@ const Navbar = () => {
           ))}
         </nav>
 
-        {/* Desktop Buttons */}
-        <div className="hidden lg:flex flex-row items-center gap-4">
+        <div className="hidden lg:flex flex-row items-center gap-3 xl:gap-4 flex-shrink-0">
           {auth ? (
             <>
-              {auth.user.role === 1 ? (
-                <Link to={"/admin/dashboard"}>
-                  <Button title="Dashboard" variant="secondary" />
-                </Link>
-              ) : (
-                <Link to={"/profile"}>
-                  <Button title="Profile" variant="secondary" />
-                </Link>
-              )}
+              <Link to={auth.user.role === 1 ? "/admin/dashboard" : "/profile"}>
+                <Button
+                  title={auth.user.role === 1 ? "Dashboard" : "Profile"}
+                  variant="secondary"
+                />
+              </Link>
               <div onClick={handleSignout}>
                 <Button title="Sign Out" isPrimary={true} />
               </div>
@@ -185,15 +163,15 @@ const Navbar = () => {
           <div className="flex flex-col items-center gap-4 mt-4">
             {auth ? (
               <>
-                {auth.user.role === 1 ? (
-                  <Link to="/admin/dashboard" onClick={() => setMenu(false)}>
-                    <Button title="Dashboard" variant="secondary" />
-                  </Link>
-                ) : (
-                  <Link to="/profile" onClick={() => setMenu(false)}>
-                    <Button title="Profile" variant="secondary" />
-                  </Link>
-                )}
+                <Link
+                  to={auth.user.role === 1 ? "/admin/dashboard" : "/profile"}
+                  onClick={() => setMenu(false)}
+                >
+                  <Button
+                    title={auth.user.role === 1 ? "Dashboard" : "Profile"}
+                    variant="secondary"
+                  />
+                </Link>
                 <div onClick={handleSignout}>
                   <Button title="Sign Out" isPrimary={true} />
                 </div>

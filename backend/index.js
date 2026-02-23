@@ -8,6 +8,8 @@ const cors = require('cors')
 const UserRoute = require('./routes/userRoute')
 const destinationRoutes = require("./routes/destinationRoutes");
 const bookingRoutes = require("./routes/bookingRoute");
+const reviewRoute = require("./routes/reviewRoute");
+const faqRoute = require("./routes/faqRoute");
 
 
 
@@ -28,6 +30,8 @@ app.get('/',(req, res)=>{
 app.use('/api/user', UserRoute)
 app.use('/api/destinations', destinationRoutes)
 app.use("/api/bookings", bookingRoutes);
+app.use("/api/reviews", reviewRoute);
+app.use("/api/faqs", faqRoute);
 
 
 const port = process.env.PORT || 8000

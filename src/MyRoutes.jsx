@@ -25,6 +25,10 @@ import BookingList from './pages/admin/BookingList';
 import ProfilePage from './pages/ProfilePage';
 import AdminAddBooking from './pages/admin/AdminAddBooking';
 import GuidesInfo from './pages/admin/GuideInfo';
+import AdminReview from './pages/admin/AdminReview';
+import Testimonials from './pages/Testimonials';
+import AdminFaq from './pages/admin/AdminFaq';
+
 
 const MyRoutes = () => {
   return (
@@ -43,6 +47,7 @@ const MyRoutes = () => {
           <Route path="/features" element={<Features />} />
           <Route path="/destinations" element={<Destinations />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="/testimonials" element={<Testimonials />} />
           <Route path="/tour/:id" element={<PackageDetails />} />
           <Route path="/faq" element={<FaqPage />} />
           <Route path='verify/:token' element={<VerifyEmail />} />
@@ -66,6 +71,8 @@ const MyRoutes = () => {
             <Route path="booking-list" element = {<BookingList />} />
             <Route path="add-booking" element={<AdminAddBooking />} />
             <Route path="guide-info" element={<GuidesInfo />} />
+            <Route path="admin-review" element = {<AdminReview />} />
+            <Route path="admin-faq" element = {<AdminFaq />} />
 
           </Route>
         </Route>

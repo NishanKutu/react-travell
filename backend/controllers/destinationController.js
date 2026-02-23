@@ -1,23 +1,25 @@
-const fs = require('fs');
-const path = require('path');
+const mongoose = require("mongoose");
+const fs = require("fs");
+const path = require("path");
 const Destination = require("../models/destinationModel");
-
 
 exports.createDestination = async (req, res) => {
   try {
     // Get the filenames of the uploaded files
-    const imagePaths = req.files ? req.files.map(file => file.filename) : [];
+    const imagePaths = req.files ? req.files.map((file) => file.filename) : [];
 
     // Wrap JSON.parse in a check to prevent crash if strings are malformed
     const itinerary = req.body.itinerary ? JSON.parse(req.body.itinerary) : [];
-    const inclusions = req.body.inclusions ? JSON.parse(req.body.inclusions) : { included: [], notIncluded: [] };
+    const inclusions = req.body.inclusions
+      ? JSON.parse(req.body.inclusions)
+      : { included: [], notIncluded: [] };
 
     const newDestination = new Destination({
       ...req.body,
       price: Number(req.body.price),
       discount: Number(req.body.discount || 0),
       groupSize: Number(req.body.groupSize),
-      images: imagePaths, // Save the filenames to the DB
+      images: imagePaths, 
       itinerary: itinerary,
       inclusions: inclusions,
     });
@@ -32,49 +34,101 @@ exports.createDestination = async (req, res) => {
 
 exports.getAllDestinations = async (req, res) => {
   try {
-    const destinations = await Destination.find().sort({ createdAt: -1 });
+    const destinations = await Destination.aggregate([
+      {
+        $lookup: {
+          from: "reviews", 
+          localField: "_id",
+          foreignField: "destination", 
+          as: "reviews",
+        },
+      },
+      {
+        $addFields: {
+          averageRating: { $avg: "$reviews.rating" },
+          totalReviews: { $size: "$reviews" },
+        },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+    ]);
+
     res.status(200).json({
       success: true,
       count: destinations.length,
-      data: destinations
+      data: destinations,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
-
 
 exports.getDestinationById = async (req, res) => {
   try {
-    const destination = await Destination.findById(req.params.id);
+    const destination = await Destination.aggregate([
+      { $match: { _id: new mongoose.Types.ObjectId(req.params.id) } },
+      {
+        $lookup: {
+          from: "reviews",
+          localField: "_id",
+          foreignField: "destination",
+          as: "reviews",
+          pipeline: [
+            {
+              $lookup: {
+                from: "users",
+                localField: "user",
+                foreignField: "_id",
+                as: "userDetails",
+              },
+            },
+            {
+              $unwind: {
+                path: "$userDetails",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+            {
+              $project: {
+                comment: 1,
+                rating: 1,
+                createdAt: 1,
+                images: 1,
+                "userDetails.username": 1,
+                "userDetails.image": 1, 
+              },
+            },
+            { $sort: { createdAt: -1 } },
+          ],
+        },
+      },
+      {
+        $addFields: {
+          averageRating: { $avg: "$reviews.rating" },
+          totalReviews: { $size: "$reviews" },
+        },
+      },
+    ]);
 
-    if (!destination) {
-      return res.status(404).json({
-        success: false,
-        message: "Destination not found"
-      });
+    if (!destination || destination.length === 0) {
+      return res.status(404).json({ success: false, message: "Not found" });
     }
 
-    res.status(200).json({
-      success: true,
-      data: destination
-    });
+    res.status(200).json({ success: true, data: destination[0] });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
+    console.error("Aggregation Error:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
-
 
 exports.updateDestination = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // Get current destination to access existing images
     const currentDoc = await Destination.findById(id);
     if (!currentDoc) return res.status(404).json({ message: "Not found" });
@@ -82,21 +136,22 @@ exports.updateDestination = async (req, res) => {
     let updateData = { ...req.body };
 
     // Safely parse JSON
-    if (req.body.itinerary) updateData.itinerary = JSON.parse(req.body.itinerary);
-    if (req.body.inclusions) updateData.inclusions = JSON.parse(req.body.inclusions);
+    if (req.body.itinerary)
+      updateData.itinerary = JSON.parse(req.body.itinerary);
+    if (req.body.inclusions)
+      updateData.inclusions = JSON.parse(req.body.inclusions);
 
-    // APPEND new images 
+    // APPEND new images
     if (req.files && req.files.length > 0) {
-      const newImageNames = req.files.map(file => file.filename);
+      const newImageNames = req.files.map((file) => file.filename);
       updateData.images = [...currentDoc.images, ...newImageNames];
     }
 
     // Update the document
-    const destination = await Destination.findByIdAndUpdate(
-      id,
-      updateData,
-      { new: true, runValidators: true }
-    );
+    const destination = await Destination.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true,
+    });
 
     res.status(200).json({ success: true, data: destination });
   } catch (error) {
@@ -107,24 +162,24 @@ exports.updateDestination = async (req, res) => {
 
 exports.deleteDestinationImage = async (req, res) => {
   try {
-      const { id, filename } = req.params;
+    const { id, filename } = req.params;
 
-      //  Removes the filename from the MongoDB array
-      const destination = await Destination.findByIdAndUpdate(
-          id,
-          { $pull: { images: filename } }, // $pull removes the specific string from the array
-          { new: true }
-      );
+    //  Removes the filename from the MongoDB array
+    const destination = await Destination.findByIdAndUpdate(
+      id,
+      { $pull: { images: filename } }, // $pull removes the specific string from the array
+      { new: true }
+    );
 
-      // Deletes the actual file from the 'public/uploads' folder
-      const filePath = path.join(__dirname, '../public/uploads', filename);
-      if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-      }
+    // Deletes the actual file from the 'public/uploads' folder
+    const filePath = path.join(__dirname, "../public/uploads", filename);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
 
-      res.status(200).json({ success: true, data: destination });
+    res.status(200).json({ success: true, data: destination });
   } catch (error) {
-      res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -135,7 +190,7 @@ exports.deleteDestination = async (req, res) => {
     if (!destination) {
       return res.status(404).json({
         success: false,
-        message: "Destination not found"
+        message: "Destination not found",
       });
     }
 
@@ -143,12 +198,12 @@ exports.deleteDestination = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Destination deleted successfully"
+      message: "Destination deleted successfully",
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };

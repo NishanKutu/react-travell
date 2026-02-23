@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import PopularDestination from '../components/PopularDestination';
+// import PopularDestination from '../components/PopularDestination';
 import DestinationCard from '../components/DestinationCard';
 import { getAllDestinations } from '../api/destinationApi';
 
@@ -67,7 +67,7 @@ const Destination = () => {
 
     return (
         <>
-            <PopularDestination />
+            {/* <PopularDestination /> */}
             <div className="max-w-7xl mx-auto px-4 py-10 flex flex-col md:flex-row gap-10 font-sans text-gray-800">
                 
                 {/* --- SIDEBAR FILTER --- */}

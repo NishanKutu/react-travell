@@ -278,8 +278,8 @@ const EditDestination = () => {
                   className="border p-3 rounded-md focus:ring-2 focus:ring-[#004d4d] outline-none bg-white"
                 >
 
-                  <option value="Active">Active </option>
-                  <option value="Not-Active">Not-Active</option>
+                  <option value="active">Active </option>
+                  <option value="not-active">In-Active</option>
                 </select>
               </div>
 
@@ -391,7 +391,7 @@ const EditDestination = () => {
               <div className="grid grid-cols-3 col-span-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Price ($)
+                    Price
                   </label>
                   <input
                     type="number"
