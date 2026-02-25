@@ -23,7 +23,12 @@ const reviewSchema = new mongoose.Schema(
       required: true,
     },
     images: [{ type: String }],
+    guide: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
   },
+
   { timestamps: true }
 );
 

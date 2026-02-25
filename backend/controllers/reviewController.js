@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 
 exports.postReview = async (req, res) => {
   try {
-    const { rating, comment, user, destination } = req.body;
+    const { rating, comment, user, destination, guide } = req.body;
     const imagePaths = req.files ? req.files.map((file) => file.filename) : [];
 
     const review = await Review.create({
@@ -11,6 +11,7 @@ exports.postReview = async (req, res) => {
       comment,
       user,
       destination,
+      guide,
       images: imagePaths,
     });
     res.status(201).json({ success: true, data: review });
@@ -22,7 +23,6 @@ exports.postReview = async (req, res) => {
 exports.getAllReviews = async (req, res) => {
   try {
     const reviews = await Review.aggregate([
-      // Join with Users collection
       {
         $lookup: {
           from: "users",
@@ -31,7 +31,6 @@ exports.getAllReviews = async (req, res) => {
           as: "userDetails",
         },
       },
-      // Join with Destinations collection to get the trek title
       {
         $lookup: {
           from: "destinations",
@@ -40,9 +39,18 @@ exports.getAllReviews = async (req, res) => {
           as: "destinationDetails",
         },
       },
+      {
+        $lookup: {
+          from: "users",
+          localField: "guide",
+          foreignField: "_id",
+          as: "guideDetails",
+        },
+      },
       // Convert arrays to objects
       { $unwind: "$userDetails" },
       { $unwind: "$destinationDetails" },
+      { $unwind: { path: "$guideDetails", preserveNullAndEmptyArrays: true } },
       // Project the specific fields the frontend needs
       {
         $project: {
@@ -50,9 +58,13 @@ exports.getAllReviews = async (req, res) => {
           comment: 1,
           images: 1,
           createdAt: 1,
+          user: 1,
+          destination: 1,
+          guide: 1,
           "userDetails.username": 1,
           "userDetails.image": 1,
           "destinationDetails.title": 1,
+          "guideDetails.username": 1,
         },
       },
       { $sort: { createdAt: -1 } },
@@ -67,6 +79,10 @@ exports.getAllReviews = async (req, res) => {
 exports.updateReview = async (req, res) => {
   try {
     const updateData = { ...req.body };
+    if (updateData.rating) {
+      updateData.rating = Number(updateData.rating);
+    }
+
     if (req.files && req.files.length > 0) {
       updateData.images = req.files.map((file) => file.filename);
     }
