@@ -2,14 +2,10 @@ import React, { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import Button from "../layout/Button";
 import { AiOutlineMenu, AiOutlineClose } from "react-icons/ai";
-import LoginPage from "../pages/LoginPage";
-import SignupPage from "../pages/Signup";
 import { isLoggedIn } from "../api/authAPI";
 
-const Navbar = () => {
+const Navbar = ({ openLogin, openSignup }) => {
   const [menu, setMenu] = useState(false);
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [isSignupOpen, setIsSignupOpen] = useState(false);
 
   let auth = isLoggedIn();
   let navigate = useNavigate();
@@ -39,23 +35,6 @@ const Navbar = () => {
     </div>
   );
 
-  const openLogin = () => {
-    setIsLoginOpen(true);
-    setIsSignupOpen(false);
-    setMenu(false);
-  };
-
-  const openSignup = () => {
-    setIsSignupOpen(true);
-    setIsLoginOpen(false);
-    setMenu(false);
-  };
-
-  const closeAll = () => {
-    setIsLoginOpen(false);
-    setIsSignupOpen(false);
-  };
-
   const handleSignout = () => {
     localStorage.removeItem("auth");
     setMenu(false);
@@ -81,7 +60,6 @@ const Navbar = () => {
   return (
     <header className="sticky top-0 z-50 w-full">
       <div className="flex flex-row justify-between items-center p-5 px-5 md:px-10 lg:px-16 xl:px-32 bg-[#004d4d] text-white shadow-md">
-        {/* Logo Section */}
         <div className="flex items-center flex-shrink-0">
           <Link to="/" className="flex items-center gap-2 lg:gap-3 group">
             <HikeHubLogo />
@@ -115,7 +93,7 @@ const Navbar = () => {
                 />
               </Link>
               <div onClick={handleSignout}>
-                <Button title="Sign Out" isPrimary={true} />
+                <Button title="Sign Out" variant="primary" />
               </div>
             </>
           ) : (
@@ -124,13 +102,12 @@ const Navbar = () => {
                 <Button title="Login" variant="secondary" />
               </div>
               <div onClick={openSignup}>
-                <Button title="Signup" isPrimary={true} />
+                <Button title="Signup" variant="primary" />
               </div>
             </>
           )}
         </div>
 
-        {/* Mobile Menu Icon */}
         <div
           className="lg:hidden flex items-center p-2 cursor-pointer"
           onClick={handleChange}
@@ -138,68 +115,40 @@ const Navbar = () => {
           {menu ? <AiOutlineClose size={25} /> : <AiOutlineMenu size={25} />}
         </div>
 
-        {/* Mobile Sidebar Menu */}
+        {/* Mobile Sidebar */}
         <div
-          className={`
-            ${menu ? "translate-x-0" : "-translate-x-full"} 
-            lg:hidden flex flex-col absolute z-50 bg-[#004d4d]/95 backdrop-blur-md text-white left-0 top-full text-2xl text-center pt-8 pb-10 gap-8 w-full h-screen transition-transform duration-300 ease-in-out
-          `}
+          className={`${
+            menu ? "translate-x-0" : "-translate-x-full"
+          } lg:hidden flex flex-col absolute z-50 bg-[#004d4d]/95 backdrop-blur-md text-white left-0 top-full text-2xl text-center pt-8 pb-10 gap-8 w-full h-screen transition-transform duration-300 ease-in-out`}
         >
           {navItems.map((item) => (
             <NavLink
               key={item.name}
               to={item.path}
               className={({ isActive }) =>
-                `transition-all duration-300 ${
-                  isActive ? "text-amber-400 font-bold" : "hover:text-amber-400"
-                }`
+                isActive ? "text-amber-400 font-bold" : ""
               }
               onClick={() => setMenu(false)}
             >
               {item.name}
             </NavLink>
           ))}
-
           <div className="flex flex-col items-center gap-4 mt-4">
             {auth ? (
-              <>
-                <Link
-                  to={auth.user.role === 1 ? "/admin/dashboard" : "/profile"}
-                  onClick={() => setMenu(false)}
-                >
-                  <Button
-                    title={auth.user.role === 1 ? "Dashboard" : "Profile"}
-                    variant="secondary"
-                  />
-                </Link>
-                <div onClick={handleSignout}>
-                  <Button title="Sign Out" isPrimary={true} />
-                </div>
-              </>
+              <Button
+                onClick={handleSignout}
+                title="Sign Out"
+                variant="primary"
+              />
             ) : (
               <>
-                <div onClick={openLogin}>
-                  <Button title="Login" variant="secondary" />
-                </div>
-                <div onClick={openSignup}>
-                  <Button title="Signup" isPrimary={true} />
-                </div>
+                <Button onClick={openLogin} title="Login" variant="secondary" />
+                <Button onClick={openSignup} title="Signup" variant="primary" />
               </>
             )}
           </div>
         </div>
       </div>
-
-      <LoginPage
-        isOpen={isLoginOpen}
-        onClose={closeAll}
-        switchToSignup={openSignup}
-      />
-      <SignupPage
-        isOpen={isSignupOpen}
-        onClose={closeAll}
-        switchToLogin={openLogin}
-      />
     </header>
   );
 };

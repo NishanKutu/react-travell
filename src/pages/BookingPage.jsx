@@ -6,11 +6,11 @@ import { createBooking, getEsewaSignature } from "../api/bookingApi";
 import { getAllGuides } from "../api/userApi";
 import PaymentModal from "./PaymentModal";
 import { FaCalendarAlt } from "react-icons/fa";
+import { useOutletContext } from "react-router-dom";
 
 const BookingPage = () => {
   const { user, token } = isLoggedIn();
   const { id } = useParams();
-  const navigate = useNavigate();
 
   const [destination, setDestination] = useState(null);
   const [guides, setGuides] = useState([]);
@@ -22,6 +22,7 @@ const BookingPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [travelerCount, setTravelerCount] = useState(1);
   const [bookingDate, setBookingDate] = useState("");
+  const { openLogin, openSignup } = useOutletContext();
 
   const [hasGuide, setHasGuide] = useState(false);
   const [hasPorter, setHasPorter] = useState(false);
@@ -426,23 +427,40 @@ const BookingPage = () => {
                 )}
                 <div className="pt-8">
                   {user ? (
-                    <button
-                      onClick={() => setIsModalOpen(true)}
-                      className="w-full bg-[#004d4d] text-white py-5 rounded-xl font-black uppercase tracking-widest hover:bg-black transition-all shadow-lg"
-                    >
-                      Confirm & Pay Now
-                    </button>
+                    /* USER LOGGED IN: Show Payment Button and Secure Text */
+                    <>
+                      <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="w-full bg-[#004d4d] text-white py-5 rounded-xl font-black uppercase tracking-widest hover:bg-black transition-all shadow-lg"
+                      >
+                        Confirm & Pay Now
+                      </button>
+
+                      <p className="text-[10px] text-center text-gray-400 mt-4 uppercase leading-relaxed font-bold">
+                        Secure Payment Gateway
+                      </p>
+                    </>
                   ) : (
-                    <button
-                      onClick={() => navigate("/login")}
-                      className="w-full bg-orange-500 text-white py-5 rounded-xl font-black uppercase tracking-widest hover:bg-orange-600 transition-all shadow-lg"
-                    >
-                      Login to Book
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        onClick={openLogin}
+                        className="w-full bg-[#004d4d] text-white py-5 rounded-xl font-black uppercase shadow-lg hover:bg-black transition-all"
+                      >
+                        Login to Book
+                      </button>
+
+                      <p className="mt-4 text-center text-sm text-gray-600">
+                        Don't have an account?
+                        <button
+                          onClick={openSignup}
+                          className="text-[#004d4d] font-bold hover:underline pl-1"
+                        >
+                          Sign up
+                        </button>
+                      </p>
+                    </>
                   )}
-                  <p className="text-[10px] text-center text-gray-400 mt-4 uppercase leading-relaxed font-bold">
-                    Secure Payment via eSewa
-                  </p>
                 </div>
               </div>
             </div>
