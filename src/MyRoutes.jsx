@@ -28,6 +28,7 @@ import GuidesInfo from './pages/admin/GuideInfo';
 import AdminReview from './pages/admin/AdminReview';
 import Testimonials from './pages/Testimonials';
 import AdminFaq from './pages/admin/AdminFaq';
+import PaymentFailure from './pages/PaymentFailure';
 
 
 const MyRoutes = () => {
@@ -55,6 +56,7 @@ const MyRoutes = () => {
           <Route path = "/booking/:id" element = {<BookingPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
+          <Route path="/payment-failure" element={<PaymentFailure />} />
 
           <Route path='*' element = {<PageNotFound/>}/>
 

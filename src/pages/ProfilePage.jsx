@@ -839,7 +839,7 @@ const ProfilePage = () => {
                             onClick={(e) => handlePayment(e, booking)}
                             className="w-full bg-[#004d4d] text-white text-[11px] font-black uppercase tracking-widest py-2.5 rounded-xl hover:bg-black transition-all shadow-md active:scale-95"
                           >
-                            Pay & Secure Trip
+                            Pay now
                           </button>
                         )}
                       </div>
