@@ -1,60 +1,45 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import Button from "../layout/Button";
 import { AiOutlineMenu, AiOutlineClose } from "react-icons/ai";
-import LoginPage from "../pages/LoginPage";
-import SignupPage from "..//pages/Signup";
-import { getAllBookings } from "../api/bookingApi";
 import { isLoggedIn } from "../api/authAPI";
 
-const Navbar = () => {
+const Navbar = ({ openLogin, openSignup }) => {
   const [menu, setMenu] = useState(false);
-  const [hasBookings, setHasBookings] = useState(false);
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [isSignupOpen, setIsSignupOpen] = useState(false);
 
   let auth = isLoggedIn();
   let navigate = useNavigate();
 
-  // Check for bookings whenever the user logs in
-  useEffect(() => {
-    const checkBookings = async () => {
-      if (auth) {
-        try {
-          const response = await getAllBookings();
-          if (response.success && response.data.length > 0) {
-            setHasBookings(true);
-          } else {
-            setHasBookings(false);
-          }
-        } catch (error) {
-          console.error("Error checking bookings:", error);
-        }
-      }
-    };
-    checkBookings();
-  }, [auth]);
-
-  const openLogin = () => {
-    setIsLoginOpen(true);
-    setIsSignupOpen(false);
-    setMenu(false);
-  };
-
-  const openSignup = () => {
-    setIsSignupOpen(true);
-    setIsLoginOpen(false);
-    setMenu(false);
-  };
-
-  const closeAll = () => {
-    setIsLoginOpen(false);
-    setIsSignupOpen(false);
-  };
+  const HikeHubLogo = () => (
+    <div className="flex items-center justify-center bg-[#bd8157] p-1.5 rounded-xl shadow-lg group-hover:rotate-12 transition-transform flex-shrink-0">
+      <svg
+        width="30"
+        height="30"
+        viewBox="0 0 100 100"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path d="M15 80L50 20L85 80H15Z" fill="white" />
+        <path
+          d="M50 20L60 38L50 34L40 38L50 20Z"
+          fill="#004d4d"
+          fillOpacity="0.2"
+        />
+        <path
+          d="M35 80C35 80 43 65 50 65C57 65 65 80 65 80"
+          stroke="#004d4d"
+          strokeWidth="4"
+          strokeLinecap="round"
+        />
+      </svg>
+    </div>
+  );
 
   const handleSignout = () => {
     localStorage.removeItem("auth");
+    setMenu(false);
     navigate("/");
+    window.location.reload();
   };
 
   const navItems = [
@@ -63,31 +48,28 @@ const Navbar = () => {
     { name: "Destinations", path: "/destinations" },
     { name: "About", path: "/about" },
     { name: "Contact", path: "/contact" },
-    { name: "faq", path: "/faq" },
+    { name: "Testimonials", path: "/testimonials" },
   ];
 
   const handleChange = () => setMenu(!menu);
 
   const desktopLinkBase =
-    "relative pb-1 text-white transition-all cursor-pointer after:content-[''] after:absolute after:left-0 after:bottom-0 after:h-0.5 after:bg-white after:transition-all after:duration-300 hover:after:w-full";
+    "relative pb-1 text-white transition-all cursor-pointer whitespace-nowrap after:content-[''] after:absolute after:left-0 after:bottom-0 after:h-0.5 after:bg-white after:transition-all after:duration-300 hover:after:w-full";
   const desktopActive = "font-bold after:w-full";
 
   return (
-    <header className="sticky top-0 z-50">
-      {/* Main Navbar Container */}
-      <div className="flex flex-row justify-between p-5 md:px-32 px-5 bg-[#004d4d] text-white shadow-[0_3px_10px_rgb(0,0,0,0.2)]">
-        <div className="flex items-center">
-          <Link
-            to="/"
-            className="cursor-pointer"
-            onClick={() => setMenu(false)}
-          >
-            <h1 className="font-semibold text-xl tracking-tight">HikeHub</h1>
+    <header className="sticky top-0 z-50 w-full">
+      <div className="flex flex-row justify-between items-center p-5 px-5 md:px-10 lg:px-16 xl:px-32 bg-[#004d4d] text-white shadow-md">
+        <div className="flex items-center flex-shrink-0">
+          <Link to="/" className="flex items-center gap-2 lg:gap-3 group">
+            <HikeHubLogo />
+            <h1 className="text-xl lg:text-2xl font-black text-[#bd8157] tracking-tighter">
+              HIKE<span className="text-[#ffffff]">HUB</span>
+            </h1>
           </Link>
         </div>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden lg:flex flex-row items-center gap-8">
+        <nav className="hidden lg:flex flex-row items-center gap-4 xl:gap-8 mx-4">
           {navItems.map((item) => (
             <NavLink
               key={item.name}
@@ -101,58 +83,31 @@ const Navbar = () => {
           ))}
         </nav>
 
-        {/* Desktop Buttons */}
-        <div className="hidden lg:flex flex-row items-center gap-4">
+        <div className="hidden lg:flex flex-row items-center gap-3 xl:gap-4 flex-shrink-0">
           {auth ? (
             <>
-              {/* 1. If Admin: Show Dashboard & Sign Out */}
-              {auth.user.role === 1 ? (
-                <>
-                  <Link to={"/admin/dashboard"}>
-                    <Button title="Dashboard" variant="secondary" />
-                  </Link>
-                  <div onClick={handleSignout}>
-                    <Button title="Sign Out" isPrimary={true} />
-                  </div>
-                </>
-              ) : (
-                /* 2. If User: Show Emoji and Booking Button ONLY if hasBookings is true */
-                <>
-                  {hasBookings && (
-                    <>
-                      <Link
-                        to="/my-bookings"
-                        title="My Bookings"
-                        className="text-2xl hover:scale-110 transition-transform cursor-pointer px-2"
-                      >
-                        📖
-                      </Link>
-
-                      <Link to={"/my-bookings"}>
-                        <Button title="Booking" variant="secondary" />
-                      </Link>
-                    </>
-                  )}
-
-                  <div onClick={handleSignout}>
-                    <Button title="Sign Out" isPrimary={true} />
-                  </div>
-                </>
-              )}
+              <Link to={auth.user.role === 1 ? "/admin/dashboard" : "/profile"}>
+                <Button
+                  title={auth.user.role === 1 ? "Dashboard" : "Profile"}
+                  variant="secondary"
+                />
+              </Link>
+              <div onClick={handleSignout}>
+                <Button title="Sign Out" variant="primary" />
+              </div>
             </>
           ) : (
-            /* 3. If Not Logged In: Show Login/Signup */
             <>
               <div onClick={openLogin}>
                 <Button title="Login" variant="secondary" />
               </div>
               <div onClick={openSignup}>
-                <Button title="Signup" isPrimary={true} />
+                <Button title="Signup" variant="primary" />
               </div>
             </>
           )}
         </div>
-        {/* Mobile Menu Icon */}
+
         <div
           className="lg:hidden flex items-center p-2 cursor-pointer"
           onClick={handleChange}
@@ -160,52 +115,40 @@ const Navbar = () => {
           {menu ? <AiOutlineClose size={25} /> : <AiOutlineMenu size={25} />}
         </div>
 
-        {/* Mobile Sidebar Menu */}
+        {/* Mobile Sidebar */}
         <div
-          className={`
-                    ${menu ? "translate-x-0" : "-translate-x-full"} 
-                    lg:hidden flex flex-col absolute z-50 bg-[#004d4d]/95 backdrop-blur-md text-white left-0 top-18 text-2xl text-center pt-8 pb-10 gap-8 w-full h-fit transition-transform duration-300 ease-in-out
-                `}
+          className={`${
+            menu ? "translate-x-0" : "-translate-x-full"
+          } lg:hidden flex flex-col absolute z-50 bg-[#004d4d]/95 backdrop-blur-md text-white left-0 top-full text-2xl text-center pt-8 pb-10 gap-8 w-full h-screen transition-transform duration-300 ease-in-out`}
         >
           {navItems.map((item) => (
             <NavLink
               key={item.name}
               to={item.path}
               className={({ isActive }) =>
-                `transition-all duration-300 ${
-                  isActive
-                    ? "text-amber-400 font-bold scale-110"
-                    : "hover:text-amber-400"
-                }`
+                isActive ? "text-amber-400 font-bold" : ""
               }
               onClick={() => setMenu(false)}
             >
               {item.name}
             </NavLink>
           ))}
-
-          {/* Mobile Login/Signup Buttons */}
           <div className="flex flex-col items-center gap-4 mt-4">
-            <div onClick={openLogin}>
-              <Button title="Login" variant="secondary" />
-            </div>
-            <div onClick={openSignup}>
-              <Button title="Signup" isPrimary={true} />
-            </div>
+            {auth ? (
+              <Button
+                onClick={handleSignout}
+                title="Sign Out"
+                variant="primary"
+              />
+            ) : (
+              <>
+                <Button onClick={openLogin} title="Login" variant="secondary" />
+                <Button onClick={openSignup} title="Signup" variant="primary" />
+              </>
+            )}
           </div>
         </div>
       </div>
-
-      <LoginPage
-        isOpen={isLoginOpen}
-        onClose={closeAll}
-        switchToSignup={openSignup}
-      />
-      <SignupPage
-        isOpen={isSignupOpen}
-        onClose={closeAll}
-        switchToLogin={openLogin}
-      />
     </header>
   );
 };

@@ -30,7 +30,7 @@ const EditDestination = () => {
     inclusions: { included: [], notIncluded: [] },
   });
 
-  // --- FIX 1: handle image delete using fetch ---
+  // --- handle image delete using fetch ---
   const handleDeleteImage = async (filename) => {
     if (window.confirm("Remove this image permanently?")) {
       try {
@@ -166,7 +166,7 @@ const EditDestination = () => {
     });
   };
 
-  // --- FIX 2: Corrected Submit URL and Header handling ---
+  // --- Submit URL and Header handling ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     const data = new FormData();
@@ -205,7 +205,7 @@ const EditDestination = () => {
           method: "PUT",
           headers: {
             Authorization: `Bearer ${token}`,
-            // Note: Do NOT set Content-Type header when sending FormData
+  
           },
           body: data,
         }
@@ -278,8 +278,8 @@ const EditDestination = () => {
                   className="border p-3 rounded-md focus:ring-2 focus:ring-[#004d4d] outline-none bg-white"
                 >
 
-                  <option value="Active">Active </option>
-                  <option value="Not-Active">Not-Active</option>
+                  <option value="active">Active </option>
+                  <option value="not-active">In-Active</option>
                 </select>
               </div>
 
@@ -391,7 +391,7 @@ const EditDestination = () => {
               <div className="grid grid-cols-3 col-span-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Price ($)
+                    Price
                   </label>
                   <input
                     type="number"

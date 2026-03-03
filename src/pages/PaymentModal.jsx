@@ -25,7 +25,7 @@ const PaymentModal = ({ isOpen, onClose, amount, onSelectPayment }) => {
           <div className="mt-4 px-10">
             <p className="text-gray-500 text-sm uppercase tracking-widest font-semibold">Total Amount to Pay</p>
             <h3 className="text-4xl font-black text-gray-900 mt-1">
-              ${amount.toLocaleString()}
+              Rs {amount.toLocaleString()}
             </h3>
           </div>
         </div>

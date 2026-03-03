@@ -3,15 +3,12 @@
 const BASE_URL = "http://localhost:8000/api/bookings";
 
 const getHeaders = () => {
-  // 1. Get the 'auth' string from localStorage
   const authData = localStorage.getItem("auth");
   let token = "";
 
   if (authData) {
     try {
-      // 2. Parse the JSON string into an object
       const parsedAuth = JSON.parse(authData);
-      // 3. Access the token inside that object
       token = parsedAuth.token;
     } catch (error) {
       console.error("Error parsing auth data:", error);
@@ -33,10 +30,28 @@ export const createBooking = async (bookingData) => {
   return response.json();
 };
 
+export const adminCreateBooking = async (bookingData) => {
+  const response = await fetch(`${BASE_URL}/admin-confirm`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(bookingData),
+  });
+  return response.json();
+};
+
 export const getAllBookings = async () => {
   const response = await fetch(`${BASE_URL}/all`, {
     method: "GET",
     headers: getHeaders(),
+  });
+  return response.json();
+};
+
+export const updateBookingStatus = async (id, status) => {
+  const response = await fetch(`${BASE_URL}/status/${id}`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify({ status }),
   });
   return response.json();
 };

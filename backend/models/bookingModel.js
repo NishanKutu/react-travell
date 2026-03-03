@@ -20,7 +20,36 @@ const bookingSchema = new mongoose.Schema({
     min: 1,
     default: 1
   },
-  // Total price after discounts 
+  // Date for booking
+  bookingDate: {
+    type: Date,
+    required: [true, "Trekking date is required"],
+  },
+
+  // --- ADD-ONS SECTION ---
+  hasGuide: {
+    type: Boolean,
+    default: false
+  },
+  hasPorter: {
+    type: Boolean,
+    default: false
+  },
+  guideId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  guideCost: {
+    type: Number,
+    default: 0
+  },
+  porterCost: {
+    type: Number,
+    default: 0
+  },
+
+  // Total price after discounts and add-ons
   totalPrice: {
     type: Number,
     required: true
@@ -28,7 +57,7 @@ const bookingSchema = new mongoose.Schema({
   // Status management for Admin Panel 
   status: {
     type: String,
-    enum: ['pending', 'confirmed', 'cancelled'],
+    enum: ['pending', 'confirmed', 'cancelled', 'completed'],
     default: 'pending'
   },
   // eSewa specific fields for tracking the transaction
