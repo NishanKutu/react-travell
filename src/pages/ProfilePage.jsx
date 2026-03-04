@@ -7,6 +7,7 @@ import {
   deleteBooking,
   getEsewaSignature,
   updateBookingStatus,
+  cancelAndRefund,
 } from "../api/bookingApi";
 import { getAllDestinations } from "../api/destinationApi";
 import { updateProfile } from "../api/userApi";
@@ -225,11 +226,40 @@ const ProfilePage = () => {
     }
   };
 
-  const handleDelete = async (e, id) => {
+  const handleDelete = async (e, booking) => {
     e.stopPropagation();
-    if (!window.confirm("Remove this booking record?")) return;
-    const res = await deleteBooking(id);
-    if (res.success) setBookings(bookings.filter((b) => b._id !== id));
+
+    // Check if the booking is paid/confirmed
+    const isConfirmed = booking.status === "confirmed";
+
+    // Dynamic message based on financial status
+    const confirmMessage = isConfirmed
+      ? "Are you sure? Your trip is confirmed. Cancelling now will refund your amount after a 20% deduction fee."
+      : "Are you sure you want to remove this booking record?";
+
+    if (window.confirm(confirmMessage)) {
+      try {
+        let res;
+        if (isConfirmed) {
+          // Trigger the refund logic on the backend
+          res = await cancelAndRefund(booking._id);
+        } else {
+          // Trigger standard deletion for pending/cancelled trips
+          res = await deleteBooking(booking._id);
+        }
+
+        if (res.success) {
+          alert(res.message || "Action completed successfully.");
+          // Refresh the data to show updated status (refunded) or removed card
+          fetchMyData();
+        } else {
+          alert(res.message || "Failed to process request.");
+        }
+      } catch (error) {
+        console.error("Delete/Refund error:", error);
+        alert("An error occurred. Please try again.");
+      }
+    }
   };
 
   const handlePayment = (e, booking) => {
@@ -717,7 +747,7 @@ const ProfilePage = () => {
                       className="p-4 rounded-2xl bg-slate-50 border border-transparent hover:border-[#004d4d]/20 hover:bg-white transition-all group relative"
                     >
                       <button
-                        onClick={(e) => handleDelete(e, booking._id)}
+                        onClick={(e) => handleDelete(e, booking)}
                         className="absolute top-3 right-3 text-slate-300 hover:text-rose-500 z-20 transition-colors"
                       >
                         <svg

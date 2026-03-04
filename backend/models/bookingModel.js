@@ -57,9 +57,15 @@ const bookingSchema = new mongoose.Schema({
   // Status management for Admin Panel 
   status: {
     type: String,
-    enum: ['pending', 'confirmed', 'cancelled', 'completed'],
+    enum: ['pending', 'confirmed', 'cancelled', 'completed', 'refunded'],
     default: 'pending'
   },
+
+  refundAmount: {
+    type: Number,
+    default: 0
+  },
+
   // eSewa specific fields for tracking the transaction
   paymentMethod: {
     type: String,

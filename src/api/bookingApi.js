@@ -56,6 +56,14 @@ export const updateBookingStatus = async (id, status) => {
   return response.json();
 };
 
+export const cancelAndRefund = async (id) => {
+  const response = await fetch(`${BASE_URL}/refund/${id}`, {
+    method: "PUT", 
+    headers: getHeaders(),
+  });
+  return response.json();
+};
+
 export const deleteBooking = async (id) => {
     const response = await fetch(`${BASE_URL}/${id}`, {
       method: "DELETE",

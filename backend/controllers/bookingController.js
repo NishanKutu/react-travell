@@ -39,22 +39,22 @@ exports.createBooking = async (req, res) => {
 // Admin Manual Booking
 exports.adminCreateBooking = async (req, res) => {
   try {
-    const { 
-      userId, 
-      destinationId, 
-      travelerCount, 
-      totalPrice, 
-      hasGuide, 
-      hasPorter, 
-      guideCost, 
+    const {
+      userId,
+      destinationId,
+      travelerCount,
+      totalPrice,
+      hasGuide,
+      hasPorter,
+      guideCost,
       porterCost,
       guideId,
       bookingDate,
-      status 
+      status,
     } = req.body;
 
     const newBooking = new Booking({
-      userId, 
+      userId,
       destinationId,
       travelerCount,
       totalPrice,
@@ -64,8 +64,8 @@ exports.adminCreateBooking = async (req, res) => {
       porterCost,
       guideId: hasGuide ? guideId : null,
       bookingDate: bookingDate,
-      status: status || "confirmed", 
-      paymentMethod: "esewa" 
+      status: status || "confirmed",
+      paymentMethod: "esewa",
     });
 
     const savedBooking = await newBooking.save();
@@ -75,15 +75,18 @@ exports.adminCreateBooking = async (req, res) => {
   }
 };
 
-// 2. Get All Bookings
+// Get All Bookings
 exports.getAllBookings = async (req, res) => {
   try {
     let query = {};
-    if (req.user.role === 1) { // Admin
+    if (req.user.role === 1) {
+      // Admin
       query = {};
-    } else if (req.user.role === 2) { // Guide
+    } else if (req.user.role === 2) {
+      // Guide
       query = { guideId: req.user._id };
-    } else { // Client
+    } else {
+      // Client
       query = { userId: req.user._id };
     }
 
@@ -93,7 +96,9 @@ exports.getAllBookings = async (req, res) => {
       .populate("guideId", "username image")
       .sort({ createdAt: -1 });
 
-    res.status(200).json({ success: true, count: bookings.length, data: bookings });
+    res
+      .status(200)
+      .json({ success: true, count: bookings.length, data: bookings });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -104,12 +109,19 @@ exports.updateBookingStatus = async (req, res) => {
     const { status } = req.body;
     const booking = await Booking.findById(req.params.id);
 
-    if (!booking) return res.status(404).json({ success: false, message: "Booking not found" });
+    if (!booking)
+      return res
+        .status(404)
+        .json({ success: false, message: "Booking not found" });
 
     booking.status = status;
     await booking.save();
 
-    res.status(200).json({ success: true, message: `Status updated to ${status}`, data: booking });
+    res.status(200).json({
+      success: true,
+      message: `Status updated to ${status}`,
+      data: booking,
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -180,5 +192,59 @@ exports.verifyEsewaPayment = async (req, res) => {
     }
   } catch (error) {
     res.redirect("http://localhost:5173/payment-failure");
+  }
+};
+
+exports.cancelAndRefund = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const booking = await Booking.findById(id);
+
+    if (!booking) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Booking not found" });
+    }
+
+    // Prevents double-refunding or cancelling finished trips
+    if (["refunded", "cancelled", "completed"].includes(booking.status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot refund a booking that is already ${booking.status}`,
+      });
+    }
+
+    // If the booking was confirmed (paid via eSewa/Stripe)
+    if (booking.status === "confirmed") {
+      const cancellationFeePercent = 20;
+      const deduction = (booking.totalPrice * cancellationFeePercent) / 100;
+      const refundAmount = booking.totalPrice - deduction;
+
+      booking.status = "refunded";
+      booking.refundAmount = refundAmount; // Ensure this is in your Schema
+
+      await booking.save();
+
+      return res.status(200).json({
+        success: true,
+        message: `Refund Processed: 20% (NPR ${deduction}) fee deducted.`,
+        data: {
+          refundAmount,
+          status: booking.status,
+        },
+      });
+    }
+
+    // Default: If it was 'pending', just mark as cancelled
+    booking.status = "cancelled";
+    await booking.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Unpaid booking cancelled successfully.",
+      data: booking,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };
