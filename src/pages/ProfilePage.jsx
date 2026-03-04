@@ -40,10 +40,13 @@ const ProfilePage = () => {
     bio: initialUser?.bio || "",
     specialization: initialUser?.specialization || "",
     dailyRate: initialUser?.dailyRate || "",
+    maxWeight: initialUser?.maxWeight || "",
   });
   const [imageFile, setImageFile] = useState(null);
 
   const isGuide = Number(user?.role) === 2;
+  const isPorter = Number(user?.role) === 3;
+  const isStaff = isGuide || isPorter;
   const IMG_URL = "http://localhost:8000/uploads/";
 
   // SAFETY: Ensure bookings exists before filtering
@@ -120,10 +123,16 @@ const ProfilePage = () => {
       data.append("bio", formData.bio);
       data.append("age", formData.age);
 
-      if (isGuide) {
+      if (isStaff) {
         data.append("experience", formData.experience);
-        data.append("specialization", formData.specialization);
         data.append("dailyRate", formData.dailyRate);
+      }
+      if (isGuide) {
+        data.append("specialization", formData.specialization);
+      }
+
+      if (isPorter) {
+        data.append("maxWeight", formData.maxWeight); // Add this line
       }
 
       if (imageFile) {
@@ -250,7 +259,6 @@ const ProfilePage = () => {
 
         if (res.success) {
           alert(res.message || "Action completed successfully.");
-          // Refresh the data to show updated status (refunded) or removed card
           fetchMyData();
         } else {
           alert(res.message || "Failed to process request.");
@@ -264,6 +272,7 @@ const ProfilePage = () => {
 
   const handlePayment = (e, booking) => {
     e.stopPropagation();
+    console.log("Payment clicked for booking:", booking);
     setPaymentBooking(booking);
     setShowPaymentModal(true);
   };
@@ -499,7 +508,7 @@ const ProfilePage = () => {
                     />
                   </div>
 
-                  {isGuide && (
+                  {isStaff && (
                     <>
                       <div className="flex flex-col">
                         <label className="text-[10px] font-black text-[#004d4d] uppercase">
@@ -525,18 +534,35 @@ const ProfilePage = () => {
                           className="border-b border-gray-200 focus:outline-none bg-transparent text-sm py-1"
                         />
                       </div>
-                      <div className="flex flex-col">
-                        <label className="text-[10px] font-black text-[#004d4d] uppercase">
-                          Specialization
-                        </label>
-                        <input
-                          name="specialization"
-                          value={formData.specialization}
-                          onChange={handleInputChange}
-                          placeholder="e.g. Everest Region"
-                          className="border-b border-gray-200 focus:outline-none bg-transparent text-sm py-1"
-                        />
-                      </div>
+                      {isGuide && (
+                        <div className="flex flex-col">
+                          <label className="text-[10px] font-black text-[#004d4d] uppercase">
+                            Specialization
+                          </label>
+                          <input
+                            name="specialization"
+                            value={formData.specialization}
+                            onChange={handleInputChange}
+                            placeholder="e.g. Everest Region"
+                            className="..."
+                          />
+                        </div>
+                      )}
+                      {isPorter && (
+                        <div className="flex flex-col">
+                          <label className="text-[10px] font-black text-orange-600 uppercase">
+                            Max Weight (kg)
+                          </label>
+                          <input
+                            name="maxWeight"
+                            type="number"
+                            value={formData.maxWeight}
+                            onChange={handleInputChange}
+                            placeholder="e.g. 25"
+                            className="..."
+                          />
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
@@ -551,12 +577,17 @@ const ProfilePage = () => {
                     Verified Guide
                   </span>
                 )}
+                {isPorter && (
+                  <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-orange-200">
+                    Trekking Porter
+                  </span>
+                )}
               </div>
             )}
             {!isEditing && (
               <p className="text-slate-400 font-medium mb-6">{user?.email}</p>
             )}
-            {!isEditing && isGuide && (
+            {!isEditing && isStaff && (
               <div className="flex flex-wrap gap-x-6 gap-y-2 mb-4">
                 <div className="flex items-center gap-1.5">
                   <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">
@@ -566,14 +597,26 @@ const ProfilePage = () => {
                     {user?.experience || 0} Years
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">
-                    Focus:
-                  </span>
-                  <span className="text-slate-700 text-sm font-black">
-                    {user?.specialization || "General Trekking"}
-                  </span>
-                </div>
+                {isGuide && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">
+                      Focus:
+                    </span>
+                    <span className="text-slate-700 text-sm font-black">
+                      {user?.specialization || "General"}
+                    </span>
+                  </div>
+                )}
+                {isPorter && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">
+                      Max Load:
+                    </span>
+                    <span className="text-slate-700 text-sm font-black">
+                      {user?.maxWeight || 0} kg
+                    </span>
+                  </div>
+                )}
                 <div className="flex items-center gap-1.5">
                   <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">
                     Daily Rate:
@@ -604,7 +647,7 @@ const ProfilePage = () => {
                     Total Reviews
                   </p>
                   <p className="text-lg font-black text-slate-800 leading-none mt-1">
-                    {isGuide ? guideReceivedReviews.length : userReviews.length}{" "}
+                    {isStaff ? guideReceivedReviews.length : userReviews.length}{" "}
                     Shared
                   </p>
                 </div>
@@ -624,7 +667,7 @@ const ProfilePage = () => {
 
         <div className="flex flex-col xl:flex-row gap-10">
           <div className="flex-1 order-2 xl:order-1">
-            {isGuide ? (
+            {isStaff ? (
               <>
                 <h2 className="text-2xl font-bold mb-6 text-slate-800 flex items-center gap-3">
                   <span className="w-10 h-1 bg-[#004d4d] rounded-full"></span>
@@ -731,7 +774,7 @@ const ProfilePage = () => {
           <div className="w-full xl:w-96 order-1 xl:order-2">
             <div className="sticky top-24 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
               <h2 className="text-2xl font-bold mb-6 text-slate-800">
-                {isGuide ? "Assignments" : "My Bookings"}
+                {isStaff ? "Assignments" : "My Bookings"}
               </h2>
               <div className="space-y-4 max-h-[800px] overflow-y-auto pr-2 custom-scrollbar">
                 {bookings?.length === 0 ? (
@@ -844,7 +887,7 @@ const ProfilePage = () => {
                             Mark as Completed
                           </button>
                         )}
-                        {!isGuide && booking.status === "completed" && (
+                        {!isStaff && booking.status === "completed" && (
                           <button
                             onClick={() => openReviewModal(booking)}
                             className={`w-full text-[11px] font-black uppercase tracking-widest py-2.5 rounded-xl transition-all shadow-md active:scale-95 ${
@@ -864,7 +907,7 @@ const ProfilePage = () => {
                               : "Rate Experience"}
                           </button>
                         )}
-                        {!isGuide && booking.status === "pending" && (
+                        {!isStaff && booking.status === "pending" && (
                           <button
                             onClick={(e) => handlePayment(e, booking)}
                             className="w-full bg-[#004d4d] text-white text-[11px] font-black uppercase tracking-widest py-2.5 rounded-xl hover:bg-black transition-all shadow-md active:scale-95"

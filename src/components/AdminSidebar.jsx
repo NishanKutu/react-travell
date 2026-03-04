@@ -56,6 +56,10 @@ const AdminSidebar = () => {
           🙋🏻‍♂️ Guide Info
         </NavLink>
 
+        <NavLink to="/admin/porter-info" style={getLinkStyle}>
+          🧳 Porter Info
+        </NavLink>
+
         <NavLink to="/admin/booking-list" style={getLinkStyle}>
           📒 Booking List
         </NavLink>

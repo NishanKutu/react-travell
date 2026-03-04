@@ -44,6 +44,11 @@ const bookingSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  porterId:{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
   porterCost: {
     type: Number,
     default: 0

@@ -8,6 +8,7 @@ const {
   login,
   getAllUsers,
   getAllGuides,
+  getAllPorters,
   getUserDetails,
   deleteUser,
   toggleUserRole,
@@ -39,6 +40,7 @@ router.post("/resetpassword/:token", resetPassword);
 router.post("/login", login);
 router.get("/getallusers", isLoggedIn, isAdmin, getAllUsers);
 router.get("/getallguides", getAllGuides);
+router.get("/getallporters", getAllPorters);
 router.get("/getuserdetails/:id", isAdmin, getUserDetails);
 router.delete("/deleteuser/:id", isAdmin, deleteUser);
 router.put("/togglerole/:id", isAdmin, toggleUserRole);

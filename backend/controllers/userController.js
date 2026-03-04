@@ -19,6 +19,7 @@ exports.register = async (req, res) => {
     age,
     bio,
     specialization,
+    maxWeight,
   } = req.body;
 
   let usernameExists = await UserModel.findOne({ username });
@@ -46,6 +47,7 @@ exports.register = async (req, res) => {
     dailyRate: req.body.dailyRate || 0,
     bio,
     specialization,
+    maxWeight,
   });
 
   if (!userToRegister) {
@@ -151,7 +153,7 @@ exports.register = async (req, res) => {
 // Update Profile Data
 exports.updateProfile = async (req, res) => {
   try {
-    const { username, experience, age, bio, specialization, dailyRate } = req.body;
+    const { username, experience, age, bio, specialization, dailyRate, maxWeight } = req.body;
     
     // Prepare update object
     const updateData = {
@@ -160,7 +162,8 @@ exports.updateProfile = async (req, res) => {
       age,
       bio,
       specialization,
-      dailyRate: Number(dailyRate) || 0
+      dailyRate: Number(dailyRate) || 0,
+      maxWeight: Number(maxWeight) || 0,
     };
 
     // If a new image is uploaded
@@ -502,9 +505,9 @@ exports.login = async (req, res) => {
       experience: user.experience, 
       age: user.age,
       dailyRate: user.dailyRate,
-      dailyRate: user.dailyRate,
       bio: user.bio,
       specialization: user.specialization,
+      maxWeight: user.maxWeight,
     },
   });
 };
@@ -602,5 +605,15 @@ exports.manualVerifyUser = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+exports.getAllPorters = async (req, res) => {
+  try {
+    // Role 3 is for Porters
+    let porters = await UserModel.find({ role: 3 }).select("-password");
+    res.status(200).json({ success: true, data: porters });
+  } catch (error) {
+    res.status(500).json({ success: false, error: "Internal Server Error" });
   }
 };

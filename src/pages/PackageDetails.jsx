@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getDestinationById } from "../api/destinationApi";
+import {
+  FaStar,
+  FaQuoteLeft,
+  FaTimes,
+  FaChevronLeft,
+  FaChevronRight,
+  FaCamera,
+} from "react-icons/fa";
 
 const PackageDetail = () => {
   const { id } = useParams();
@@ -8,8 +16,12 @@ const PackageDetail = () => {
   const [tour, setTour] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
-  const [isOpen, setIsOpen] = useState(false);
-  const [currentImgIndex, setCurrentImgIndex] = useState(0);
+  const [lightbox, setLightbox] = useState({
+    isOpen: false,
+    images: [],
+    index: 0,
+    title: "",
+  });
 
   const IMG_URL = "http://localhost:8000/uploads";
 
@@ -31,9 +43,12 @@ const PackageDetail = () => {
     fetchTour();
   }, [id]);
 
-  const openLightbox = (index) => {
-    setCurrentImgIndex(index);
-    setIsOpen(true);
+  const openLightbox = (images, index, title) => {
+    setLightbox({ isOpen: true, images, index, title: title || tour.title });
+  };
+
+  const closeLightbox = () => {
+    setLightbox({ ...lightbox, isOpen: false });
   };
 
   if (loading)
@@ -184,38 +199,35 @@ const PackageDetail = () => {
             {/* GALLERY: Hero + Thumbs Grid */}
             <div className="space-y-4">
               <div
-                className="relative h-96 w-full overflow-hidden rounded-sm cursor-pointer group"
-                onClick={() => openLightbox(0)}
+                className="relative h-96 w-full overflow-hidden rounded-2xl cursor-pointer group"
+                onClick={() => openLightbox(tour.images, 0)}
               >
                 <img
                   src={`${IMG_URL}/${tour.images[0]}`}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  alt="Main View"
+                  alt="Main"
                 />
-                <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <span className="text-white bg-black/40 px-4 py-2 rounded-full text-xs uppercase tracking-widest">
+                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <span className="text-white bg-black/40 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest backdrop-blur-md border border-white/20">
                     View Gallery
                   </span>
                 </div>
               </div>
-
               <div className="grid grid-cols-3 gap-3">
-                {tour.images?.slice(1, 4).map((img, index) => (
+                {tour.images?.slice(1, 4).map((img, idx) => (
                   <div
-                    key={index}
-                    onClick={() => openLightbox(index + 1)}
-                    className="relative h-28 md:h-36 cursor-pointer group overflow-hidden rounded-sm"
+                    key={idx}
+                    onClick={() => openLightbox(tour.images, idx + 1)}
+                    className="relative h-28 cursor-pointer group overflow-hidden rounded-xl"
                   >
                     <img
                       src={`${IMG_URL}/${img}`}
-                      alt={`Gallery ${index}`}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      alt="Gallery"
                     />
-                    {index === 2 && tour.images.length > 4 && (
-                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-[2px]">
-                        <span className="text-white text-xl font-bold">
-                          +{tour.images.length - 3}
-                        </span>
+                    {idx === 2 && tour.images.length > 4 && (
+                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-[2px] text-white font-bold">
+                        +{tour.images.length - 3}
                       </div>
                     )}
                   </div>
@@ -331,95 +343,121 @@ const PackageDetail = () => {
 
         {/* REVIEWS TAB */}
         {activeTab === "reviews" && (
-          <div className="max-w-4xl mx-auto text-left">
-            <div className="flex items-center justify-between mb-12">
-              <h2 className="text-4xl font-serif">Traveler Reviews</h2>
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center justify-between mb-16 bg-slate-50 p-8 rounded-3xl border border-slate-100">
+              <div>
+                <h2 className="text-3xl font-black text-slate-800 tracking-tight">
+                  Traveler Stories
+                </h2>
+                <p className="text-slate-500 mt-1 font-medium">
+                  Authentic experiences from the trail.
+                </p>
+              </div>
               <div className="text-right">
-                <p className="text-3xl font-bold text-[#004d4d]">
+                <p className="text-5xl font-black text-[#004d4d] leading-none">
                   {tour.averageRating?.toFixed(1) || "0.0"}
                 </p>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                  Average Score
-                </p>
+                <div className="flex text-amber-400 justify-end mt-2">
+                  {[...Array(5)].map((_, i) => (
+                    <FaStar
+                      key={i}
+                      size={14}
+                      className={
+                        i < Math.round(tour.averageRating || 0)
+                          ? "fill-current"
+                          : "text-slate-200"
+                      }
+                    />
+                  ))}
+                </div>
               </div>
             </div>
 
             {tour.reviews && tour.reviews.length > 0 ? (
-              <div className="space-y-10">
+              <div className="grid grid-cols-1 gap-8">
                 {tour.reviews.map((review, index) => (
                   <div
                     key={index}
-                    className="border-b border-gray-100 pb-10 last:border-0"
+                    className="bg-white border border-slate-100 p-8 rounded-[2.5rem] shadow-sm hover:shadow-md transition-shadow relative overflow-hidden"
                   >
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex items-center gap-4">
-                        {review.userDetails?.image ? (
-                          <img
-                            src={`${IMG_URL}/${review.userDetails.image}`}
-                            alt={review.userDetails.username}
-                            className="w-12 h-12 rounded-full object-cover border border-emerald-100"
-                            onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.src = `https://ui-avatars.com/api/?name=${
-                                review.userDetails?.username || "U"
-                              }&background=d1fae5&color=065f46`;
-                            }}
-                          />
-                        ) : (
-                          <div className="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center font-bold text-lg">
+                    <FaQuoteLeft className="absolute -top-2 -left-2 text-slate-50 text-6xl" />
+
+                    <div className="relative z-10">
+                      <div className="flex justify-between items-start mb-6">
+                        <div className="flex items-center gap-4">
+                          <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-700 font-black text-xl border border-emerald-100">
                             {review.userDetails?.username
                               ?.charAt(0)
                               .toUpperCase() || "U"}
                           </div>
-                        )}
-                        <div>
-                          <h4 className="font-bold text-gray-800">
-                            {review.userDetails?.username ||
-                              "Verified Traveler"}
-                          </h4>
-                          <p className="text-xs text-gray-400 uppercase tracking-tighter">
-                            {new Date(review.createdAt).toLocaleDateString(
-                              "en-US",
-                              { month: "long", year: "numeric" }
-                            )}
-                          </p>
+                          <div>
+                            <h4 className="font-bold text-slate-800 text-lg">
+                              {review.userDetails?.username ||
+                                "Verified Traveler"}
+                            </h4>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                              {new Date(review.createdAt).toLocaleDateString(
+                                "en-US",
+                                { month: "long", year: "numeric" }
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex text-amber-400 bg-amber-50 px-3 py-1 rounded-full">
+                          {[...Array(5)].map((_, i) => (
+                            <FaStar
+                              key={i}
+                              size={12}
+                              className={
+                                i < review.rating
+                                  ? "fill-current"
+                                  : "text-slate-200"
+                              }
+                            />
+                          ))}
                         </div>
                       </div>
-                      <div className="flex text-amber-400">
-                        {[...Array(5)].map((_, i) => (
-                          <span key={i}>{i < review.rating ? "★" : "☆"}</span>
-                        ))}
-                      </div>
-                    </div>
-                    <p className="text-gray-600 leading-relaxed font-light italic">
-                      "{review.comment}"
-                    </p>
 
-                    {/* Review Images logic */}
-                    {review.images?.length > 0 && (
-                      <div className="flex gap-2 mt-4">
-                        {review.images.slice(0, 3).map((img, i) => (
-                          <div key={i} className="relative w-20 h-20">
-                            <img
-                              src={`${IMG_URL}/${img}`}
-                              className="w-full h-full object-cover rounded-md border"
-                              alt="Review"
-                            />
-                            {i === 2 && review.images.length > 3 && (
-                              <div className="absolute inset-0 bg-black/50 rounded-md flex items-center justify-center text-white text-xs font-bold">
-                                +{review.images.length - 2}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                      <p className="text-slate-600 text-lg leading-relaxed italic font-light mb-8 pl-4 border-l-2 border-emerald-100">
+                        "{review.comment}"
+                      </p>
+
+                      {/* Review Images logic */}
+                      {review.images?.length > 0 && (
+                        <div className="flex gap-3 mt-6">
+                          {review.images.slice(0, 3).map((img, i) => (
+                            <div
+                              key={i}
+                              className="relative w-20 h-20 cursor-pointer group"
+                              onClick={() =>
+                                openLightbox(
+                                  review.images,
+                                  i,
+                                  `${review.userDetails?.username}'s Review`
+                                )
+                              }
+                            >
+                              <img
+                                src={`${IMG_URL}/${img}`}
+                                className="w-full h-full object-cover rounded-2xl border border-slate-100 group-hover:border-emerald-500 transition-all shadow-sm"
+                                alt="Review"
+                              />
+                              {i === 2 && review.images.length > 3 && (
+                                <div className="absolute inset-0 bg-black/60 rounded-2xl flex items-center justify-center text-white text-xs font-black">
+                                  +{review.images.length - 3}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-20 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
-                <p className="text-gray-400">
+              <div className="text-center py-20 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
+                <p className="text-slate-400 font-bold">
                   No reviews yet for this adventure.
                 </p>
               </div>
@@ -429,94 +467,77 @@ const PackageDetail = () => {
       </div>
 
       {/* LIGHTBOX MODAL */}
-      {isOpen && (
-        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex flex-col items-center justify-center">
-          <div className="absolute top-0 w-full p-6 flex justify-between items-center text-white z-10">
+      {lightbox.isOpen && (
+        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex flex-col items-center justify-between p-6">
+          <div className="w-full flex justify-between items-start text-white">
             <div>
-              <h3 className="text-lg font-serif italic">{tour.title}</h3>
-              <p className="text-[10px] tracking-widest uppercase opacity-60">
-                Photo {currentImgIndex + 1} of {tour.images.length}
+              <h3 className="text-xl font-bold">{lightbox.title}</h3>
+              <p className="text-[10px] tracking-widest uppercase opacity-60 font-black mt-1">
+                Photo {lightbox.index + 1} of {lightbox.images.length}
               </p>
             </div>
             <button
-              onClick={() => setIsOpen(false)}
-              className="p-2 hover:bg-white/10 rounded-full transition-colors text-3xl"
+              onClick={closeLightbox}
+              className="p-3 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
             >
-              &times;
+              <FaTimes size={24} />
             </button>
           </div>
 
-          <div className="relative w-full max-w-5xl h-[70vh] flex items-center justify-center px-12">
-            <button
-              onClick={() =>
-                setCurrentImgIndex(
-                  (currentImgIndex + tour.images.length - 1) %
-                    tour.images.length
-                )
-              }
-              className="absolute left-4 p-4 text-white/50 hover:text-white transition-colors"
-            >
-              <svg
-                className="w-10 h-10"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+          <div className="relative flex items-center justify-center w-full flex-1 max-h-[70vh]">
+            {lightbox.images.length > 1 && (
+              <button
+                onClick={() =>
+                  setLightbox((p) => ({
+                    ...p,
+                    index: (p.index - 1 + p.images.length) % p.images.length,
+                  }))
+                }
+                className="absolute left-4 text-white hover:scale-125 transition-transform"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-            </button>
-
+                <FaChevronLeft size={40} />
+              </button>
+            )}
             <img
-              src={`${IMG_URL}/${tour.images[currentImgIndex]}`}
-              className="max-w-full max-h-full object-contain shadow-2xl animate-in fade-in zoom-in duration-300"
+              src={`${IMG_URL}/${lightbox.images[lightbox.index]}`}
+              className="max-w-full max-h-full object-contain rounded-lg shadow-2xl animate-in zoom-in duration-300"
               alt="Lightbox"
             />
-
-            <button
-              onClick={() =>
-                setCurrentImgIndex((currentImgIndex + 1) % tour.images.length)
-              }
-              className="absolute right-4 p-4 text-white/50 hover:text-white transition-colors"
-            >
-              <svg
-                className="w-10 h-10"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+            {lightbox.images.length > 1 && (
+              <button
+                onClick={() =>
+                  setLightbox((p) => ({
+                    ...p,
+                    index: (p.index + 1) % p.images.length,
+                  }))
+                }
+                className="absolute right-4 text-white hover:scale-125 transition-transform"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </button>
+                <FaChevronRight size={40} />
+              </button>
+            )}
           </div>
 
-          <div className="mt-8 flex gap-3 overflow-x-auto p-2 max-w-full no-scrollbar">
-            {tour.images.map((img, idx) => (
-              <div
-                key={idx}
-                onClick={() => setCurrentImgIndex(idx)}
-                className={`relative w-16 h-12 flex-shrink-0 cursor-pointer rounded-sm overflow-hidden transition-all ${
-                  currentImgIndex === idx
-                    ? "ring-2 ring-emerald-500 scale-110 opacity-100"
-                    : "opacity-40 hover:opacity-100"
-                }`}
-              >
-                <img
-                  src={`${IMG_URL}/${img}`}
-                  className="w-full h-full object-cover"
-                  alt="Thumbnail"
-                />
-              </div>
-            ))}
+          <div className="bg-white/5 border border-white/10 p-4 rounded-3xl backdrop-blur-sm max-w-2xl w-full">
+            <div className="flex justify-center gap-3 overflow-x-auto py-2 no-scrollbar">
+              {lightbox.images.map((img, i) => (
+                <button
+                  key={i}
+                  onClick={() => setLightbox((p) => ({ ...p, index: i }))}
+                  className={`relative shrink-0 w-20 h-14 rounded-xl overflow-hidden transition-all border-2 ${
+                    lightbox.index === i
+                      ? "border-emerald-500 scale-110 shadow-lg shadow-emerald-500/20"
+                      : "border-transparent opacity-40"
+                  }`}
+                >
+                  <img
+                    src={`${IMG_URL}/${img}`}
+                    className="w-full h-full object-cover"
+                    alt="Thumb"
+                  />
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}

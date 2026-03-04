@@ -29,6 +29,7 @@ import AdminReview from './pages/admin/AdminReview';
 import Testimonials from './pages/Testimonials';
 import AdminFaq from './pages/admin/AdminFaq';
 import PaymentFailure from './pages/PaymentFailure';
+import PortersInfo from './pages/admin/PortersInfo';
 
 
 const MyRoutes = () => {
@@ -73,8 +74,10 @@ const MyRoutes = () => {
             <Route path="booking-list" element = {<BookingList />} />
             <Route path="add-booking" element={<AdminAddBooking />} />
             <Route path="guide-info" element={<GuidesInfo />} />
+            <Route path="porter-info" element={<PortersInfo />} />
             <Route path="admin-review" element = {<AdminReview />} />
             <Route path="admin-faq" element = {<AdminFaq />} />
+
 
           </Route>
         </Route>

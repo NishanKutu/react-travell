@@ -14,6 +14,7 @@ exports.createBooking = async (req, res) => {
       guideCost,
       porterCost,
       guideId,
+      porterId,
       bookingDate,
     } = req.body;
     const newBooking = new Booking({
@@ -26,6 +27,7 @@ exports.createBooking = async (req, res) => {
       guideCost: guideCost || 0,
       porterCost: porterCost || 0,
       guideId: hasGuide ? guideId : null,
+      porterId: hasPorter ? porterId : null,
       bookingDate: bookingDate,
       status: "pending",
     });
@@ -49,6 +51,7 @@ exports.adminCreateBooking = async (req, res) => {
       guideCost,
       porterCost,
       guideId,
+      porterId,
       bookingDate,
       status,
     } = req.body;
@@ -63,6 +66,7 @@ exports.adminCreateBooking = async (req, res) => {
       guideCost,
       porterCost,
       guideId: hasGuide ? guideId : null,
+      porterId: hasPorter ? porterId : null,
       bookingDate: bookingDate,
       status: status || "confirmed",
       paymentMethod: "esewa",
@@ -85,6 +89,9 @@ exports.getAllBookings = async (req, res) => {
     } else if (req.user.role === 2) {
       // Guide
       query = { guideId: req.user._id };
+    } else if (req.user.role === 3) {
+      // Porter
+      query = { porterId: req.user._id };
     } else {
       // Client
       query = { userId: req.user._id };
@@ -94,6 +101,7 @@ exports.getAllBookings = async (req, res) => {
       .populate("userId", "username email")
       .populate("destinationId", "title price location")
       .populate("guideId", "username image")
+      .populate("porterId", "username image maxWeight")
       .sort({ createdAt: -1 });
 
     res

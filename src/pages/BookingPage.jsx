@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { isLoggedIn } from "../api/authAPI";
 import { getDestinationById } from "../api/destinationApi";
 import { createBooking, getEsewaSignature } from "../api/bookingApi";
-import { getAllGuides } from "../api/userApi";
+import { getAllGuides, getAllPorters } from "../api/userApi";
 import PaymentModal from "./PaymentModal";
 import { FaCalendarAlt } from "react-icons/fa";
 import { useOutletContext } from "react-router-dom";
@@ -14,10 +14,14 @@ const BookingPage = () => {
 
   const [destination, setDestination] = useState(null);
   const [guides, setGuides] = useState([]);
+  const [porters, setPorters] = useState([]);
   const [selectedGuide, setSelectedGuide] = useState(null);
+  const [selectedPorter, setSelectedPorter] = useState(null);
   const [expandedGuideId, setExpandedGuideId] = useState(null);
+  const [expandedPorterId, setExpandedPorterId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [guidesLoading, setGuidesLoading] = useState(true);
+  const [portersLoading, setPortersLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [travelerCount, setTravelerCount] = useState(1);
@@ -27,20 +31,22 @@ const BookingPage = () => {
   const [hasGuide, setHasGuide] = useState(false);
   const [hasPorter, setHasPorter] = useState(false);
 
-  const PORTER_PRICE = 30;
-
   useEffect(() => {
     const fetchData = async () => {
       setGuidesLoading(true);
+      setPortersLoading(true);
       try {
-        const [destRes, guideRes] = await Promise.all([
+        const [destRes, guideRes, porterRes] = await Promise.all([
           getDestinationById(id),
           getAllGuides(),
+          getAllPorters(),
         ]);
 
         if (destRes.success) setDestination(destRes.data);
 
         const guideData = guideRes?.data || [];
+        const porterData = porterRes?.data || [];
+        setPorters(porterData);
         setGuides(guideData);
       } catch (err) {
         console.error("Fetch Error:", err);
@@ -48,6 +54,7 @@ const BookingPage = () => {
       } finally {
         setLoading(false);
         setGuidesLoading(false);
+        setPortersLoading(false);
       }
     };
     fetchData();
@@ -60,7 +67,8 @@ const BookingPage = () => {
   const totalDiscount = discountPerPerson * travelerCount;
   const guideTotal =
     hasGuide && selectedGuide ? Number(selectedGuide.dailyRate) || 0 : 0;
-  const porterTotal = hasPorter ? PORTER_PRICE : 0;
+  const porterTotal =
+    hasPorter && selectedPorter ? Number(selectedPorter.dailyRate) || 0 : 0;
 
   const finalTotal = subtotal - totalDiscount + guideTotal + porterTotal;
 
@@ -84,6 +92,7 @@ const BookingPage = () => {
           guideCost: guideTotal,
           porterCost: porterTotal,
           guideId: selectedGuide?._id,
+          porterId: selectedPorter?._id,
           bookingDate: bookingDate,
         });
 
@@ -358,29 +367,117 @@ const BookingPage = () => {
               {/* Porter Toggle */}
               <div
                 className={`p-6 flex justify-between items-center cursor-pointer transition-all border-t ${
-                  hasPorter ? "bg-teal-50/30" : "bg-white hover:bg-gray-50"
+                  hasPorter ? "bg-orange-50/30" : "bg-white hover:bg-gray-50"
                 }`}
-                onClick={() => setHasPorter(!hasPorter)}
+                onClick={() => {
+                  setHasPorter(!hasPorter);
+                  if (hasPorter) setSelectedPorter(null);
+                }}
               >
                 <div className="flex items-center gap-4">
                   <div
                     className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
                       hasPorter
-                        ? "bg-teal-600 border-teal-600"
+                        ? "bg-orange-600 border-orange-600"
                         : "border-gray-300"
                     }`}
                   >
                     {hasPorter && <span className="text-white text-xs">✓</span>}
                   </div>
                   <div>
-                    <span className="font-bold text-gray-800">
+                    <span className="block font-bold text-gray-800 text-lg">
                       Add Porter Service
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      Select a porter to carry your gear
                     </span>
                   </div>
                 </div>
-                <span className="font-bold text-gray-700">
-                  + Rs {PORTER_PRICE}
+                <span className="text-xs font-bold text-orange-600 uppercase">
+                  {selectedPorter
+                    ? `Selected: Rs ${selectedPorter.dailyRate}`
+                    : "Select a porter below"}
                 </span>
+              </div>
+              <div
+                className={`transition-all duration-500 ease-in-out overflow-hidden ${
+                  hasPorter
+                    ? "max-h-[800px] opacity-100 border-t"
+                    : "max-h-0 opacity-0"
+                }`}
+              >
+                <div className="p-6 bg-gray-50/50">
+                  {portersLoading ? (
+                    <p className="text-sm text-center text-gray-400 animate-pulse">
+                      Finding porters...
+                    </p>
+                  ) : porters.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {porters.map((porter) => (
+                        <div
+                          key={porter._id}
+                          className={`flex flex-col p-4 rounded-xl border-2 transition-all cursor-pointer ${
+                            selectedPorter?._id === porter._id
+                              ? "border-orange-600 bg-white shadow-md"
+                              : "border-transparent bg-white/60 hover:border-gray-200"
+                          }`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedPorter(porter);
+                          }}
+                        >
+                          <div className="flex items-center gap-4">
+                            <img
+                              src={
+                                porter.image
+                                  ? `http://localhost:8000/uploads/${porter.image}`
+                                  : "https://via.placeholder.com/100"
+                              }
+                              className="w-14 h-14 rounded-full object-cover bg-gray-200 shadow-sm"
+                              alt="Porter"
+                            />
+                            <div className="flex-1">
+                              <p className="font-bold text-gray-800">
+                                {porter.username}
+                              </p>
+                              <p className="text-[10px] text-orange-700 font-bold uppercase tracking-wider">
+                                Rs {porter.dailyRate || 0} / Day • Max{" "}
+                                {porter.maxWeight || 0}kg
+                              </p>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setExpandedPorterId(
+                                  expandedPorterId === porter._id
+                                    ? null
+                                    : porter._id
+                                );
+                              }}
+                              className="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-600 font-bold"
+                            >
+                              {expandedPorterId === porter._id
+                                ? "CLOSE"
+                                : "INFO"}
+                            </button>
+                          </div>
+                          {expandedPorterId === porter._id && (
+                            <div className="mt-4 pt-4 border-t border-gray-100 animate-fadeIn text-xs text-gray-600">
+                              <p>
+                                <strong>Bio:</strong>{" "}
+                                {porter.bio || "Available for trekking."}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-center py-6 text-sm text-gray-500 italic">
+                      No porters available.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -411,10 +508,10 @@ const BookingPage = () => {
                     <span>+Rs {selectedGuide.dailyRate}</span>
                   </div>
                 )}
-                {hasPorter && (
-                  <div className="flex justify-between text-sm items-center text-teal-700 font-medium">
-                    <span>Porter Service</span>
-                    <span>+Rs {PORTER_PRICE}</span>
+                {hasPorter && selectedPorter && (
+                  <div className="flex justify-between text-sm items-center text-orange-700 font-medium">
+                    <span>Porter: {selectedPorter.username}</span>
+                    <span>+Rs {selectedPorter.dailyRate.toLocaleString()}</span>
                   </div>
                 )}
                 {totalDiscount > 0 && (
