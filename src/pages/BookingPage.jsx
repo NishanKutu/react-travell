@@ -101,10 +101,16 @@ const BookingPage = () => {
 
         const sigRes = await getEsewaSignature({
           amount: amountToSend,
-          productId: bookingRes.data._id,
+          bookingId: bookingRes.data._id,
         });
 
-        submitToEsewa(amountToSend, bookingRes.data._id, sigRes.signature);
+        if (sigRes.success) {
+          submitToEsewa(
+            amountToSend,
+            sigRes.transaction_uuid,
+            sigRes.signature
+          );
+        }
       } catch (err) {
         alert("Booking/Payment Error: " + err.message);
       }

@@ -1,4 +1,3 @@
-// src/api/bookingApi.js
 
 const BASE_URL = "http://localhost:8000/api/bookings";
 
@@ -58,25 +57,38 @@ export const updateBookingStatus = async (id, status) => {
 
 export const cancelAndRefund = async (id) => {
   const response = await fetch(`${BASE_URL}/refund/${id}`, {
-    method: "PUT", 
+    method: "PUT",
     headers: getHeaders(),
   });
   return response.json();
 };
 
 export const deleteBooking = async (id) => {
-    const response = await fetch(`${BASE_URL}/${id}`, {
-      method: "DELETE",
-      headers: getHeaders(),
-    });
-    return response.json();
-  };
-
-export const getEsewaSignature = async (paymentData) => {
-  const response = await fetch(`${BASE_URL}/initiate-esewa`, {
-    method: "POST",
+  const response = await fetch(`${BASE_URL}/${id}`, {
+    method: "DELETE",
     headers: getHeaders(),
-    body: JSON.stringify(paymentData),
   });
   return response.json();
+};
+
+export const getEsewaSignature = async (paymentData) => {
+  try {
+    const response = await fetch(`${BASE_URL}/initiate-esewa`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(paymentData),
+    });
+
+    // Check if the server actually returned a 200 OK
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Server Error Response:", errorText);
+      throw new Error(`Server returned ${response.status}: ${errorText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Fetch Error in bookingApi.js:", error);
+    throw error;
+  }
 };

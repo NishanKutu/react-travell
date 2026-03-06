@@ -6,7 +6,6 @@ const AdminLayout = () => {
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
       <AdminSidebar />
-
       {/* Dynamic Content Area */}
       <main
         style={{

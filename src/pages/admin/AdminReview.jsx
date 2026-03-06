@@ -22,7 +22,7 @@ const AdminReview = () => {
     isOpen: false,
     images: [],
     index: 0,
-    title: "", // To show the trek name in lightbox
+    title: "", 
   });
 
   useEffect(() => {
@@ -116,7 +116,7 @@ const AdminReview = () => {
             )}
           </div>
 
-          {/* Bottom Thumbnail Strip (Matching your screenshot) */}
+          {/* Bottom Thumbnail Strip */}
           <div className="bg-white/5 border border-white/10 p-4 rounded-3xl backdrop-blur-sm max-w-2xl w-full">
             <div className="flex justify-center gap-3 overflow-x-auto py-2 scrollbar-hide">
               {lightbox.images.map((img, i) => (

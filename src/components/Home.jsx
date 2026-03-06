@@ -1,7 +1,6 @@
 import React from "react";
-import "../App.css";
+// import "../App.css";
 import Button from "../layout/Button";
-// Remove the react-scroll Link import if you aren't using it elsewhere
 import img from "../assets/img/beauty.jpg";
 import SearchBar from "./SearchBar";
 import { HiOutlinePhone } from "react-icons/hi";

@@ -1,6 +1,7 @@
 const Booking = require("../models/bookingModel");
 const Destination = require("../models/destinationModel");
 const crypto = require("crypto");
+const CustomTour = require("../models/customTourModel");
 
 // Create Initial Booking
 exports.createBooking = async (req, res) => {
@@ -152,54 +153,70 @@ exports.deleteBooking = async (req, res) => {
   }
 };
 
-// Initiate eSewa Payment
 exports.initiateEsewaPayment = async (req, res) => {
   try {
-    const { amount, productId } = req.body;
-    const cleanAmount = String(amount);
+    const { bookingId, amount } = req.body;
+
+    if (!bookingId || !amount) {
+      return res.status(400).json({
+        success: false,
+        message: "Booking ID and Amount are required",
+      });
+    }
+
+    // Format configuration
     const secretKey = "8gBm/:&EnhH.1/q";
     const productCode = "EPAYTEST";
-
-    const message = `total_amount=${cleanAmount},transaction_uuid=${productId},product_code=${productCode}`;
-
+    const cleanAmount = String(Math.round(amount));
+    const transactionUuid = `${bookingId}-${Date.now()}`;
+    const message = `total_amount=${cleanAmount},transaction_uuid=${transactionUuid},product_code=${productCode}`;
     const signature = crypto
       .createHmac("sha256", secretKey)
       .update(message)
       .digest("base64");
 
+    // Return values to frontend
     res.status(200).json({
       success: true,
       signature,
       product_code: productCode,
-      transaction_uuid: productId,
+      transaction_uuid: transactionUuid, // Send the unique one back
     });
   } catch (error) {
+    console.error("Esewa Initiation Error:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Verify eSewa Payment
+
 exports.verifyEsewaPayment = async (req, res) => {
-  const { data } = req.query;
   try {
+    const { data } = req.query;
+    if (!data) return res.redirect(`${process.env.FRONTEND_URL}/profile?payment=failed`);
+
     const decodedData = JSON.parse(
       Buffer.from(data, "base64").toString("utf-8")
     );
+    const { transaction_uuid, status } = decodedData;
 
-    const transactionUuid = decodedData.transaction_uuid;
-    const bookingId = transactionUuid.split("-")[0];
+    if (status === "COMPLETE") {
+      const bookingId = transaction_uuid.split("-")[0];
+      let order = await Booking.findById(bookingId) || await CustomTour.findById(bookingId);
 
-    if (decodedData.status === "COMPLETE") {
-      await Booking.findByIdAndUpdate(bookingId, {
-        status: "confirmed",
-        transactionId: decodedData.transaction_code,
-      });
-      res.redirect("http://localhost:5173/payment-success?payment=success");
-    } else {
-      res.redirect("http://localhost:5173/payment-failure");
+      if (order) {
+        order.status = "confirmed";
+        order.paymentMethod = "esewa";
+        await order.save();
+        return res.redirect(
+          `${process.env.FRONTEND_URL}/profile?payment=success`
+        );
+      }
     }
+    res.redirect(`${process.env.FRONTEND_URL}/profile?payment=failed`);
   } catch (error) {
-    res.redirect("http://localhost:5173/payment-failure");
+    console.error("Verification Error:", error);
+    res.status(500).json({ success: false, message: error.message });
+    // res.redirect(`${process.env.FRONTEND_URL}/profile?payment=failed`);
   }
 };
 
@@ -222,7 +239,6 @@ exports.cancelAndRefund = async (req, res) => {
       });
     }
 
-    // If the booking was confirmed (paid via eSewa/Stripe)
     if (booking.status === "confirmed") {
       const cancellationFeePercent = 20;
       const deduction = (booking.totalPrice * cancellationFeePercent) / 100;
@@ -243,7 +259,6 @@ exports.cancelAndRefund = async (req, res) => {
       });
     }
 
-    // Default: If it was 'pending', just mark as cancelled
     booking.status = "cancelled";
     await booking.save();
 

@@ -3,6 +3,12 @@ import { isLoggedIn } from "../api/authAPI";
 import PaymentModal from "./PaymentModal";
 import DestinationCard from "../components/DestinationCard";
 import {
+  getMyCustomTours,
+  getGuideCustomAssignments,
+  deleteCustomTour,
+  updateCustomTourStatus,
+} from "../api/customTourApi";
+import {
   getAllBookings,
   deleteBooking,
   getEsewaSignature,
@@ -49,13 +55,11 @@ const ProfilePage = () => {
   const isStaff = isGuide || isPorter;
   const IMG_URL = "http://localhost:8000/uploads/";
 
-  // SAFETY: Ensure bookings exists before filtering
   const completedTreksCount =
     bookings?.length > 0
       ? bookings.filter((b) => b.status === "completed").length
       : 0;
 
-  // SAFETY: Ensure user and userReviews exist before filtering
   const guideReceivedReviews =
     user && userReviews?.length > 0
       ? userReviews.filter((review) => {
@@ -71,42 +75,77 @@ const ProfilePage = () => {
   const fetchMyData = async () => {
     setLoading(true);
     setUserReviews([]);
+
     try {
+      const userRole = Number(user?.role);
+      const isGuideUser = userRole === 2;
+      const isPorterUser = userRole === 3;
+
       const bookingRes = await getAllBookings();
-      if (bookingRes?.success) {
-        const validBookings = bookingRes.data.filter(
-          (b) => b.destinationId !== null
-        );
-        setBookings(validBookings);
+      let standardBookings = [];
+      if (bookingRes?.success && Array.isArray(bookingRes.data)) {
+        standardBookings = bookingRes.data
+          .filter((b) => b.destinationId !== null)
+          .map((b) => ({
+            ...b,
+            isCustom: false,
+          }));
       }
 
+      // Fetch Custom Tours
+      let customRes;
+      if (isGuideUser || isPorterUser) {
+        customRes = await getGuideCustomAssignments();
+      } else {
+        customRes = await getMyCustomTours();
+      }
+
+      let customTours = [];
+      if (customRes?.success && Array.isArray(customRes.data)) {
+        customTours = customRes.data.map((ct) => ({
+          ...ct,
+          isCustom: true, 
+          status: ct.status || "pending",
+          createdAt: ct.createdAt || new Date().toISOString(),
+        }));
+      }
+
+      const combined = [...standardBookings, ...customTours].sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+
+      setBookings(combined);
+
+      // 4. Fetch Reviews 
       const reviewRes = await getAllReviews(token);
-      if (reviewRes?.success) {
-        // DEBUG: This will show you exactly what the backend is sending
-        console.log("RAW REVIEWS FROM BACKEND:", reviewRes.data);
-
+      if (reviewRes?.success && Array.isArray(reviewRes.data)) {
+        const currentUserId = String(user?._id || initialUser?._id);
         const myReviews = reviewRes.data.filter((r) => {
-          const isMyReview =
-            String(r.user?._id || r.user || "") === String(user?._id);
-          const isReviewForMe =
-            String(r.guide?._id || r.guide || "") === String(user?._id);
-
+          const userIdInReview = String(r.user?._id || r.user || "");
+          const guideIdInReview = String(r.guide?._id || r.guide || "");
           return (
-            isMyReview ||
-            isReviewForMe ||
-            r.userDetails?.username === user?.username
+            userIdInReview === currentUserId ||
+            guideIdInReview === currentUserId
           );
         });
         setUserReviews(myReviews);
       }
 
+      // 5. Fetch Suggestions
       const destRes = await getAllDestinations();
-      if (destRes?.success) {
-        const shuffled = [...destRes.data].sort(() => 0.5 - Math.random());
-        setSuggestions(shuffled.slice(0, 6));
+      if (destRes?.success && Array.isArray(destRes.data)) {
+        const bookedDestIds = standardBookings.map((b) =>
+          b.destinationId?._id?.toString()
+        );
+        const availableSuggestions = destRes.data.filter(
+          (d) => !bookedDestIds.includes(d._id.toString())
+        );
+        setSuggestions(
+          availableSuggestions.sort(() => 0.5 - Math.random()).slice(0, 6)
+        );
       }
     } catch (error) {
-      console.error("Failed to fetch profile data:", error);
+      console.error("Critical error in fetchMyData:", error);
     } finally {
       setLoading(false);
     }
@@ -220,15 +259,21 @@ const ProfilePage = () => {
     }
   };
 
-  const handleStatusUpdate = async (id, newStatus) => {
+  const handleStatusUpdate = async (booking, newStatus) => {
     if (!window.confirm(`Mark this trek as ${newStatus}?`)) return;
     try {
-      const res = await updateBookingStatus(id, newStatus);
+      let res;
+      const isCustomTour = booking.itinerary || booking.isCustom;
+
+      if (isCustomTour) {
+        res = await updateCustomTourStatus(booking._id, newStatus);
+      } else {
+        res = await updateBookingStatus(booking._id, newStatus);
+      }
+
       if (res.success) {
         alert(`Trek marked as ${newStatus}!`);
-        setBookings((prev) =>
-          prev.map((b) => (b._id === id ? { ...b, status: newStatus } : b))
-        );
+        fetchMyData();
       }
     } catch (error) {
       alert("Failed to update status.");
@@ -249,12 +294,13 @@ const ProfilePage = () => {
     if (window.confirm(confirmMessage)) {
       try {
         let res;
-        if (isConfirmed) {
-          // Trigger the refund logic on the backend
-          res = await cancelAndRefund(booking._id);
+        if (booking.isCustom) {
+          res = await deleteCustomTour(booking._id);
         } else {
-          // Trigger standard deletion for pending/cancelled trips
-          res = await deleteBooking(booking._id);
+          res =
+            booking.status === "confirmed"
+              ? await cancelAndRefund(booking._id)
+              : await deleteBooking(booking._id);
         }
 
         if (res.success) {
@@ -280,6 +326,7 @@ const ProfilePage = () => {
   const onSelectPayment = async (method) => {
     if (method === "esewa") {
       const res = await getEsewaSignature({
+        bookingId: paymentBooking._id,
         amount: paymentBooking.totalPrice,
         productId: `${paymentBooking._id}-${Date.now()}`,
       });
@@ -780,144 +827,241 @@ const ProfilePage = () => {
                 {bookings?.length === 0 ? (
                   <div className="text-center py-10">
                     <p className="text-slate-400 font-bold text-sm">
-                      No adventures found.
+                      No adventures or assignments found.
                     </p>
                   </div>
                 ) : (
-                  bookings?.map((booking) => (
-                    <div
-                      key={booking._id}
-                      className="p-4 rounded-2xl bg-slate-50 border border-transparent hover:border-[#004d4d]/20 hover:bg-white transition-all group relative"
-                    >
-                      <button
-                        onClick={(e) => handleDelete(e, booking)}
-                        className="absolute top-3 right-3 text-slate-300 hover:text-rose-500 z-20 transition-colors"
+                  bookings
+                    /* Filter bookings based on numeric roles (2: Guide, 3: Porter) */
+                    ?.filter((b) => {
+                      const userRole = Number(user?.role);
+                      const currentUserId = String(user?._id);
+
+                      if (userRole === 2) {
+                        // Guide: Show only if they are the assigned guideId
+                        return (
+                          String(b.guideId?._id || b.guideId) === currentUserId
+                        );
+                      }
+                      if (userRole === 3) {
+                        // Porter: Show only if they are the assigned porterId
+                        return (
+                          String(b.porterId?._id || b.porterId) ===
+                          currentUserId
+                        );
+                      }
+                      // Traveler (0): Show all their bookings
+                      return true;
+                    })
+                    /* Map the filtered list to the UI */
+                    ?.map((booking) => (
+                      <div
+                        key={booking._id}
+                        className="p-4 rounded-2xl bg-slate-50 border border-transparent hover:border-[#004d4d]/20 hover:bg-white transition-all group relative"
                       >
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                        {/* Delete/Cancel Button */}
+                        <button
+                          onClick={(e) => handleDelete(e, booking)}
+                          className="absolute top-3 right-3 text-slate-300 hover:text-rose-500 z-20 transition-colors"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2.5"
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
-                      <div className="flex justify-between items-start mb-3 pr-6">
-                        <div>
-                          <h3 className="font-bold text-slate-800 line-clamp-1">
-                            {booking.destinationId?.title}
-                          </h3>
-                          <p className="text-sm font-black text-emerald-600 tracking-tight">
-                            Rs. {booking.totalPrice?.toLocaleString() || 0}
-                          </p>
-                        </div>
-                        <span
-                          className={`text-[9px] px-2 py-1 rounded-lg font-black uppercase border bg-white shadow-sm ${
-                            booking.status === "confirmed"
-                              ? "border-emerald-500 text-emerald-500"
-                              : booking.status === "completed"
-                              ? "border-blue-500 text-blue-500"
-                              : "border-orange-400 text-orange-400"
-                          }`}
-                        >
-                          {booking.status}
-                        </span>
-                      </div>
-                      <div className="flex items-end justify-between mb-2">
-                        <div className="flex flex-col gap-1">
-                          <div className="flex gap-2 text-[10px] text-slate-500 font-bold">
-                            <span>👥 {booking.travelerCount} Persons</span>
-                            <span>•</span>
-                            <span>
-                              📅{" "}
-                              {booking.createdAt
-                                ? new Date(
-                                    booking.createdAt
-                                  ).toLocaleDateString()
-                                : "N/A"}
-                            </span>
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2.5"
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </button>
+
+                        {/* Header Section: Title & Price */}
+                        <div className="flex justify-between items-start mb-3 pr-6">
+                          <div>
+                            <h3 className="font-bold text-slate-800 line-clamp-1">
+                              {booking.isCustom ? (
+                                <span className="text-[#c08457]">
+                                  ✨ Custom:{" "}
+                                  {booking.itinerary?.[0]?.destinationCity
+                                    ?.cityname || "Planned Trip"}
+                                  ...
+                                </span>
+                              ) : (
+                                booking.destinationId?.title
+                              )}
+                              {/* Numeric role check for Guide (2) */}
+                              {Number(user?.role) === 2 && (
+                                <span className="text-[10px] text-slate-400 block font-normal mt-0.5">
+                                  <i className="bi bi-person-badge mr-1"></i>
+                                  Customer:{" "}
+                                  {booking.userId?.username || "Guest User"}
+                                </span>
+                              )}
+                            </h3>
+                            <p className="text-sm font-black text-emerald-600 tracking-tight">
+                              NPR {booking.totalPrice?.toLocaleString() || 0}
+                            </p>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-black uppercase text-slate-400">
-                              Porter Service:
-                            </span>
-                            <span
-                              className={`text-[8px] font-bold px-2 py-0.5 rounded-md border shadow-sm ${
-                                booking.hasPorter
-                                  ? "bg-emerald-50 text-emerald-600 border-emerald-100"
-                                  : "bg-slate-100 text-slate-400 border-slate-200"
-                              }`}
-                            >
-                              {booking.hasPorter ? "YES" : "NO"}
-                            </span>
-                          </div>
+                          <span
+                            className={`text-[9px] px-2 py-1 rounded-lg font-black uppercase border bg-white shadow-sm ${
+                              booking.status === "confirmed"
+                                ? "border-emerald-500 text-emerald-500"
+                                : booking.status === "completed"
+                                ? "border-blue-500 text-blue-500"
+                                : "border-orange-400 text-orange-400"
+                            }`}
+                          >
+                            {booking.status}
+                          </span>
                         </div>
-                        {!isGuide && booking.guideId && (
-                          <div className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-full border border-gray-100 shadow-sm relative group/guide">
-                            <span className="text-[8px] font-bold text-slate-400 uppercase">
-                              Guide
-                            </span>
-                            <div className="w-7 h-7 rounded-full overflow-hidden border border-[#004d4d]/20">
-                              <img
-                                src={
-                                  booking.guideId?.image
-                                    ? `${IMG_URL}${booking.guideId.image}`
-                                    : "https://via.placeholder.com/50"
-                                }
-                                alt="Guide"
-                                className="w-full h-full object-cover"
-                              />
+
+                        {/* Custom Tour specific details (Itinerary Preview) */}
+                        {booking.isCustom && booking.itinerary && (
+                          <div className="mb-3 p-2 bg-emerald-50/50 rounded-lg border border-emerald-100/50">
+                            <p className="text-[10px] text-emerald-800 font-bold mb-1">
+                              📅 {booking.itinerary.length} Day Customized Plan
+                            </p>
+                            <div className="flex flex-wrap gap-1">
+                              {booking.itinerary.slice(0, 2).map((day, i) => (
+                                <span
+                                  key={i}
+                                  className="text-[8px] bg-white px-1.5 py-0.5 border rounded text-slate-500"
+                                >
+                                  Day {day.dayNumber}:{" "}
+                                  {day.destinationCity?.cityname || "TBD"}
+                                </span>
+                              ))}
+                              {booking.itinerary.length > 2 && (
+                                <span className="text-[8px] text-slate-400 self-center ml-1">
+                                  +{booking.itinerary.length - 2} more
+                                </span>
+                              )}
                             </div>
                           </div>
                         )}
+
+                        {/* Metadata Section: Travelers, Date, Porter */}
+                        <div className="flex items-end justify-between mb-2">
+                          <div className="flex flex-col gap-1">
+                            <div className="flex gap-2 text-[10px] text-slate-500 font-bold">
+                              <span>👥 {booking.travelerCount} Persons</span>
+                              <span>•</span>
+                              <span>
+                                📅{" "}
+                                {booking.createdAt
+                                  ? new Date(
+                                      booking.createdAt
+                                    ).toLocaleDateString()
+                                  : "N/A"}
+                              </span>
+                            </div>
+
+                            {!booking.isCustom && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-black uppercase text-slate-400">
+                                  Porter:
+                                </span>
+                                <span
+                                  className={`text-[8px] font-bold px-2 py-0.5 rounded-md border shadow-sm ${
+                                    booking.hasPorter
+                                      ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+                                      : "bg-slate-100 text-slate-400 border-slate-200"
+                                  }`}
+                                >
+                                  {booking.hasPorter ? "YES" : "NO"}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Guide Info */}
+                          {(booking.guideId || booking.guide) && (
+                            <div className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-full border border-gray-100 shadow-sm">
+                              <span className="text-[8px] font-bold text-slate-400 uppercase">
+                                Guide
+                              </span>
+                              <div className="w-7 h-7 rounded-full overflow-hidden border border-[#004d4d]/20 bg-slate-100 flex items-center justify-center">
+                                {Number(user?.role) === 2 ? (
+                                  <img
+                                    src={
+                                      user?.image
+                                        ? `${IMG_URL}${user.image}`
+                                        : "/default-avatar.png"
+                                    }
+                                    alt="Me"
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : booking.guideId?.image ||
+                                  booking.guide?.image ? (
+                                  <img
+                                    src={`${IMG_URL}${
+                                      booking.guideId?.image ||
+                                      booking.guide?.image
+                                    }`}
+                                    alt="Guide"
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <i className="bi bi-person text-xs text-slate-400"></i>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Action Buttons Section */}
+                        <div className="flex flex-col gap-2 pt-3 border-t border-slate-200/50 mt-2">
+                          {/* Numeric check for Guide role (2) */}
+                          {Number(user?.role) === 2 &&
+                            booking.status === "confirmed" && (
+                              <button
+                                onClick={() =>
+                                  handleStatusUpdate(booking, "completed")
+                                }
+                                className="w-full bg-emerald-600 text-white text-[11px] font-black uppercase tracking-widest py-2.5 rounded-xl hover:bg-emerald-700 transition-colors shadow-md active:scale-95"
+                              >
+                                Mark as Completed
+                              </button>
+                            )}
+
+                          {!isStaff &&
+                            booking.status === "completed" &&
+                            !booking.isCustom && (
+                              <button
+                                onClick={() => openReviewModal(booking)}
+                                className={`w-full text-[11px] font-black uppercase tracking-widest py-2.5 rounded-xl transition-all shadow-md active:scale-95 ${
+                                  getExistingReview(
+                                    booking.destinationId?._id,
+                                    booking.destinationId?.title
+                                  )
+                                    ? "bg-white border border-emerald-600 text-emerald-600"
+                                    : "bg-emerald-600 text-white hover:bg-emerald-700"
+                                }`}
+                              >
+                                {getExistingReview(
+                                  booking.destinationId?._id,
+                                  booking.destinationId?.title
+                                )
+                                  ? "Edit Review"
+                                  : "Rate Experience"}
+                              </button>
+                            )}
+
+                          {!isStaff && booking.status === "pending" && (
+                            <button
+                              onClick={(e) => handlePayment(e, booking)}
+                              className="w-full bg-[#004d4d] text-white text-[11px] font-black uppercase tracking-widest py-2.5 rounded-xl hover:bg-black transition-all shadow-md active:scale-95"
+                            >
+                              Proceed to Payment
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex flex-col gap-2 pt-3 border-t border-slate-200/50 mt-2">
-                        {isGuide && booking.status === "confirmed" && (
-                          <button
-                            onClick={() =>
-                              handleStatusUpdate(booking._id, "completed")
-                            }
-                            className="w-full bg-emerald-600 text-white text-[11px] font-black uppercase tracking-widest py-2.5 rounded-xl hover:bg-emerald-700 transition-colors shadow-md active:scale-95"
-                          >
-                            Mark as Completed
-                          </button>
-                        )}
-                        {!isStaff && booking.status === "completed" && (
-                          <button
-                            onClick={() => openReviewModal(booking)}
-                            className={`w-full text-[11px] font-black uppercase tracking-widest py-2.5 rounded-xl transition-all shadow-md active:scale-95 ${
-                              getExistingReview(
-                                booking.destinationId?._id,
-                                booking.destinationId?.title
-                              )
-                                ? "bg-white border border-emerald-600 text-emerald-600"
-                                : "bg-emerald-600 text-white hover:bg-emerald-700"
-                            }`}
-                          >
-                            {getExistingReview(
-                              booking.destinationId?._id,
-                              booking.destinationId?.title
-                            )
-                              ? "Edit Review"
-                              : "Rate Experience"}
-                          </button>
-                        )}
-                        {!isStaff && booking.status === "pending" && (
-                          <button
-                            onClick={(e) => handlePayment(e, booking)}
-                            className="w-full bg-[#004d4d] text-white text-[11px] font-black uppercase tracking-widest py-2.5 rounded-xl hover:bg-black transition-all shadow-md active:scale-95"
-                          >
-                            Pay now
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))
+                    ))
                 )}
               </div>
             </div>

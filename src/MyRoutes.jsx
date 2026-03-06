@@ -30,6 +30,10 @@ import Testimonials from './pages/Testimonials';
 import AdminFaq from './pages/admin/AdminFaq';
 import PaymentFailure from './pages/PaymentFailure';
 import PortersInfo from './pages/admin/PortersInfo';
+import CustomTour from './pages/CustomTour';
+import ManageActivity from './pages/admin/ManageActivity';
+import Activities from './pages/admin/Activities';
+import CustomTourList from './pages/admin/CustomTourList';
 
 
 const MyRoutes = () => {
@@ -58,6 +62,7 @@ const MyRoutes = () => {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
           <Route path="/payment-failure" element={<PaymentFailure />} />
+          <Route path="/custom-tours" element={<CustomTour />} />
 
           <Route path='*' element = {<PageNotFound/>}/>
 
@@ -77,6 +82,9 @@ const MyRoutes = () => {
             <Route path="porter-info" element={<PortersInfo />} />
             <Route path="admin-review" element = {<AdminReview />} />
             <Route path="admin-faq" element = {<AdminFaq />} />
+            <Route path="manage-activity" element={<ManageActivity />} />
+            <Route path="activities" element={<Activities />} />
+            <Route path="custom-tour-list" element={<CustomTourList />} />
 
 
           </Route>

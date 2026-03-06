@@ -60,8 +60,6 @@ const PortersInfo = () => {
 
   const getActiveAssignment = (porterId) => {
     return bookings.find((b) => {
-      // Logic assumes bookings check for hasPorter and stores porterId
-      // Adjust if your booking schema uses a different field for assigned porter
       const bPorterId = b.porterId?._id || b.porterId; 
       return (
         bPorterId === porterId &&
