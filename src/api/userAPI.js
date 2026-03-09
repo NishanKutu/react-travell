@@ -16,6 +16,12 @@ export const getAllGuides = () => {
     .catch((error) => console.log(error));
 };
 
+export const getAllPorters = () => {
+  return fetch(`${API}/getallporters`)
+    .then((res) => res.json())
+    .catch((error) => console.log(error));
+};
+
 export const deleteUser = (id, token) => {
   return fetch(`${API}/deleteuser/${id}`, {
     method: "DELETE",

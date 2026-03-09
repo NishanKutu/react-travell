@@ -2,13 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAllDestinations } from "../../api/destinationApi";
 import { adminCreateBooking } from "../../api/bookingApi";
-import { getAllUsers, getAllGuides } from "../../api/userAPI";
+import { getAllUsers, getAllGuides, getAllPorters } from "../../api/userAPI";
 
 const AdminAddBooking = () => {
   const navigate = useNavigate();
   const [destinations, setDestinations] = useState([]);
   const [users, setUsers] = useState([]);
   const [guides, setGuides] = useState([]);
+  const [porters, setPorters] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [formData, setFormData] = useState({
@@ -18,8 +19,8 @@ const AdminAddBooking = () => {
     hasGuide: false,
     hasPorter: false,
     guideId: "",
-    porterCost: 2000,
-    status: "confirmed", 
+    porterId: "",
+    status: "confirmed",
     bookingDate: new Date().toISOString().split("T")[0],
   });
 
@@ -29,15 +30,32 @@ const AdminAddBooking = () => {
         const authData = JSON.parse(localStorage.getItem("auth"));
         const token = authData?.token;
 
-        const [destRes, userRes, guideRes] = await Promise.all([
+        // Note: If getAllPorters() returns the full list, you might not even need to filter users.
+        // But based on your logic, we will use the users list.
+        const [destRes, userRes, guideRes, porterRes] = await Promise.all([
           getAllDestinations(),
           getAllUsers(token),
           getAllGuides(),
+          getAllPorters(),
         ]);
 
         setDestinations(destRes.data || []);
-        setUsers(Array.isArray(userRes) ? userRes : userRes.data || []);
+
+        // Define the users array clearly
+        const fetchedUsers = Array.isArray(userRes)
+          ? userRes
+          : userRes.data || [];
+        setUsers(fetchedUsers);
+
         setGuides(guideRes.success ? guideRes.data : guideRes || []);
+
+        // FIX: Filter from fetchedUsers instead of the undefined 'allUsers'
+        // Also, check if porterRes has data directly if your API provides it
+        const porterList = porterRes.success
+          ? porterRes.data
+          : fetchedUsers.filter((u) => Number(u.role) === 3);
+
+        setPorters(porterList);
       } catch (err) {
         console.error("Failed to load data", err);
       } finally {
@@ -56,13 +74,20 @@ const AdminAddBooking = () => {
   const selectedGuide = guides.find((g) => g._id === formData.guideId);
   const dynamicGuideRate = selectedGuide ? Number(selectedGuide.dailyRate) : 0;
 
+  // DYNAMIC PORTER CALCULATION
+  const selectedPorter = porters.find((p) => p._id === formData.porterId);
+  const dynamicPorterRate = selectedPorter
+    ? Number(selectedPorter.dailyRate)
+    : 0;
+
   // DYNAMIC PRICE CALCULATION
   const subtotal = selectedTrip
     ? selectedTrip.price * (formData.travelerCount || 0)
     : 0;
   const currentGuideCost =
     formData.hasGuide && formData.guideId ? dynamicGuideRate : 0;
-  const currentPorterCost = formData.hasPorter ? formData.porterCost : 0;
+  const currentPorterCost =
+    formData.hasPorter && formData.porterId ? dynamicPorterRate : 0;
   const finalTotal = subtotal + currentGuideCost + currentPorterCost;
 
   const handleTravelerChange = (e) => {
@@ -79,26 +104,37 @@ const AdminAddBooking = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!formData.userId || !formData.destinationId)
       return alert("Select user and destination");
     if (formData.hasGuide && !formData.guideId)
       return alert("Please assign a specific guide.");
+    if (formData.hasPorter && !formData.porterId)
+      return alert("Please assign a specific porter.");
 
     try {
       const payload = {
         ...formData,
         totalPrice: finalTotal,
         guideCost: currentGuideCost,
+        porterCost: currentPorterCost,
         guideId: formData.hasGuide ? formData.guideId : null,
+        porterId: formData.hasPorter ? formData.porterId : null,
       };
 
       const res = await adminCreateBooking(payload);
+
       if (res.success) {
         alert("Booking created successfully!");
-        navigate("/admin/bookings");
+        navigate("/admin/booking-list");
+      } else {
+        alert(res.message || "Booking failed");
+        navigate("/admin/dashboard");
       }
     } catch (err) {
-      alert(err.message);
+      console.error("Booking Error:", err);
+      alert(err.message || "An error occurred during booking");
+      navigate("/admin/dashboard");
     }
   };
 
@@ -129,11 +165,13 @@ const AdminAddBooking = () => {
                 }
               >
                 <option value="">-- Choose User --</option>
-                {users.map((u) => (
-                  <option key={u._id} value={u._id}>
-                    {u.username}
-                  </option>
-                ))}
+                {users
+                  .filter((u) => Number(u.role) === 0)
+                  .map((u) => (
+                    <option key={u._id} value={u._id}>
+                      {u.username}
+                    </option>
+                  ))}
               </select>
             </div>
             <div>
@@ -228,7 +266,7 @@ const AdminAddBooking = () => {
             </h4>
             <div className="space-y-4">
               <div className="flex gap-6">
-                <label className="flex items-center gap-2 cursor-pointer group">
+                <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     disabled={!isDestinationSelected}
@@ -246,18 +284,22 @@ const AdminAddBooking = () => {
                     Hire Guide
                   </span>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer group">
+                <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     disabled={!isDestinationSelected}
                     checked={formData.hasPorter}
                     onChange={(e) =>
-                      setFormData({ ...formData, hasPorter: e.target.checked })
+                      setFormData({
+                        ...formData,
+                        hasPorter: e.target.checked,
+                        porterId: "",
+                      })
                     }
-                    className="w-4 h-4 accent-blue-600"
+                    className="w-4 h-4 accent-orange-600"
                   />
                   <span className="text-sm font-bold text-slate-700">
-                    Hire Porter (Rs. {formData.porterCost})
+                    Hire Porter
                   </span>
                 </label>
               </div>
@@ -294,6 +336,39 @@ const AdminAddBooking = () => {
                   )}
                 </div>
               )}
+
+              {/* 6. DYNAMIC PORTER DROPDOWN */}
+              {formData.hasPorter && (
+                <div className="bg-white p-3 rounded-lg border border-orange-100 shadow-sm animate-in fade-in slide-in-from-top-2">
+                  <label className="block text-[10px] font-black text-orange-500 uppercase mb-2">
+                    Assign Porter
+                  </label>
+                  <select
+                    className="w-full border-b p-1 text-sm outline-none focus:border-orange-500"
+                    value={formData.porterId}
+                    onChange={(e) =>
+                      setFormData({ ...formData, porterId: e.target.value })
+                    }
+                  >
+                    <option value="">-- Select Porter --</option>
+                    {porters.map((p) => (
+                      <option key={p._id} value={p._id}>
+                        {p.username} (Max: {p.maxWeight || 25}kg)
+                      </option>
+                    ))}
+                  </select>
+                  {selectedPorter && (
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-[10px] text-slate-400 italic">
+                        Exp: {selectedPorter.experience} yrs
+                      </span>
+                      <span className="text-xs font-bold text-orange-600">
+                        + Rs. {selectedPorter.dailyRate}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -311,7 +386,8 @@ const AdminAddBooking = () => {
               type="submit"
               disabled={
                 !isDestinationSelected ||
-                (formData.hasGuide && !formData.guideId)
+                (formData.hasGuide && !formData.guideId) ||
+                (formData.hasPorter && !formData.porterId)
               }
               className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-xl font-bold transition-all disabled:opacity-30"
             >

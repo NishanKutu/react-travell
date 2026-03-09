@@ -13,6 +13,8 @@
     "@heroicons/react": "^2.2.0",
     "@tailwindcss/vite": "^4.1.18",
     "bcryptjs": "^3.0.3",
+    "bootstrap-icons": "^1.13.1",
+    "framer-motion": "^12.35.0",
     "lucide-react": "^0.563.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -20,6 +22,7 @@
     "react-router-dom": "^7.10.1",
     "react-scroll": "^1.9.3",
     "react-toastify": "^11.0.5",
+    "swiffy-slider": "^1.6.0",
     "swiper": "^12.0.3",
     "tailwindcss": "^4.1.18"
   },

@@ -25,27 +25,31 @@ const userSchema = new mongoose.Schema(
     role: {
       type: Number,
       default: 0,
-      // 0-normal user, 1-admin, 2-guide
+      // 0-normal user, 1-admin, 2-guide, 3-porter
     },
-    // Guide specific fields
     image: {
       type: String,
-    },
-    experience: {
-      type: Number,
     },
     age: {
       type: Number,
     },
+    // Guide and porter specific fields
+    experience: {
+      type: Number,
+    },
     dailyRate: {
       type: Number,
-      default: 0
+      default: 0,
     },
     bio: {
       type: String,
     },
     specialization: {
       type: String,
+    },
+    maxWeight: {
+      type: Number,
+      default: 0,
     },
     isVerified: {
       type: Boolean,

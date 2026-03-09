@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import sun from '../assets/img/sun.png';
-import "../App.css";
+
 
 // Swiper Imports
 import { Swiper, SwiperSlide } from 'swiper/react';

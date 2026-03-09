@@ -10,6 +10,9 @@ const destinationRoutes = require("./routes/destinationRoutes");
 const bookingRoutes = require("./routes/bookingRoute");
 const reviewRoute = require("./routes/reviewRoute");
 const faqRoute = require("./routes/faqRoute");
+const activityRoute = require("./routes/activityRoute");     // For activities like "Sunrise View"
+const customTourRoute = require("./routes/customTourRoute"); // For saving user itineraries
+const cityRoute = require("./routes/cityRoute");             // For dynamic cities/destinations
 
 
 
@@ -32,6 +35,10 @@ app.use('/api/destinations', destinationRoutes)
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/reviews", reviewRoute);
 app.use("/api/faqs", faqRoute);
+app.use("/api/activities", activityRoute);     // Used by AddActivity.jsx and CustomTour.jsx
+app.use("/api/custom-tours", customTourRoute); // Used to save the final itinerary
+app.use("/api/cities", cityRoute); // Used to populate dynamic city dropdowns
+
 
 
 const port = process.env.PORT || 8000

@@ -1,10 +1,10 @@
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { FaFacebookF, FaInstagram } from "react-icons/fa";
-import destination from "../pages/Destinations";
+
 
 const Footer = () => {
-  const navigate = useNavigate();
+
 
   return (
     <footer className="bg-white text-gray-800 pt-16 pb-8 px-5 md:px-32 border-t border-gray-200">
@@ -48,7 +48,7 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* 2. Middle Section: Multi-column Links */}
+      {/* Middle Section: Multi-column Links */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 py-12">
         <div>
           <h3 className="font-bold mb-4 uppercase text-xs tracking-widest text-gray-400">
@@ -60,6 +60,9 @@ const Footer = () => {
             </Link>
             <Link to="/destinations" className="hover:text-[#a68269]">
               Tours
+            </Link>
+            <Link to="/custom-tours" className="hover:text-[#a68269]">
+              Custom Tours
             </Link>
           </ul>
         </div>
@@ -114,7 +117,7 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* 3. Bottom Section: Copyright */}
+      {/* Bottom Section: Copyright */}
       <div className="pt-8 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
         <p className="text-[10px] text-gray-400">
           All Rights Reserved © 2023 - HikeHub

@@ -9,6 +9,7 @@ import {
   FaShieldAlt,
   FaCheckCircle,
   FaTimes,
+  FaWeightHanging,
 } from "react-icons/fa";
 import {
   getAllUsers,
@@ -54,6 +55,8 @@ const UsersListPage = () => {
           ? "administrator admin"
           : user.role === 2
           ? "guide"
+          : user.role === 3
+          ? "porter"
           : "client user";
 
       return (
@@ -68,6 +71,7 @@ const UsersListPage = () => {
   const stats = {
     admins: users.filter((u) => u.role === 1).length,
     guides: users.filter((u) => u.role === 2).length,
+    porters: users.filter((u) => u.role === 3).length,
     clients: users.filter((u) => u.role === 0).length,
   };
 
@@ -188,6 +192,38 @@ const UsersListPage = () => {
               >
                 <FaMapMarkedAlt />
               </div>
+            </div>
+          </div>
+          {/* Porter Card */}
+          <div
+            onClick={() => handleStatClick("porter")}
+            className={`p-5 rounded-2xl shadow-sm border cursor-pointer transition-all duration-300 hover:shadow-md ${
+              searchTerm.toLowerCase() === "porter"
+                ? "bg-orange-600 border-orange-600 text-white"
+                : "bg-white border-orange-100"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p
+                  className={`text-[9px] font-black uppercase tracking-widest ${
+                    searchTerm.toLowerCase() === "porter"
+                      ? "text-orange-100"
+                      : "text-slate-400"
+                  }`}
+                >
+                  Porters
+                </p>
+                <h3 className="text-xl font-black">{stats.porters}</h3>
+              </div>
+              <FaWeightHanging
+                className={
+                  searchTerm.toLowerCase() === "porter"
+                    ? "text-orange-200"
+                    : "text-orange-500"
+                }
+                size={20}
+              />
             </div>
           </div>
 
@@ -325,11 +361,13 @@ const UsersListPage = () => {
                       </td>
                       <td className="p-5">
                         <span
-                          className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter border shadow-sm ${
+                          className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter border ${
                             user.role === 1
                               ? "bg-indigo-50 text-indigo-700 border-indigo-200"
                               : user.role === 2
                               ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                              : user.role === 3
+                              ? "bg-orange-50 text-orange-700 border-orange-200" // Added Porter Style
                               : "bg-slate-50 text-slate-600 border-slate-200"
                           }`}
                         >
@@ -337,6 +375,8 @@ const UsersListPage = () => {
                             ? "Administrator"
                             : user.role === 2
                             ? "Guide"
+                            : user.role === 3
+                            ? "Porter"
                             : "Client"}
                         </span>
                       </td>

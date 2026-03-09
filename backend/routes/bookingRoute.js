@@ -7,7 +7,8 @@ const {
     verifyEsewaPayment ,
     getAllBookings,
     updateBookingStatus,
-    deleteBooking
+    deleteBooking,
+    cancelAndRefund,
 } = require("../controllers/bookingController");
 const { isLoggedIn } = require("../middleware/authMiddleware");
 
@@ -29,5 +30,7 @@ router.post("/initiate-esewa", isLoggedIn, initiateEsewaPayment);
 
 // Verification route (Called by eSewa after payment)
 router.get("/verify-esewa", verifyEsewaPayment);
+
+router.put("/refund/:id", isLoggedIn, cancelAndRefund);
 
 module.exports = router;

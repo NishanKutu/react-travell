@@ -18,6 +18,14 @@ const SignupPage = ({ isOpen, onClose, switchToLogin }) => {
     specialization: "",
   });
 
+  const [porterData, setPorterData] = useState({
+    experience: "",
+    age: "",
+    bio: "",
+    dailyRate: "",
+    maxWeight: "",
+  });
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -28,6 +36,10 @@ const SignupPage = ({ isOpen, onClose, switchToLogin }) => {
 
   const handleGuideChange = (e) => {
     setGuideData({ ...guideData, [e.target.name]: e.target.value });
+  };
+
+  const handlePorterChange = (e) => {
+    setPorterData({ ...porterData, [e.target.name]: e.target.value });
   };
 
   if (!isOpen) return null;
@@ -51,6 +63,14 @@ const SignupPage = ({ isOpen, onClose, switchToLogin }) => {
         formData.append("age", guideData.age);
         formData.append("bio", guideData.bio);
         formData.append("specialization", guideData.specialization);
+        formData.append("dailyRate", guideData.dailyRate);
+      } else if (role === 3) {
+        formData.append("experience", porterData.experience);
+        formData.append("age", porterData.age);
+        formData.append("bio", porterData.bio);
+        formData.append("maxWeight", porterData.maxWeight);
+        formData.append("dailyRate", porterData.dailyRate);
+
       }
 
       // Pass formData to your API
@@ -105,6 +125,15 @@ const SignupPage = ({ isOpen, onClose, switchToLogin }) => {
               onClick={() => setRole(2)}
             >
               Guide
+            </button>
+            <button
+              type="button"
+              className={`flex-1 py-2 text-sm rounded-md ${
+                role === 3 ? "bg-white shadow text-[#004d4d]" : "text-gray-500"
+              }`}
+              onClick={() => setRole(3)}
+            >
+              Porter
             </button>
           </div>
 
@@ -187,6 +216,49 @@ const SignupPage = ({ isOpen, onClose, switchToLogin }) => {
                 placeholder="Brief Bio"
                 className="p-2 border rounded-md"
                 onChange={handleGuideChange}
+                rows="2"
+              />
+            </div>
+          )}
+          {role === 3 && (
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <input
+                type="number"
+                name="experience"
+                placeholder="Years of Experience"
+                className="p-2 border rounded-md"
+                onChange={handlePorterChange}
+                required
+              />
+              <input
+                type="number"
+                name="age"
+                placeholder="Age"
+                className="p-2 border rounded-md"
+                onChange={handlePorterChange}
+                required
+              />
+              <input
+                type="number"
+                name="dailyRate"
+                placeholder="Daily Rate ($)"
+                className="p-2 border rounded-md"
+                onChange={handlePorterChange}
+                required
+              />
+              <input
+                type="number"
+                name="maxWeight"
+                placeholder="Max Weight (kg)"
+                className="p-2 border rounded-md"
+                onChange={handlePorterChange}
+                required
+              />
+              <textarea
+                name="bio"
+                placeholder="Porter Bio"
+                className="p-2 border rounded-md col-span-2"
+                onChange={handlePorterChange}
                 rows="2"
               />
             </div>
