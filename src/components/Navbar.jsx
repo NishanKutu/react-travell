@@ -86,9 +86,9 @@ const Navbar = ({ openLogin, openSignup }) => {
         <div className="hidden lg:flex flex-row items-center gap-3 xl:gap-4 flex-shrink-0">
           {auth ? (
             <>
-              <Link to={auth.user.role === 1 ? "/admin/dashboard" : "/profile"}>
+              <Link to={auth.user?.role === 1 ? "/admin/dashboard" : "/profile"}>
                 <Button
-                  title={auth.user.role === 1 ? "Dashboard" : "Profile"}
+                  title={auth.user?.role === 1 ? "Dashboard" : "Profile"}
                   variant="secondary"
                 />
               </Link>
