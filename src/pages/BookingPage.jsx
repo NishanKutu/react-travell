@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { isLoggedIn } from "../api/authAPI";
 import { getDestinationById } from "../api/destinationApi";
-import { createBooking, getEsewaSignature } from "../api/bookingApi";
+import { createBooking, getEsewaSignature, initiateStripePayment } from "../api/bookingApi";
 import { getAllGuides, getAllPorters } from "../api/userApi";
 import PaymentModal from "./PaymentModal";
 import { FaCalendarAlt } from "react-icons/fa";
@@ -80,28 +80,40 @@ const BookingPage = () => {
 
   const handlePaymentSelection = async (method) => {
     console.log("Current Booking Date State:", bookingDate);
-    if (method === "esewa") {
-      try {
-        const amountToSend = Number(finalTotal).toFixed(0);
-        const bookingRes = await createBooking({
-          destinationId: id,
-          travelerCount,
-          totalPrice: amountToSend,
-          hasGuide,
-          hasPorter,
-          guideCost: guideTotal,
-          porterCost: porterTotal,
-          guideId: selectedGuide?._id,
-          porterId: selectedPorter?._id,
-          bookingDate: bookingDate,
-        });
 
-        if (!bookingRes?.success)
-          throw new Error(bookingRes?.message || "Booking failed.");
+    try {
+      // Check for booking date before proceeding
+      if (!bookingDate) {
+        alert("Please select a trekking date.");
+        return;
+      }
 
+      const amountToSend = Number(finalTotal).toFixed(0);
+
+      // Create the booking first to get the bookingId for both payment methods
+      const bookingRes = await createBooking({
+        destinationId: id,
+        travelerCount,
+        totalPrice: amountToSend,
+        hasGuide,
+        hasPorter,
+        guideCost: guideTotal,
+        porterCost: porterTotal,
+        guideId: selectedGuide?._id,
+        porterId: selectedPorter?._id,
+        bookingDate: bookingDate,
+      });
+
+      if (!bookingRes?.success) {
+        throw new Error(bookingRes?.message || "Booking failed.");
+      }
+
+      const bookingId = bookingRes.data._id;
+
+      if (method === "esewa") {
         const sigRes = await getEsewaSignature({
           amount: amountToSend,
-          bookingId: bookingRes.data._id,
+          bookingId: bookingId,
         });
 
         if (sigRes.success) {
@@ -111,9 +123,23 @@ const BookingPage = () => {
             sigRes.signature
           );
         }
-      } catch (err) {
-        alert("Booking/Payment Error: " + err.message);
+      } else if (method === "stripe") {
+        // initiateStripePayment must be imported from your api file
+        const stripeRes = await initiateStripePayment({
+          bookingId: bookingId,
+          amount: amountToSend,
+          destinationName: destination.title,
+        });
+
+        if (stripeRes.success && stripeRes.url) {
+          // Redirect user to Stripe Checkout page
+          window.location.href = stripeRes.url;
+        } else {
+          throw new Error("Stripe session creation failed.");
+        }
       }
+    } catch (err) {
+      alert("Payment Error: " + err.message);
     }
   };
 

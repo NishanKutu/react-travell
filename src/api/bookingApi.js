@@ -92,3 +92,47 @@ export const getEsewaSignature = async (paymentData) => {
     throw error;
   }
 };
+
+// Initiate Stripe Payment
+export const initiateStripePayment = async (paymentData) => {
+  try {
+    const response = await fetch(`${BASE_URL}/initiate-stripe`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(paymentData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to initiate Stripe");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Stripe Initiation Error:", error);
+    throw error;
+  }
+};
+
+// Verify Stripe Payment
+export const verifyStripePayment = async (sessionId, bookingId) => {
+  try {
+    const response = await fetch(
+      `${BASE_URL}/verify-stripe?session_id=${sessionId}&bookingId=${bookingId}`,
+      {
+        method: "GET",
+        headers: getHeaders(),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Stripe verification failed");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Stripe Verification Error:", error);
+    throw error;
+  }
+};

@@ -1,14 +1,16 @@
 const express = require("express");
 const router = express.Router();
-const { 
-    createBooking,
-    adminCreateBooking,
-    initiateEsewaPayment, 
-    verifyEsewaPayment ,
-    getAllBookings,
-    updateBookingStatus,
-    deleteBooking,
-    cancelAndRefund,
+const {
+  createBooking,
+  adminCreateBooking,
+  initiateEsewaPayment,
+  verifyEsewaPayment,
+  getAllBookings,
+  updateBookingStatus,
+  deleteBooking,
+  cancelAndRefund,
+  initiateStripePayment,
+  verifyStripePayment,
 } = require("../controllers/bookingController");
 const { isLoggedIn } = require("../middleware/authMiddleware");
 
@@ -30,6 +32,11 @@ router.post("/initiate-esewa", isLoggedIn, initiateEsewaPayment);
 
 // Verification route (Called by eSewa after payment)
 router.get("/verify-esewa", verifyEsewaPayment);
+
+// Initiate Stripe Payment
+router.post("/initiate-stripe", isLoggedIn, initiateStripePayment);
+
+router.get("/verify-stripe", verifyStripePayment);
 
 router.put("/refund/:id", isLoggedIn, cancelAndRefund);
 

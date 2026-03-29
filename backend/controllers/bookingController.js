@@ -1,4 +1,5 @@
 const Booking = require("../models/bookingModel");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const Destination = require("../models/destinationModel");
 const crypto = require("crypto");
 const CustomTour = require("../models/customTourModel");
@@ -188,11 +189,11 @@ exports.initiateEsewaPayment = async (req, res) => {
   }
 };
 
-
 exports.verifyEsewaPayment = async (req, res) => {
   try {
     const { data } = req.query;
-    if (!data) return res.redirect(`${process.env.FRONTEND_URL}/profile?payment=failed`);
+    if (!data)
+      return res.redirect(`${process.env.FRONTEND_URL}/profile?payment=failed`);
 
     const decodedData = JSON.parse(
       Buffer.from(data, "base64").toString("utf-8")
@@ -201,14 +202,16 @@ exports.verifyEsewaPayment = async (req, res) => {
 
     if (status === "COMPLETE") {
       const bookingId = transaction_uuid.split("-")[0];
-      let order = await Booking.findById(bookingId) || await CustomTour.findById(bookingId);
+      let order =
+        (await Booking.findById(bookingId)) ||
+        (await CustomTour.findById(bookingId));
 
       if (order) {
         order.status = "confirmed";
         order.paymentMethod = "esewa";
         await order.save();
         return res.redirect(
-          `${process.env.FRONTEND_URL}/profile?payment=success`
+          `${process.env.FRONTEND_URL}/payment-success?payment=success`
         );
       }
     }
@@ -267,6 +270,64 @@ exports.cancelAndRefund = async (req, res) => {
       message: "Unpaid booking cancelled successfully.",
       data: booking,
     });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.initiateStripePayment = async (req, res) => {
+  try {
+    const { bookingId, amount, destinationName } = req.body;
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price_data: {
+            currency: "npr",
+            product_data: {
+              name: destinationName || "Trekking Booking",
+            },
+            unit_amount: Math.round(amount * 100),
+          },
+          quantity: 1,
+        },
+      ],
+      mode: "payment",
+      success_url: `${process.env.FRONTEND_URL}/payment-success?payment=success&session_id={CHECKOUT_SESSION_ID}&bookingId=${bookingId}`,
+      cancel_url: `${process.env.FRONTEND_URL}/profile?payment=failed`,
+    });
+
+    res.status(200).json({ success: true, url: session.url });
+  } catch (error) {
+    console.error("Stripe Error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// --- STRIPE: Verify Payment ---
+exports.verifyStripePayment = async (req, res) => {
+  try {
+    const { session_id, bookingId } = req.query;
+
+    const session = await stripe.checkout.sessions.retrieve(session_id);
+
+    if (session.payment_status === "paid") {
+      const booking = await Booking.findById(bookingId);
+      if (booking) {
+        booking.status = "confirmed";
+        booking.paymentMethod = "stripe";
+        booking.transactionId = session.id; // Store Stripe Session ID
+        await booking.save();
+        return res
+          .status(200)
+          .json({ success: true, message: "Payment verified" });
+      }
+    }
+
+    res
+      .status(400)
+      .json({ success: false, message: "Payment verification failed" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
