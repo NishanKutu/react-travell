@@ -16,6 +16,7 @@ const SignupPage = ({ isOpen, onClose, switchToLogin }) => {
     age: "",
     bio: "",
     specialization: "",
+    dailyRate: "",
   });
 
   const [porterData, setPorterData] = useState({
@@ -63,14 +64,13 @@ const SignupPage = ({ isOpen, onClose, switchToLogin }) => {
         formData.append("age", guideData.age);
         formData.append("bio", guideData.bio);
         formData.append("specialization", guideData.specialization);
-        formData.append("dailyRate", guideData.dailyRate);
+        formData.append("dailyRate", guideData.dailyRate || 0);
       } else if (role === 3) {
         formData.append("experience", porterData.experience);
         formData.append("age", porterData.age);
         formData.append("bio", porterData.bio);
         formData.append("maxWeight", porterData.maxWeight);
         formData.append("dailyRate", porterData.dailyRate);
-
       }
 
       // Pass formData to your API
@@ -207,6 +207,14 @@ const SignupPage = ({ isOpen, onClose, switchToLogin }) => {
                 type="text"
                 name="specialization"
                 placeholder="Specialization"
+                className="p-2 border rounded-md"
+                onChange={handleGuideChange}
+                required
+              />
+              <input
+                type="number"
+                name="dailyRate"
+                placeholder="Daily Rate ($)"
                 className="p-2 border rounded-md"
                 onChange={handleGuideChange}
                 required
