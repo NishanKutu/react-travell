@@ -4,6 +4,8 @@ const saltRounds = 10;
 const TokenModel = require("../models/tokenModel");
 const crypto = require("crypto");
 const emailSender = require("../utils/emailSender");
+const Booking = require("../models/bookingModel");
+const Destination = require("../models/destinationModel");
 
 const jwt = require("jsonwebtoken");
 
@@ -153,8 +155,16 @@ exports.register = async (req, res) => {
 // Update Profile Data
 exports.updateProfile = async (req, res) => {
   try {
-    const { username, experience, age, bio, specialization, dailyRate, maxWeight } = req.body;
-    
+    const {
+      username,
+      experience,
+      age,
+      bio,
+      specialization,
+      dailyRate,
+      maxWeight,
+    } = req.body;
+
     // Prepare update object
     const updateData = {
       username,
@@ -180,7 +190,7 @@ exports.updateProfile = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Profile updated successfully",
-      user: updatedUser
+      user: updatedUser,
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -501,8 +511,8 @@ exports.login = async (req, res) => {
       email: user.email,
       username: user.username,
       role: user.role,
-      image: user.image, 
-      experience: user.experience, 
+      image: user.image,
+      experience: user.experience,
       age: user.age,
       dailyRate: user.dailyRate,
       bio: user.bio,
@@ -522,7 +532,7 @@ exports.getAllUsers = async (req, res) => {
     }
     res.status(200).json({
       success: true,
-      data: users
+      data: users,
     });
   } catch (error) {
     console.error("Get All Users Error:", error);
@@ -533,11 +543,34 @@ exports.getAllUsers = async (req, res) => {
 // for guide
 exports.getAllGuides = async (req, res) => {
   try {
-    // Specifically find users with role 2
-    let guides = await UserModel.find({ role: 2 }).select("-password");
+    const { date, destinationId } = req.query;
+    let filter = { role: 2 };
+
+    // If both date and destination are provided, filter out busy guides
+    if (date && destinationId) {
+      const destination = await Destination.findById(destinationId);
+      if (destination) {
+        const durationDays = parseInt(destination.duration) || 1;
+        const startDate = new Date(date);
+        const endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + (durationDays - 1));
+
+        // Find IDs of guides who have an overlapping booking
+        const busyGuideIds = await Booking.find({
+          status: { $in: ["pending", "confirmed"] },
+          bookingDate: { $lte: endDate },
+          endDate: { $gte: startDate },
+          guideId: { $ne: null },
+        }).distinct("guideId");
+
+        filter._id = { $nin: busyGuideIds };
+      }
+    }
+
+    const guides = await UserModel.find(filter).select("-password");
     res.status(200).json({ success: true, data: guides });
   } catch (error) {
-    res.status(500).json({ success: false, error: "Internal Server Error" });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -610,10 +643,43 @@ exports.manualVerifyUser = async (req, res) => {
 
 exports.getAllPorters = async (req, res) => {
   try {
+    const { date, destinationId } = req.query;
     // Role 3 is for Porters
-    let porters = await UserModel.find({ role: 3 }).select("-password");
-    res.status(200).json({ success: true, data: porters });
+    let filter = { role: 3 };
+
+    // If both date and destinationId are provided, filter by availability
+    if (date && destinationId) {
+      const destination = await Destination.findById(destinationId);
+
+      if (destination) {
+        // Calculate the Trek Range
+        const durationDays = parseInt(destination.duration) || 1;
+        const startDate = new Date(date);
+        const endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + (durationDays - 1));
+
+        // Find Porters who are busy during this specific date range
+        const busyPorterIds = await Booking.find({
+          status: { $in: ["pending", "confirmed"] },
+          // Overlap Logic:
+          bookingDate: { $lte: endDate },
+          endDate: { $gte: startDate },
+          porterId: { $ne: null },
+        }).distinct("porterId");
+
+        // 3. Exclude the busy porter IDs from our search
+        filter._id = { $nin: busyPorterIds };
+      }
+    }
+
+    const porters = await UserModel.find(filter).select("-password");
+
+    res.status(200).json({
+      success: true,
+      count: porters.length,
+      data: porters,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, error: "Internal Server Error" });
+    res.status(500).json({ success: false, error: error.message });
   }
 };

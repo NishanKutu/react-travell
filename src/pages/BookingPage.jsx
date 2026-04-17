@@ -2,8 +2,12 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { isLoggedIn } from "../api/authAPI";
 import { getDestinationById } from "../api/destinationApi";
-import { createBooking, getEsewaSignature, initiateStripePayment } from "../api/bookingApi";
-import { getAllGuides, getAllPorters } from "../api/userApi";
+import {
+  createBooking,
+  getEsewaSignature,
+  initiateStripePayment,
+  getAvailableStaff,
+} from "../api/bookingApi";
 import PaymentModal from "./PaymentModal";
 import { FaCalendarAlt } from "react-icons/fa";
 import { useOutletContext } from "react-router-dom";
@@ -20,8 +24,8 @@ const BookingPage = () => {
   const [expandedGuideId, setExpandedGuideId] = useState(null);
   const [expandedPorterId, setExpandedPorterId] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [guidesLoading, setGuidesLoading] = useState(true);
-  const [portersLoading, setPortersLoading] = useState(true);
+  const [guidesLoading, setGuidesLoading] = useState(false);
+  const [portersLoading, setPortersLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [travelerCount, setTravelerCount] = useState(1);
@@ -32,33 +36,54 @@ const BookingPage = () => {
   const [hasPorter, setHasPorter] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setGuidesLoading(true);
-      setPortersLoading(true);
+    const fetchDest = async () => {
       try {
-        const [destRes, guideRes, porterRes] = await Promise.all([
-          getDestinationById(id),
-          getAllGuides(),
-          getAllPorters(),
-        ]);
-
+        const destRes = await getDestinationById(id);
         if (destRes.success) setDestination(destRes.data);
-
-        const guideData = guideRes?.data || [];
-        const porterData = porterRes?.data || [];
-        setPorters(porterData);
-        setGuides(guideData);
       } catch (err) {
-        console.error("Fetch Error:", err);
-        setError("Failed to load booking details.");
+        setError("Failed to load destination details.");
       } finally {
         setLoading(false);
+      }
+    };
+    fetchDest();
+  }, [id]);
+
+  useEffect(() => {
+    const fetchStaff = async () => {
+      if (!bookingDate || !id) {
+        setGuides([]);
+        setPorters([]);
+        return;
+      }
+
+      setGuidesLoading(true);
+      setPortersLoading(true);
+
+      try {
+
+        const [guideRes, porterRes] = await Promise.all([
+          getAvailableStaff(bookingDate, 2, id), 
+          getAvailableStaff(bookingDate, 3, id), 
+        ]);
+
+        setGuides(guideRes.data || []);
+        setPorters(porterRes.data || []);
+
+        setSelectedGuide(null);
+        setSelectedPorter(null);
+      } catch (err) {
+        console.error("Error fetching available staff:", err);
+        setGuides([]);
+        setPorters([]);
+      } finally {
         setGuidesLoading(false);
         setPortersLoading(false);
       }
     };
-    fetchData();
-  }, [id]);
+
+    fetchStaff();
+  }, [bookingDate, id]);
 
   // Handle price calculations
   const price = Number(destination?.price) || 0;
@@ -243,7 +268,7 @@ const BookingPage = () => {
               </div>
             </div>
 
-            {/* Date Selection Section */}
+            {/* 2. Date Selection Section */}
             <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
               <h3 className="text-xl font-bold mb-6 text-gray-800 flex items-center gap-2">
                 2. Select Trekking Date
@@ -268,249 +293,272 @@ const BookingPage = () => {
               </div>
             </div>
 
-            {/* Guide & Porter Section */}
+            {/* 3. Guide & Porter Section */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="p-6 border-b bg-gray-50/50">
                 <h3 className="text-xl font-bold text-gray-800">
-                  2. Enhance Your Trip
+                  3. Enhance Your Trip
                 </h3>
               </div>
 
-              {/* Guide Selector Toggle */}
-              <div
-                className={`p-6 flex justify-between items-center cursor-pointer transition-all ${
-                  hasGuide ? "bg-teal-50" : "bg-white hover:bg-gray-50"
-                }`}
-                onClick={() => {
-                  setHasGuide(!hasGuide);
-                  if (hasGuide) setSelectedGuide(null);
-                }}
-              >
-                <div className="flex items-center gap-4">
+              {!bookingDate ? (
+                <div className="p-10 text-center bg-gray-50/30 flex flex-col items-center gap-3">
+                  <FaCalendarAlt
+                    className="text-teal-500 opacity-20"
+                    size={40}
+                  />
+                  <p className="text-sm text-gray-500 font-medium">
+                    Please select a trekking date first to see available guides
+                    and porters.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* Guide Selector Toggle */}
                   <div
-                    className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
+                    className={`p-6 flex justify-between items-center cursor-pointer transition-all ${
+                      hasGuide ? "bg-teal-50" : "bg-white hover:bg-gray-50"
+                    }`}
+                    onClick={() => {
+                      setHasGuide(!hasGuide);
+                      if (hasGuide) setSelectedGuide(null);
+                    }}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div
+                        className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
+                          hasGuide
+                            ? "bg-teal-600 border-teal-600"
+                            : "border-gray-300"
+                        }`}
+                      >
+                        {hasGuide && (
+                          <span className="text-white text-xs">✓</span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="block font-bold text-gray-800 text-lg">
+                          Add Professional Guide
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          Showing experts available for {bookingDate}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold text-teal-600 uppercase">
+                      {selectedGuide
+                        ? `Selected: Rs ${selectedGuide.dailyRate}`
+                        : "Select a guide below"}
+                    </span>
+                  </div>
+
+                  {/* GUIDE LIST */}
+                  <div
+                    className={`transition-all duration-500 ease-in-out overflow-hidden ${
                       hasGuide
-                        ? "bg-teal-600 border-teal-600"
-                        : "border-gray-300"
+                        ? "max-h-[800px] opacity-100 border-t"
+                        : "max-h-0 opacity-0"
                     }`}
                   >
-                    {hasGuide && <span className="text-white text-xs">✓</span>}
-                  </div>
-                  <div>
-                    <span className="block font-bold text-gray-800 text-lg">
-                      Add Professional Guide
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      Price varies by individual guide
-                    </span>
-                  </div>
-                </div>
-                {/* Visual Hint */}
-                <span className="text-xs font-bold text-teal-600 uppercase">
-                  {selectedGuide
-                    ? `Selected: Rs ${selectedGuide.dailyRate}`
-                    : "Select a guide below"}
-                </span>
-              </div>
-
-              {/* GUIDE LIST */}
-              <div
-                className={`transition-all duration-500 ease-in-out overflow-hidden ${
-                  hasGuide
-                    ? "max-h-[800px] opacity-100 border-t"
-                    : "max-h-0 opacity-0"
-                }`}
-              >
-                <div className="p-6 bg-gray-50/50">
-                  {guidesLoading ? (
-                    <p className="text-sm text-center text-gray-400 animate-pulse">
-                      Finding experts...
-                    </p>
-                  ) : guides.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {guides.map((guide) => (
-                        <div
-                          key={guide._id}
-                          className={`flex flex-col p-4 rounded-xl border-2 transition-all cursor-pointer ${
-                            selectedGuide?._id === guide._id
-                              ? "border-teal-600 bg-white shadow-md"
-                              : "border-transparent bg-white/60 hover:border-gray-200"
-                          }`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedGuide(guide);
-                          }}
-                        >
-                          <div className="flex items-center gap-4">
-                            <img
-                              src={
-                                guide.image
-                                  ? `http://localhost:8000/uploads/${guide.image}`
-                                  : "https://via.placeholder.com/100"
-                              }
-                              className="w-14 h-14 rounded-full object-cover bg-gray-200 shadow-sm"
-                              alt="Guide"
-                            />
-                            <div className="flex-1">
-                              <p className="font-bold text-gray-800">
-                                {guide.username}
-                              </p>
-                              <p className="text-[10px] text-teal-700 font-bold uppercase tracking-wider">
-                                Rs {guide.dailyRate || 0} / Day
-                              </p>
-                            </div>
-                            <button
+                    <div className="p-6 bg-gray-50/50">
+                      {guidesLoading ? (
+                        <p className="text-sm text-center text-gray-400 animate-pulse">
+                          Checking availability...
+                        </p>
+                      ) : guides.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {guides.map((guide) => (
+                            <div
+                              key={guide._id}
+                              className={`flex flex-col p-4 rounded-xl border-2 transition-all cursor-pointer ${
+                                selectedGuide?._id === guide._id
+                                  ? "border-teal-600 bg-white shadow-md"
+                                  : "border-transparent bg-white/60 hover:border-gray-200"
+                              }`}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setExpandedGuideId(
-                                  expandedGuideId === guide._id
-                                    ? null
-                                    : guide._id
-                                );
+                                setSelectedGuide(guide);
                               }}
-                              className="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-600 font-bold"
                             >
-                              {expandedGuideId === guide._id ? "CLOSE" : "INFO"}
-                            </button>
-                            {selectedGuide?._id === guide._id && (
-                              <div className="bg-teal-600 text-white rounded-full p-1 ml-2">
-                                <span className="text-[10px]">✓</span>
+                              <div className="flex items-center gap-4">
+                                <img
+                                  src={
+                                    guide.image
+                                      ? `http://localhost:8000/uploads/${guide.image}`
+                                      : "https://via.placeholder.com/100"
+                                  }
+                                  className="w-14 h-14 rounded-full object-cover bg-gray-200 shadow-sm"
+                                  alt="Guide"
+                                />
+                                <div className="flex-1">
+                                  <p className="font-bold text-gray-800">
+                                    {guide.username}
+                                  </p>
+                                  <p className="text-[10px] text-teal-700 font-bold uppercase tracking-wider">
+                                    Rs {guide.dailyRate || 0} / Day
+                                  </p>
+                                </div>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setExpandedGuideId(
+                                      expandedGuideId === guide._id
+                                        ? null
+                                        : guide._id
+                                    );
+                                  }}
+                                  className="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-600 font-bold"
+                                >
+                                  {expandedGuideId === guide._id
+                                    ? "CLOSE"
+                                    : "INFO"}
+                                </button>
+                                {selectedGuide?._id === guide._id && (
+                                  <div className="bg-teal-600 text-white rounded-full p-1 ml-2">
+                                    <span className="text-[10px]">✓</span>
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                          {expandedGuideId === guide._id && (
-                            <div className="mt-4 pt-4 border-t border-gray-100 animate-fadeIn">
-                              <p className="text-xs text-gray-600 italic leading-relaxed">
-                                "{guide.bio || "No bio available."}"
-                              </p>
+                              {expandedGuideId === guide._id && (
+                                <div className="mt-4 pt-4 border-t border-gray-100 animate-fadeIn">
+                                  <p className="text-xs text-gray-600 italic leading-relaxed">
+                                    "{guide.bio || "No bio available."}"
+                                  </p>
+                                </div>
+                              )}
                             </div>
-                          )}
+                          ))}
                         </div>
-                      ))}
+                      ) : (
+                        <p className="text-center py-6 text-sm text-gray-500 italic">
+                          No guides available for this date.
+                        </p>
+                      )}
                     </div>
-                  ) : (
-                    <p className="text-center py-6 text-sm text-gray-500 italic">
-                      No guides available.
-                    </p>
-                  )}
-                </div>
-              </div>
+                  </div>
 
-              {/* Porter Toggle */}
-              <div
-                className={`p-6 flex justify-between items-center cursor-pointer transition-all border-t ${
-                  hasPorter ? "bg-orange-50/30" : "bg-white hover:bg-gray-50"
-                }`}
-                onClick={() => {
-                  setHasPorter(!hasPorter);
-                  if (hasPorter) setSelectedPorter(null);
-                }}
-              >
-                <div className="flex items-center gap-4">
+                  {/* Porter Toggle */}
                   <div
-                    className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
+                    className={`p-6 flex justify-between items-center cursor-pointer transition-all border-t ${
                       hasPorter
-                        ? "bg-orange-600 border-orange-600"
-                        : "border-gray-300"
+                        ? "bg-orange-50/30"
+                        : "bg-white hover:bg-gray-50"
+                    }`}
+                    onClick={() => {
+                      setHasPorter(!hasPorter);
+                      if (hasPorter) setSelectedPorter(null);
+                    }}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div
+                        className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
+                          hasPorter
+                            ? "bg-orange-600 border-orange-600"
+                            : "border-gray-300"
+                        }`}
+                      >
+                        {hasPorter && (
+                          <span className="text-white text-xs">✓</span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="block font-bold text-gray-800 text-lg">
+                          Add Porter Service
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          Showing porters available for {bookingDate}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold text-orange-600 uppercase">
+                      {selectedPorter
+                        ? `Selected: Rs ${selectedPorter.dailyRate}`
+                        : "Select a porter below"}
+                    </span>
+                  </div>
+
+                  <div
+                    className={`transition-all duration-500 ease-in-out overflow-hidden ${
+                      hasPorter
+                        ? "max-h-[800px] opacity-100 border-t"
+                        : "max-h-0 opacity-0"
                     }`}
                   >
-                    {hasPorter && <span className="text-white text-xs">✓</span>}
-                  </div>
-                  <div>
-                    <span className="block font-bold text-gray-800 text-lg">
-                      Add Porter Service
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      Select a porter to carry your gear
-                    </span>
-                  </div>
-                </div>
-                <span className="text-xs font-bold text-orange-600 uppercase">
-                  {selectedPorter
-                    ? `Selected: Rs ${selectedPorter.dailyRate}`
-                    : "Select a porter below"}
-                </span>
-              </div>
-              <div
-                className={`transition-all duration-500 ease-in-out overflow-hidden ${
-                  hasPorter
-                    ? "max-h-[800px] opacity-100 border-t"
-                    : "max-h-0 opacity-0"
-                }`}
-              >
-                <div className="p-6 bg-gray-50/50">
-                  {portersLoading ? (
-                    <p className="text-sm text-center text-gray-400 animate-pulse">
-                      Finding porters...
-                    </p>
-                  ) : porters.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {porters.map((porter) => (
-                        <div
-                          key={porter._id}
-                          className={`flex flex-col p-4 rounded-xl border-2 transition-all cursor-pointer ${
-                            selectedPorter?._id === porter._id
-                              ? "border-orange-600 bg-white shadow-md"
-                              : "border-transparent bg-white/60 hover:border-gray-200"
-                          }`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedPorter(porter);
-                          }}
-                        >
-                          <div className="flex items-center gap-4">
-                            <img
-                              src={
-                                porter.image
-                                  ? `http://localhost:8000/uploads/${porter.image}`
-                                  : "https://via.placeholder.com/100"
-                              }
-                              className="w-14 h-14 rounded-full object-cover bg-gray-200 shadow-sm"
-                              alt="Porter"
-                            />
-                            <div className="flex-1">
-                              <p className="font-bold text-gray-800">
-                                {porter.username}
-                              </p>
-                              <p className="text-[10px] text-orange-700 font-bold uppercase tracking-wider">
-                                Rs {porter.dailyRate || 0} / Day • Max{" "}
-                                {porter.maxWeight || 0}kg
-                              </p>
-                            </div>
-                            <button
+                    <div className="p-6 bg-gray-50/50">
+                      {portersLoading ? (
+                        <p className="text-sm text-center text-gray-400 animate-pulse">
+                          Checking availability...
+                        </p>
+                      ) : porters.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {porters.map((porter) => (
+                            <div
+                              key={porter._id}
+                              className={`flex flex-col p-4 rounded-xl border-2 transition-all cursor-pointer ${
+                                selectedPorter?._id === porter._id
+                                  ? "border-orange-600 bg-white shadow-md"
+                                  : "border-transparent bg-white/60 hover:border-gray-200"
+                              }`}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setExpandedPorterId(
-                                  expandedPorterId === porter._id
-                                    ? null
-                                    : porter._id
-                                );
+                                setSelectedPorter(porter);
                               }}
-                              className="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-600 font-bold"
                             >
-                              {expandedPorterId === porter._id
-                                ? "CLOSE"
-                                : "INFO"}
-                            </button>
-                          </div>
-                          {expandedPorterId === porter._id && (
-                            <div className="mt-4 pt-4 border-t border-gray-100 animate-fadeIn text-xs text-gray-600">
-                              <p>
-                                <strong>Bio:</strong>{" "}
-                                {porter.bio || "Available for trekking."}
-                              </p>
+                              <div className="flex items-center gap-4">
+                                <img
+                                  src={
+                                    porter.image
+                                      ? `http://localhost:8000/uploads/${porter.image}`
+                                      : "https://via.placeholder.com/100"
+                                  }
+                                  className="w-14 h-14 rounded-full object-cover bg-gray-200 shadow-sm"
+                                  alt="Porter"
+                                />
+                                <div className="flex-1">
+                                  <p className="font-bold text-gray-800">
+                                    {porter.username}
+                                  </p>
+                                  <p className="text-[10px] text-orange-700 font-bold uppercase tracking-wider">
+                                    Rs {porter.dailyRate || 0} / Day • Max{" "}
+                                    {porter.maxWeight || 0}kg
+                                  </p>
+                                </div>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setExpandedPorterId(
+                                      expandedPorterId === porter._id
+                                        ? null
+                                        : porter._id
+                                    );
+                                  }}
+                                  className="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-600 font-bold"
+                                >
+                                  {expandedPorterId === porter._id
+                                    ? "CLOSE"
+                                    : "INFO"}
+                                </button>
+                              </div>
+                              {expandedPorterId === porter._id && (
+                                <div className="mt-4 pt-4 border-t border-gray-100 animate-fadeIn text-xs text-gray-600">
+                                  <p>
+                                    <strong>Bio:</strong>{" "}
+                                    {porter.bio || "Available for trekking."}
+                                  </p>
+                                </div>
+                              )}
                             </div>
-                          )}
+                          ))}
                         </div>
-                      ))}
+                      ) : (
+                        <p className="text-center py-6 text-sm text-gray-500 italic">
+                          No porters available for this date.
+                        </p>
+                      )}
                     </div>
-                  ) : (
-                    <p className="text-center py-6 text-sm text-gray-500 italic">
-                      No porters available.
-                    </p>
-                  )}
-                </div>
-              </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -556,7 +604,6 @@ const BookingPage = () => {
                 )}
                 <div className="pt-8">
                   {user ? (
-                    /* USER LOGGED IN: Show Payment Button and Secure Text */
                     <>
                       <button
                         onClick={() => setIsModalOpen(true)}

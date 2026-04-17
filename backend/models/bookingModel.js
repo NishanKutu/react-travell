@@ -25,6 +25,10 @@ const bookingSchema = new mongoose.Schema({
     type: Date,
     required: [true, "Trekking date is required"],
   },
+  endDate: {
+    type: Date,
+    required: [true, "End date is required"],
+  },
 
   // --- ADD-ONS SECTION ---
   hasGuide: {

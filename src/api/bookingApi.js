@@ -136,3 +136,22 @@ export const verifyStripePayment = async (sessionId, bookingId) => {
     throw error;
   }
 };
+
+export const getAvailableStaff = async (date, role, destinationId) => {
+  try {
+    const response = await fetch(`${BASE_URL}/available-staff?date=${date}&role=${role}&destinationId=${destinationId}`, {
+      method: "GET",
+      headers: getHeaders(),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to fetch available staff");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Fetch Available Staff Error:", error);
+    throw error;
+  }
+};

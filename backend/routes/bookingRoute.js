@@ -11,6 +11,7 @@ const {
   cancelAndRefund,
   initiateStripePayment,
   verifyStripePayment,
+  getAvailableStaff, 
 } = require("../controllers/bookingController");
 const { isLoggedIn } = require("../middleware/authMiddleware");
 
@@ -18,6 +19,9 @@ const { isLoggedIn } = require("../middleware/authMiddleware");
 router.post("/confirm", isLoggedIn, createBooking);
 
 router.post("/admin-confirm", isLoggedIn, adminCreateBooking);
+
+// Get available guides/porters for a specific date
+router.get("/available-staff", getAvailableStaff);
 
 // Get all bookings
 router.get("/all", isLoggedIn, getAllBookings);

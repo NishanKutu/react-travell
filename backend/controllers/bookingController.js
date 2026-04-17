@@ -3,6 +3,22 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const Destination = require("../models/destinationModel");
 const crypto = require("crypto");
 const CustomTour = require("../models/customTourModel");
+const User = require("../models/userModel");
+
+const checkAvailability = async (staffId, role, start, end) => {
+  const query = {
+    status: { $in: ["pending", "confirmed"] },
+    // Standard Overlap Logic: (NewStart <= ExistingEnd) AND (NewEnd >= ExistingStart)
+    bookingDate: { $lte: end },
+    endDate: { $gte: start },
+  };
+
+  if (role === "guide") query.guideId = staffId;
+  if (role === "porter") query.porterId = staffId;
+
+  const overlap = await Booking.findOne(query);
+  return !overlap; // Returns true if no overlap is found
+};
 
 // Create Initial Booking
 exports.createBooking = async (req, res) => {
@@ -19,6 +35,44 @@ exports.createBooking = async (req, res) => {
       porterId,
       bookingDate,
     } = req.body;
+    // get destination to find duration
+    const destination = await Destination.findById(destinationId);
+    if (!destination)
+      return res.status(404).json({ message: "Destination not found" });
+    // parse duration and calculate dates
+    const durationDays = parseInt(destination.duration) || 1;
+    const startDate = new Date(bookingDate);
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + (durationDays - 1));
+    // check guide availability
+    if (hasGuide && guideId) {
+      const available = await checkAvailability(
+        guideId,
+        "guide",
+        startDate,
+        endDate
+      );
+      if (!available)
+        return res.status(400).json({
+          success: false,
+          message: "Guide is busy during these dates",
+        });
+    }
+    // Check Porter Availability
+    if (hasPorter && porterId) {
+      const available = await checkAvailability(
+        porterId,
+        "porter",
+        startDate,
+        endDate
+      );
+      if (!available)
+        return res.status(400).json({
+          success: false,
+          message: "Porter is busy during these dates",
+        });
+    }
+
     const newBooking = new Booking({
       userId: req.user._id,
       destinationId,
@@ -30,7 +84,8 @@ exports.createBooking = async (req, res) => {
       porterCost: porterCost || 0,
       guideId: hasGuide ? guideId : null,
       porterId: hasPorter ? porterId : null,
-      bookingDate: bookingDate,
+      bookingDate: startDate,
+      endDate: endDate,
       status: "pending",
     });
     const savedBooking = await newBooking.save();
@@ -181,7 +236,7 @@ exports.initiateEsewaPayment = async (req, res) => {
       success: true,
       signature,
       product_code: productCode,
-      transaction_uuid: transactionUuid, // Send the unique one back
+      transaction_uuid: transactionUuid, // Sends the unique one back
     });
   } catch (error) {
     console.error("Esewa Initiation Error:", error);
@@ -248,7 +303,7 @@ exports.cancelAndRefund = async (req, res) => {
       const refundAmount = booking.totalPrice - deduction;
 
       booking.status = "refunded";
-      booking.refundAmount = refundAmount; // Ensure this is in your Schema
+      booking.refundAmount = refundAmount;
 
       await booking.save();
 
@@ -328,6 +383,50 @@ exports.verifyStripePayment = async (req, res) => {
     res
       .status(400)
       .json({ success: false, message: "Payment verification failed" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.getAvailableStaff = async (req, res) => {
+  try {
+    const { date, role, destinationId } = req.query;
+    
+    const destination = await Destination.findById(destinationId);
+    if (!destination) return res.status(404).json({ message: "Destination not found" });
+
+    const durationDays = parseInt(destination.duration) || 1;
+    
+    // --- NORMALIZE REQUESTED DATES ---
+    // Force the start of the trek to the very beginning of the day (00:00:00)
+    const requestedStart = new Date(date);
+    requestedStart.setHours(0, 0, 0, 0);
+
+    // Force the end of the trek to the very end of the final day (23:59:59)
+    const requestedEnd = new Date(requestedStart);
+    requestedEnd.setDate(requestedStart.getDate() + (durationDays - 1));
+    requestedEnd.setHours(23, 59, 59, 999);
+
+    // --- FIND OVERLAPS ---
+    const activeBookings = await Booking.find({
+      status: { $in: ["pending", "confirmed"] },
+      // The overlapping logic:
+      bookingDate: { $lte: requestedEnd },
+      endDate: { $gte: requestedStart },
+    });
+
+    const occupiedStaffIds = [];
+    activeBookings.forEach((b) => {
+      if (role === "2" && b.guideId) occupiedStaffIds.push(b.guideId.toString());
+      if (role === "3" && b.porterId) occupiedStaffIds.push(b.porterId.toString());
+    });
+
+    const availableStaff = await User.find({
+      role: Number(role),
+      _id: { $nin: occupiedStaffIds },
+    }).select("-password");
+
+    res.status(200).json({ success: true, data: availableStaff });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
