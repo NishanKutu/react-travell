@@ -34,6 +34,9 @@ const BookingPage = () => {
 
   const [hasGuide, setHasGuide] = useState(false);
   const [hasPorter, setHasPorter] = useState(false);
+  // states for booking vs payment failures
+  const [bookingError, setBookingError] = useState("");
+  const [paymentError, setPaymentError] = useState("");
 
   useEffect(() => {
     const fetchDest = async () => {
@@ -61,10 +64,9 @@ const BookingPage = () => {
       setPortersLoading(true);
 
       try {
-
         const [guideRes, porterRes] = await Promise.all([
-          getAvailableStaff(bookingDate, 2, id), 
-          getAvailableStaff(bookingDate, 3, id), 
+          getAvailableStaff(bookingDate, 2, id),
+          getAvailableStaff(bookingDate, 3, id),
         ]);
 
         setGuides(guideRes.data || []);
@@ -85,7 +87,7 @@ const BookingPage = () => {
     fetchStaff();
   }, [bookingDate, id]);
 
-  // Handle price calculations
+  // Price calculations
   const price = Number(destination?.price) || 0;
   const discountPerPerson = Number(destination?.discount) || 0;
   const subtotal = price * travelerCount;
@@ -104,18 +106,20 @@ const BookingPage = () => {
   };
 
   const handlePaymentSelection = async (method) => {
-    console.log("Current Booking Date State:", bookingDate);
+    // Clear any previous errors on each new attempt
+    setBookingError("");
+    setPaymentError("");
 
     try {
-      // Check for booking date before proceeding
       if (!bookingDate) {
-        alert("Please select a trekking date.");
+        setBookingError("Please select a trekking date before proceeding.");
+        setIsModalOpen(false);
         return;
       }
 
       const amountToSend = Number(finalTotal).toFixed(0);
 
-      // Create the booking first to get the bookingId for both payment methods
+      // Step 1: Create the booking record
       const bookingRes = await createBooking({
         destinationId: id,
         travelerCount,
@@ -129,42 +133,47 @@ const BookingPage = () => {
         bookingDate: bookingDate,
       });
 
+      // If booking failed (date conflict, staff conflict, etc.)
       if (!bookingRes?.success) {
-        throw new Error(bookingRes?.message || "Booking failed.");
+        setIsModalOpen(false);
+        setBookingError(
+          bookingRes?.message ||
+            "Booking could not be created. Please try again."
+        );
+        return;
       }
 
       const bookingId = bookingRes.data._id;
 
+      // Proceed to payment gateway
       if (method === "esewa") {
         const sigRes = await getEsewaSignature({
           amount: amountToSend,
           bookingId: bookingId,
         });
-
         if (sigRes.success) {
           submitToEsewa(
             amountToSend,
             sigRes.transaction_uuid,
             sigRes.signature
           );
+        } else {
+          setPaymentError("Failed to connect to eSewa. Please try again.");
         }
       } else if (method === "stripe") {
-        // initiateStripePayment must be imported from your api file
         const stripeRes = await initiateStripePayment({
           bookingId: bookingId,
           amount: amountToSend,
           destinationName: destination.title,
         });
-
         if (stripeRes.success && stripeRes.url) {
-          // Redirect user to Stripe Checkout page
           window.location.href = stripeRes.url;
         } else {
-          throw new Error("Stripe session creation failed.");
+          setPaymentError("Failed to connect to Stripe. Please try again.");
         }
       }
     } catch (err) {
-      alert("Payment Error: " + err.message);
+      setPaymentError("An unexpected error occurred. Please try again.");
     }
   };
 
@@ -234,6 +243,44 @@ const BookingPage = () => {
       <div className="max-w-6xl mx-auto px-4 -mt-16 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
+            {/* ── Booking Error Banner ── */}
+            {bookingError && (
+              <div className="flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-xl shadow-sm">
+                <span className="text-lg mt-0.5">⚠️</span>
+                <div>
+                  <p className="font-bold text-sm uppercase tracking-wide mb-0.5">
+                    Booking Failed
+                  </p>
+                  <p className="text-sm">{bookingError}</p>
+                </div>
+                <button
+                  onClick={() => setBookingError("")}
+                  className="ml-auto text-red-400 hover:text-red-600 font-bold text-lg leading-none"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+
+            {/* ── Payment Error Banner ── */}
+            {paymentError && (
+              <div className="flex items-start gap-3 bg-orange-50 border border-orange-200 text-orange-700 px-5 py-4 rounded-xl shadow-sm">
+                <span className="text-lg mt-0.5">💳</span>
+                <div>
+                  <p className="font-bold text-sm uppercase tracking-wide mb-0.5">
+                    Payment Error
+                  </p>
+                  <p className="text-sm">{paymentError}</p>
+                </div>
+                <button
+                  onClick={() => setPaymentError("")}
+                  className="ml-auto text-orange-400 hover:text-orange-600 font-bold text-lg leading-none"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+
             {/* 1. Travelers Section */}
             <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
               <h3 className="text-xl font-bold mb-6 text-gray-800">
@@ -284,9 +331,13 @@ const BookingPage = () => {
                   <input
                     type="date"
                     required
-                    min={new Date().toISOString().split("T")[0]} // Prevent past dates
+                    min={new Date().toISOString().split("T")[0]}
                     value={bookingDate}
-                    onChange={(e) => setBookingDate(e.target.value)}
+                    onChange={(e) => {
+                      setBookingDate(e.target.value);
+                      // Clear booking error when user picks a new date
+                      setBookingError("");
+                    }}
                     className="w-full bg-white border border-teal-200 rounded-lg px-4 py-2 font-bold text-gray-800 focus:ring-2 focus:ring-teal-500 outline-none"
                   />
                 </div>
@@ -611,7 +662,6 @@ const BookingPage = () => {
                       >
                         Confirm & Pay Now
                       </button>
-
                       <p className="text-[10px] text-center text-gray-400 mt-4 uppercase leading-relaxed font-bold">
                         Secure Payment Gateway
                       </p>
@@ -625,7 +675,6 @@ const BookingPage = () => {
                       >
                         Login to Book
                       </button>
-
                       <p className="mt-4 text-center text-sm text-gray-600">
                         Don't have an account?
                         <button

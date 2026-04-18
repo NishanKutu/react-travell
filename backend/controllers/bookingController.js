@@ -73,6 +73,27 @@ exports.createBooking = async (req, res) => {
         });
     }
 
+    // Check if this user already has a booking for this destination on overlapping dates
+    const userConflict = await Booking.findOne({
+      userId: req.user._id,
+      destinationId: destinationId,
+      status: { $in: ["pending", "confirmed"] },
+      bookingDate: { $lte: endDate },
+      endDate: { $gte: startDate },
+    });
+
+    if (userConflict) {
+      return res.status(400).json({
+        success: false,
+        errorType: "BOOKING_CONFLICT",
+        message: `You already have a booking for this destination from ${new Date(
+          userConflict.bookingDate
+        ).toLocaleDateString()} to ${new Date(
+          userConflict.endDate
+        ).toLocaleDateString()}. Please choose a different date.`,
+      });
+    }
+
     const newBooking = new Booking({
       userId: req.user._id,
       destinationId,
@@ -391,12 +412,13 @@ exports.verifyStripePayment = async (req, res) => {
 exports.getAvailableStaff = async (req, res) => {
   try {
     const { date, role, destinationId } = req.query;
-    
+
     const destination = await Destination.findById(destinationId);
-    if (!destination) return res.status(404).json({ message: "Destination not found" });
+    if (!destination)
+      return res.status(404).json({ message: "Destination not found" });
 
     const durationDays = parseInt(destination.duration) || 1;
-    
+
     // --- NORMALIZE REQUESTED DATES ---
     // Force the start of the trek to the very beginning of the day (00:00:00)
     const requestedStart = new Date(date);
@@ -417,8 +439,10 @@ exports.getAvailableStaff = async (req, res) => {
 
     const occupiedStaffIds = [];
     activeBookings.forEach((b) => {
-      if (role === "2" && b.guideId) occupiedStaffIds.push(b.guideId.toString());
-      if (role === "3" && b.porterId) occupiedStaffIds.push(b.porterId.toString());
+      if (role === "2" && b.guideId)
+        occupiedStaffIds.push(b.guideId.toString());
+      if (role === "3" && b.porterId)
+        occupiedStaffIds.push(b.porterId.toString());
     });
 
     const availableStaff = await User.find({
