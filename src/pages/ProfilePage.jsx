@@ -16,7 +16,7 @@ import {
   cancelAndRefund,
 } from "../api/bookingApi";
 import { getAllDestinations } from "../api/destinationApi";
-import { updateProfile } from "../api/userApi";
+import { updateProfile, toggleAvailability } from "../api/userAPI";
 import { submitReview, getAllReviews, updateReview } from "../api/reviewApi";
 
 const ProfilePage = () => {
@@ -31,6 +31,7 @@ const ProfilePage = () => {
   const [userReviews, setUserReviews] = useState([]);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentBooking, setPaymentBooking] = useState(null);
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
 
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
@@ -92,7 +93,6 @@ const ProfilePage = () => {
           }));
       }
 
-      // Fetch Custom Tours
       let customRes;
       if (isGuideUser || isPorterUser) {
         customRes = await getGuideCustomAssignments();
@@ -104,7 +104,7 @@ const ProfilePage = () => {
       if (customRes?.success && Array.isArray(customRes.data)) {
         customTours = customRes.data.map((ct) => ({
           ...ct,
-          isCustom: true, 
+          isCustom: true,
           status: ct.status || "pending",
           createdAt: ct.createdAt || new Date().toISOString(),
         }));
@@ -116,7 +116,6 @@ const ProfilePage = () => {
 
       setBookings(combined);
 
-      // 4. Fetch Reviews 
       const reviewRes = await getAllReviews(token);
       if (reviewRes?.success && Array.isArray(reviewRes.data)) {
         const currentUserId = String(user?._id || initialUser?._id);
@@ -131,7 +130,6 @@ const ProfilePage = () => {
         setUserReviews(myReviews);
       }
 
-      // 5. Fetch Suggestions
       const destRes = await getAllDestinations();
       if (destRes?.success && Array.isArray(destRes.data)) {
         const bookedDestIds = standardBookings.map((b) =>
@@ -169,11 +167,9 @@ const ProfilePage = () => {
       if (isGuide) {
         data.append("specialization", formData.specialization);
       }
-
       if (isPorter) {
-        data.append("maxWeight", formData.maxWeight); // Add this line
+        data.append("maxWeight", formData.maxWeight);
       }
-
       if (imageFile) {
         data.append("image", imageFile);
       }
@@ -194,6 +190,30 @@ const ProfilePage = () => {
     } catch (error) {
       console.error("Update error:", error);
       alert("An error occurred while updating the profile.");
+    }
+  };
+
+  // Toggle availability for guides and porters
+  const handleToggleAvailability = async () => {
+    setAvailabilityLoading(true);
+    try {
+      const res = await toggleAvailability(user._id, token);
+      if (res.success) {
+        const updatedUser = { ...user, isAvailable: res.isAvailable };
+        setUser(updatedUser);
+        const existingAuth = JSON.parse(localStorage.getItem("auth"));
+        localStorage.setItem(
+          "auth",
+          JSON.stringify({ ...existingAuth, user: updatedUser })
+        );
+      } else {
+        alert(res.message || "Failed to update availability.");
+      }
+    } catch (error) {
+      console.error("Availability toggle error:", error);
+      alert("An error occurred. Please try again.");
+    } finally {
+      setAvailabilityLoading(false);
     }
   };
 
@@ -283,10 +303,7 @@ const ProfilePage = () => {
   const handleDelete = async (e, booking) => {
     e.stopPropagation();
 
-    // Check if the booking is paid/confirmed
     const isConfirmed = booking.status === "confirmed";
-
-    // Dynamic message based on financial status
     const confirmMessage = isConfirmed
       ? "Are you sure? Your trip is confirmed. Cancelling now will refund your amount after a 20% deduction fee."
       : "Are you sure you want to remove this booking record?";
@@ -318,7 +335,6 @@ const ProfilePage = () => {
 
   const handlePayment = (e, booking) => {
     e.stopPropagation();
-    console.log("Payment clicked for booking:", booking);
     setPaymentBooking(booking);
     setShowPaymentModal(true);
   };
@@ -417,7 +433,6 @@ const ProfilePage = () => {
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
               />
-
               <div className="mt-4">
                 <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">
                   Add Photos
@@ -540,7 +555,6 @@ const ProfilePage = () => {
                   placeholder="Tell us about yourself"
                   className="text-slate-500 border-b border-gray-200 focus:outline-none bg-transparent text-sm py-1 resize-none"
                 />
-
                 <div className="grid grid-cols-2 gap-4 mt-2">
                   <div className="flex flex-col">
                     <label className="text-[10px] font-black text-slate-400 uppercase">
@@ -554,7 +568,6 @@ const ProfilePage = () => {
                       className="border-b border-gray-200 focus:outline-none bg-transparent text-sm py-1"
                     />
                   </div>
-
                   {isStaff && (
                     <>
                       <div className="flex flex-col">
@@ -591,7 +604,7 @@ const ProfilePage = () => {
                             value={formData.specialization}
                             onChange={handleInputChange}
                             placeholder="e.g. Everest Region"
-                            className="..."
+                            className="border-b border-gray-200 focus:outline-none bg-transparent text-sm py-1"
                           />
                         </div>
                       )}
@@ -606,7 +619,7 @@ const ProfilePage = () => {
                             value={formData.maxWeight}
                             onChange={handleInputChange}
                             placeholder="e.g. 25"
-                            className="..."
+                            className="border-b border-gray-200 focus:outline-none bg-transparent text-sm py-1"
                           />
                         </div>
                       )}
@@ -701,14 +714,52 @@ const ProfilePage = () => {
               </div>
             </div>
 
-            <button
-              onClick={() =>
-                isEditing ? handleUpdateProfile() : setIsEditing(true)
-              }
-              className="bg-[#004d4d] text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:bg-black hover:scale-105 transition-all active:scale-95"
-            >
-              {isEditing ? "Save Profile Changes" : "Edit Profile"}
-            </button>
+            {/* Action Buttons Row */}
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() =>
+                  isEditing ? handleUpdateProfile() : setIsEditing(true)
+                }
+                className="bg-[#004d4d] text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:bg-black hover:scale-105 transition-all active:scale-95"
+              >
+                {isEditing ? "Save Profile Changes" : "Edit Profile"}
+              </button>
+
+              {/* Availability Toggle — only shown for guides and porters */}
+              {isStaff && !isEditing && (
+                <button
+                  onClick={handleToggleAvailability}
+                  disabled={availabilityLoading}
+                  className={`flex items-center gap-2 px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed ${
+                    user?.isAvailable !== false
+                      ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                      : "bg-rose-500 hover:bg-rose-600 text-white"
+                  }`}
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      user?.isAvailable !== false
+                        ? "bg-white animate-pulse"
+                        : "bg-white/60"
+                    }`}
+                  />
+                  {availabilityLoading
+                    ? "Updating..."
+                    : user?.isAvailable !== false
+                    ? "Available"
+                    : "Unavailable"}
+                </button>
+              )}
+            </div>
+
+            {/* Availability hint text */}
+            {isStaff && !isEditing && (
+              <p className="text-[10px] text-slate-400 mt-2 font-medium">
+                {user?.isAvailable !== false
+                  ? "You are visible to users booking guides/porters. Click to mark yourself unavailable."
+                  : "You are hidden from new bookings. Click to mark yourself available again."}
+              </p>
+            )}
           </div>
         </div>
 
@@ -832,34 +883,27 @@ const ProfilePage = () => {
                   </div>
                 ) : (
                   bookings
-                    /* Filter bookings based on numeric roles (2: Guide, 3: Porter) */
                     ?.filter((b) => {
                       const userRole = Number(user?.role);
                       const currentUserId = String(user?._id);
-
                       if (userRole === 2) {
-                        // Guide: Show only if they are the assigned guideId
                         return (
                           String(b.guideId?._id || b.guideId) === currentUserId
                         );
                       }
                       if (userRole === 3) {
-                        // Porter: Show only if they are the assigned porterId
                         return (
                           String(b.porterId?._id || b.porterId) ===
                           currentUserId
                         );
                       }
-                      // Traveler (0): Show all their bookings
                       return true;
                     })
-                    /* Map the filtered list to the UI */
                     ?.map((booking) => (
                       <div
                         key={booking._id}
                         className="p-4 rounded-2xl bg-slate-50 border border-transparent hover:border-[#004d4d]/20 hover:bg-white transition-all group relative"
                       >
-                        {/* Delete/Cancel Button */}
                         <button
                           onClick={(e) => handleDelete(e, booking)}
                           className="absolute top-3 right-3 text-slate-300 hover:text-rose-500 z-20 transition-colors"
@@ -879,7 +923,6 @@ const ProfilePage = () => {
                           </svg>
                         </button>
 
-                        {/* Header Section: Title & Price */}
                         <div className="flex justify-between items-start mb-3 pr-6">
                           <div>
                             <h3 className="font-bold text-slate-800 line-clamp-1">
@@ -893,7 +936,6 @@ const ProfilePage = () => {
                               ) : (
                                 booking.destinationId?.title
                               )}
-                              {/* Numeric role check for Guide (2) */}
                               {Number(user?.role) === 2 && (
                                 <span className="text-[10px] text-slate-400 block font-normal mt-0.5">
                                   <i className="bi bi-person-badge mr-1"></i>
@@ -919,7 +961,6 @@ const ProfilePage = () => {
                           </span>
                         </div>
 
-                        {/* Custom Tour specific details (Itinerary Preview) */}
                         {booking.isCustom && booking.itinerary && (
                           <div className="mb-3 p-2 bg-emerald-50/50 rounded-lg border border-emerald-100/50">
                             <p className="text-[10px] text-emerald-800 font-bold mb-1">
@@ -944,7 +985,6 @@ const ProfilePage = () => {
                           </div>
                         )}
 
-                        {/* Metadata Section: Travelers, Date, Porter */}
                         <div className="flex items-end justify-between mb-2">
                           <div className="flex flex-col gap-1">
                             <div className="flex gap-2 text-[10px] text-slate-500 font-bold">
@@ -959,7 +999,6 @@ const ProfilePage = () => {
                                   : "N/A"}
                               </span>
                             </div>
-
                             {!booking.isCustom && (
                               <div className="flex items-center gap-2">
                                 <span className="text-[10px] font-black uppercase text-slate-400">
@@ -978,7 +1017,6 @@ const ProfilePage = () => {
                             )}
                           </div>
 
-                          {/* Guide Info */}
                           {(booking.guideId || booking.guide) && (
                             <div className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-full border border-gray-100 shadow-sm">
                               <span className="text-[8px] font-bold text-slate-400 uppercase">
@@ -1013,9 +1051,7 @@ const ProfilePage = () => {
                           )}
                         </div>
 
-                        {/* Action Buttons Section */}
                         <div className="flex flex-col gap-2 pt-3 border-t border-slate-200/50 mt-2">
-                          {/* Numeric check for Guide role (2) */}
                           {Number(user?.role) === 2 &&
                             booking.status === "confirmed" && (
                               <button

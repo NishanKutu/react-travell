@@ -57,7 +57,7 @@ export const updateProfile = (id, userData, token) => {
     .then((res) => res.json())
     .catch((error) => {
       console.error("API Error:", error);
-      throw error; 
+      throw error;
     });
 };
 
@@ -71,4 +71,19 @@ export const manualVerifyUser = (id, token) => {
   })
     .then((res) => res.json())
     .catch((error) => console.log(error));
+};
+
+// Guide/Porter toggle their own availability on/off
+export const toggleAvailability = (id, token) => {
+  return fetch(`${API}/toggle-availability/${id}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+    .then((res) => res.json())
+    .catch((error) => {
+      console.error("Toggle availability error:", error);
+      throw error;
+    });
 };

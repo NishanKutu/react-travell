@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAllDestinations } from "../../api/destinationApi";
-import { adminCreateBooking } from "../../api/bookingApi";
-import { getAllUsers, getAllGuides, getAllPorters } from "../../api/userAPI";
+import { adminCreateBooking, getAvailableStaff } from "../../api/bookingApi";
+import { getAllUsers } from "../../api/userAPI";
 
 const AdminAddBooking = () => {
   const navigate = useNavigate();
@@ -11,6 +11,7 @@ const AdminAddBooking = () => {
   const [guides, setGuides] = useState([]);
   const [porters, setPorters] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [staffLoading, setStaffLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     userId: "",
@@ -24,38 +25,24 @@ const AdminAddBooking = () => {
     bookingDate: new Date().toISOString().split("T")[0],
   });
 
+  // Load destinations and users once on mount
   useEffect(() => {
     const fetchData = async () => {
       try {
         const authData = JSON.parse(localStorage.getItem("auth"));
         const token = authData?.token;
 
-        // Note: If getAllPorters() returns the full list, you might not even need to filter users.
-        // But based on your logic, we will use the users list.
-        const [destRes, userRes, guideRes, porterRes] = await Promise.all([
+        const [destRes, userRes] = await Promise.all([
           getAllDestinations(),
           getAllUsers(token),
-          getAllGuides(),
-          getAllPorters(),
         ]);
 
         setDestinations(destRes.data || []);
 
-        // Define the users array clearly
         const fetchedUsers = Array.isArray(userRes)
           ? userRes
           : userRes.data || [];
         setUsers(fetchedUsers);
-
-        setGuides(guideRes.success ? guideRes.data : guideRes || []);
-
-        // FIX: Filter from fetchedUsers instead of the undefined 'allUsers'
-        // Also, check if porterRes has data directly if your API provides it
-        const porterList = porterRes.success
-          ? porterRes.data
-          : fetchedUsers.filter((u) => Number(u.role) === 3);
-
-        setPorters(porterList);
       } catch (err) {
         console.error("Failed to load data", err);
       } finally {
@@ -65,22 +52,56 @@ const AdminAddBooking = () => {
     fetchData();
   }, []);
 
+  // Re-fetch available staff whenever date or destination changes
+  // This respects both booking conflicts AND the isAvailable flag
+  useEffect(() => {
+    const fetchAvailableStaff = async () => {
+      if (!formData.bookingDate || !formData.destinationId) {
+        setGuides([]);
+        setPorters([]);
+        return;
+      }
+
+      setStaffLoading(true);
+      // Reset selections when date/destination changes
+      setFormData((prev) => ({ ...prev, guideId: "", porterId: "" }));
+
+      try {
+        const [guideRes, porterRes] = await Promise.all([
+          getAvailableStaff(formData.bookingDate, 2, formData.destinationId),
+          getAvailableStaff(formData.bookingDate, 3, formData.destinationId),
+        ]);
+
+        setGuides(guideRes.data || []);
+        setPorters(porterRes.data || []);
+      } catch (err) {
+        console.error("Failed to load available staff", err);
+        setGuides([]);
+        setPorters([]);
+      } finally {
+        setStaffLoading(false);
+      }
+    };
+
+    fetchAvailableStaff();
+  }, [formData.bookingDate, formData.destinationId]);
+
   const isDestinationSelected = formData.destinationId !== "";
+  const isDateSelected = formData.bookingDate !== "";
+
   const selectedTrip = destinations.find(
     (d) => d._id === formData.destinationId
   );
 
-  // DYNAMIC GUIDE CALCULATION
+  // Dynamic calculations
   const selectedGuide = guides.find((g) => g._id === formData.guideId);
   const dynamicGuideRate = selectedGuide ? Number(selectedGuide.dailyRate) : 0;
 
-  // DYNAMIC PORTER CALCULATION
   const selectedPorter = porters.find((p) => p._id === formData.porterId);
   const dynamicPorterRate = selectedPorter
     ? Number(selectedPorter.dailyRate)
     : 0;
 
-  // DYNAMIC PRICE CALCULATION
   const subtotal = selectedTrip
     ? selectedTrip.price * (formData.travelerCount || 0)
     : 0;
@@ -129,12 +150,10 @@ const AdminAddBooking = () => {
         navigate("/admin/booking-list");
       } else {
         alert(res.message || "Booking failed");
-        navigate("/admin/dashboard");
       }
     } catch (err) {
       console.error("Booking Error:", err);
       alert(err.message || "An error occurred during booking");
-      navigate("/admin/dashboard");
     }
   };
 
@@ -142,6 +161,9 @@ const AdminAddBooking = () => {
     return (
       <div className="p-10 text-center text-gray-500">Loading Resources...</div>
     );
+
+  // Whether staff dropdowns should be shown
+  const staffReady = isDestinationSelected && isDateSelected && !staffLoading;
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -186,6 +208,8 @@ const AdminAddBooking = () => {
                     ...formData,
                     destinationId: e.target.value,
                     travelerCount: e.target.value ? 1 : "",
+                    guideId: "",
+                    porterId: "",
                   })
                 }
               >
@@ -228,7 +252,12 @@ const AdminAddBooking = () => {
                 className="w-full border p-2.5 rounded-md outline-none focus:ring-2 focus:ring-blue-500"
                 value={formData.bookingDate}
                 onChange={(e) =>
-                  setFormData({ ...formData, bookingDate: e.target.value })
+                  setFormData({
+                    ...formData,
+                    bookingDate: e.target.value,
+                    guideId: "",
+                    porterId: "",
+                  })
                 }
               />
             </div>
@@ -264,12 +293,28 @@ const AdminAddBooking = () => {
             <h4 className="text-xs font-black text-slate-500 uppercase mb-3">
               Add-on Services
             </h4>
+
+            {/* Prompt to pick a date first if not done */}
+            {isDestinationSelected && !isDateSelected && (
+              <p className="text-xs text-amber-600 font-bold bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
+                ⚠ Select a booking date above to see available guides and
+                porters.
+              </p>
+            )}
+
+            {/* Staff loading indicator */}
+            {staffLoading && (
+              <p className="text-xs text-blue-500 font-bold animate-pulse mb-3">
+                Checking staff availability for {formData.bookingDate}...
+              </p>
+            )}
+
             <div className="space-y-4">
               <div className="flex gap-6">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
-                    disabled={!isDestinationSelected}
+                    disabled={!staffReady}
                     checked={formData.hasGuide}
                     onChange={(e) =>
                       setFormData({
@@ -287,7 +332,7 @@ const AdminAddBooking = () => {
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
-                    disabled={!isDestinationSelected}
+                    disabled={!staffReady}
                     checked={formData.hasPorter}
                     onChange={(e) =>
                       setFormData({
@@ -304,68 +349,89 @@ const AdminAddBooking = () => {
                 </label>
               </div>
 
-              {/* DYNAMIC GUIDE DROPDOWN */}
+              {/* Guide Dropdown */}
               {formData.hasGuide && (
                 <div className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm animate-in fade-in slide-in-from-top-2">
                   <label className="block text-[10px] font-black text-blue-500 uppercase mb-2">
                     Assign Guide
                   </label>
-                  <select
-                    className="w-full border-b-2 border-slate-100 p-1 text-sm outline-none focus:border-blue-500"
-                    value={formData.guideId}
-                    onChange={(e) =>
-                      setFormData({ ...formData, guideId: e.target.value })
-                    }
-                  >
-                    <option value="">-- Select a Guide --</option>
-                    {guides.map((g) => (
-                      <option key={g._id} value={g._id}>
-                        {g.username} - Rs. {g.dailyRate}/day
-                      </option>
-                    ))}
-                  </select>
-                  {selectedGuide && (
-                    <div className="mt-2 flex items-center justify-between">
-                      <span className="text-[10px] text-slate-400 italic">
-                        Specialization: {selectedGuide.specialization || "N/A"}
-                      </span>
-                      <span className="text-xs font-bold text-emerald-600">
-                        + Rs. {selectedGuide.dailyRate}
-                      </span>
-                    </div>
+                  {guides.length === 0 ? (
+                    <p className="text-xs text-slate-400 italic py-2">
+                      No guides available for this date.
+                    </p>
+                  ) : (
+                    <>
+                      <select
+                        className="w-full border-b-2 border-slate-100 p-1 text-sm outline-none focus:border-blue-500"
+                        value={formData.guideId}
+                        onChange={(e) =>
+                          setFormData({ ...formData, guideId: e.target.value })
+                        }
+                      >
+                        <option value="">-- Select a Guide --</option>
+                        {guides.map((g) => (
+                          <option key={g._id} value={g._id}>
+                            {g.username} — Rs. {g.dailyRate}/day
+                            {g.specialization ? ` · ${g.specialization}` : ""}
+                          </option>
+                        ))}
+                      </select>
+                      {selectedGuide && (
+                        <div className="mt-2 flex items-center justify-between">
+                          <span className="text-[10px] text-slate-400 italic">
+                            Specialization:{" "}
+                            {selectedGuide.specialization || "N/A"}
+                          </span>
+                          <span className="text-xs font-bold text-emerald-600">
+                            + Rs. {selectedGuide.dailyRate}
+                          </span>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )}
 
-              {/* 6. DYNAMIC PORTER DROPDOWN */}
+              {/* Porter Dropdown */}
               {formData.hasPorter && (
                 <div className="bg-white p-3 rounded-lg border border-orange-100 shadow-sm animate-in fade-in slide-in-from-top-2">
                   <label className="block text-[10px] font-black text-orange-500 uppercase mb-2">
                     Assign Porter
                   </label>
-                  <select
-                    className="w-full border-b p-1 text-sm outline-none focus:border-orange-500"
-                    value={formData.porterId}
-                    onChange={(e) =>
-                      setFormData({ ...formData, porterId: e.target.value })
-                    }
-                  >
-                    <option value="">-- Select Porter --</option>
-                    {porters.map((p) => (
-                      <option key={p._id} value={p._id}>
-                        {p.username} (Max: {p.maxWeight || 25}kg)
-                      </option>
-                    ))}
-                  </select>
-                  {selectedPorter && (
-                    <div className="mt-2 flex items-center justify-between">
-                      <span className="text-[10px] text-slate-400 italic">
-                        Exp: {selectedPorter.experience} yrs
-                      </span>
-                      <span className="text-xs font-bold text-orange-600">
-                        + Rs. {selectedPorter.dailyRate}
-                      </span>
-                    </div>
+                  {porters.length === 0 ? (
+                    <p className="text-xs text-slate-400 italic py-2">
+                      No porters available for this date.
+                    </p>
+                  ) : (
+                    <>
+                      <select
+                        className="w-full border-b p-1 text-sm outline-none focus:border-orange-500"
+                        value={formData.porterId}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            porterId: e.target.value,
+                          })
+                        }
+                      >
+                        <option value="">-- Select Porter --</option>
+                        {porters.map((p) => (
+                          <option key={p._id} value={p._id}>
+                            {p.username} (Max: {p.maxWeight || 25}kg)
+                          </option>
+                        ))}
+                      </select>
+                      {selectedPorter && (
+                        <div className="mt-2 flex items-center justify-between">
+                          <span className="text-[10px] text-slate-400 italic">
+                            Exp: {selectedPorter.experience} yrs
+                          </span>
+                          <span className="text-xs font-bold text-orange-600">
+                            + Rs. {selectedPorter.dailyRate}
+                          </span>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )}
@@ -386,6 +452,7 @@ const AdminAddBooking = () => {
               type="submit"
               disabled={
                 !isDestinationSelected ||
+                !isDateSelected ||
                 (formData.hasGuide && !formData.guideId) ||
                 (formData.hasPorter && !formData.porterId)
               }

@@ -683,3 +683,35 @@ exports.getAllPorters = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
+exports.toggleAvailability = async (req, res) => {
+  try {
+    const user = await UserModel.findById(req.params.id);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    // Only guides (2) and porters (3) can use this
+    if (user.role !== 2 && user.role !== 3) {
+      return res.status(403).json({
+        success: false,
+        message: "Only guides and porters can toggle availability",
+      });
+    }
+
+    user.isAvailable = !user.isAvailable;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: `You are now marked as ${
+        user.isAvailable ? "Available" : "Unavailable"
+      }`,
+      isAvailable: user.isAvailable,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

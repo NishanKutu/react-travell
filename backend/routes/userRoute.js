@@ -13,6 +13,7 @@ const {
   deleteUser,
   toggleUserRole,
   updateProfile,
+  toggleAvailability,
 } = require("../controllers/userController");
 const { isLoggedIn, isAdmin } = require("../middleware/authMiddleware");
 const {
@@ -30,7 +31,12 @@ router.post(
   register
 );
 
-router.put("/update-profile/:id", isLoggedIn, upload.single("image"), updateProfile);
+router.put(
+  "/update-profile/:id",
+  isLoggedIn,
+  upload.single("image"),
+  updateProfile
+);
 
 router.get("/verify/:token", verifyEmail);
 router.put("/manual-verify/:id", isLoggedIn, isAdmin, manualVerifyUser);
@@ -44,5 +50,8 @@ router.get("/getallporters", getAllPorters);
 router.get("/getuserdetails/:id", isAdmin, getUserDetails);
 router.delete("/deleteuser/:id", isAdmin, deleteUser);
 router.put("/togglerole/:id", isAdmin, toggleUserRole);
+
+// Guide/Porter availability toggle
+router.put("/toggle-availability/:id", isLoggedIn, toggleAvailability);
 
 module.exports = router;

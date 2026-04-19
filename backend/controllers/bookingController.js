@@ -134,6 +134,19 @@ exports.adminCreateBooking = async (req, res) => {
       status,
     } = req.body;
 
+    // Calculate endDate from destination duration — same as createBooking does.
+    // Without this, staff overlap checks break because endDate is undefined.
+    const destination = await Destination.findById(destinationId);
+    if (!destination) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Destination not found" });
+    }
+    const durationDays = parseInt(destination.duration) || 1;
+    const startDate = new Date(bookingDate);
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + (durationDays - 1));
+
     const newBooking = new Booking({
       userId,
       destinationId,
@@ -145,7 +158,8 @@ exports.adminCreateBooking = async (req, res) => {
       porterCost,
       guideId: hasGuide ? guideId : null,
       porterId: hasPorter ? porterId : null,
-      bookingDate: bookingDate,
+      bookingDate: startDate,
+      endDate: endDate,
       status: status || "confirmed",
       paymentMethod: "esewa",
     });
@@ -448,6 +462,9 @@ exports.getAvailableStaff = async (req, res) => {
     const availableStaff = await User.find({
       role: Number(role),
       _id: { $nin: occupiedStaffIds },
+      isAvailable: { $ne: false }, // exclude only those explicitly marked unavailable
+      // ($ne: false) correctly handles both new users (isAvailable: true)
+      // and existing users created before the field was added (isAvailable: undefined)
     }).select("-password");
 
     res.status(200).json({ success: true, data: availableStaff });

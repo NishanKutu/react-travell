@@ -9,7 +9,6 @@ import {
   FaClock,
   FaExclamationCircle,
   FaMoneyBillWave,
-  FaArrowRight,
 } from "react-icons/fa";
 import { getAllUsers } from "../../api/userAPI";
 import { getAllBookings } from "../../api/bookingApi";
@@ -69,11 +68,33 @@ const GuidesInfo = () => {
     });
   };
 
-  // format the date
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const options = { year: "numeric", month: "short", day: "numeric" };
     return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
+  // Derive status label and style from both isAvailable and booking state
+  const getStatusInfo = (guide, isBooked) => {
+    if (guide.isAvailable === false) {
+      return {
+        label: "Marked Unavailable",
+        icon: <FaExclamationCircle />,
+        className: "bg-rose-50 text-rose-600",
+      };
+    }
+    if (isBooked) {
+      return {
+        label: "Currently Booked",
+        icon: <FaClock className="animate-pulse" />,
+        className: "bg-amber-50 text-amber-600",
+      };
+    }
+    return {
+      label: "Available",
+      icon: <FaCheckCircle />,
+      className: "bg-emerald-50 text-emerald-600",
+    };
   };
 
   return (
@@ -111,6 +132,7 @@ const GuidesInfo = () => {
             {filteredGuides.map((guide) => {
               const assignment = getActiveAssignment(guide._id);
               const isBooked = !!assignment;
+              const statusInfo = getStatusInfo(guide, isBooked);
 
               return (
                 <div
@@ -119,19 +141,11 @@ const GuidesInfo = () => {
                 >
                   {/* Top Status Banner */}
                   <div
-                    className={`px-6 py-3 text-[10px] font-black uppercase tracking-widest flex justify-between items-center ${
-                      isBooked
-                        ? "bg-amber-50 text-amber-600"
-                        : "bg-emerald-50 text-emerald-600"
-                    }`}
+                    className={`px-6 py-3 text-[10px] font-black uppercase tracking-widest flex justify-between items-center ${statusInfo.className}`}
                   >
                     <span className="flex items-center gap-2">
-                      {isBooked ? (
-                        <FaClock className="animate-pulse" />
-                      ) : (
-                        <FaCheckCircle />
-                      )}
-                      {isBooked ? "Currently Booked" : "Available"}
+                      {statusInfo.icon}
+                      {statusInfo.label}
                     </span>
                   </div>
 
@@ -160,15 +174,24 @@ const GuidesInfo = () => {
                       </div>
                     </div>
 
-                    {/* Booking Details */}
+                    {/* Booking / Unavailability Details */}
                     <div
                       className={`rounded-2xl border-2 border-dashed p-5 ${
-                        isBooked
+                        guide.isAvailable === false
+                          ? "bg-rose-50/40 border-rose-100"
+                          : isBooked
                           ? "bg-white border-[#004d4d]/20"
                           : "bg-slate-50 border-slate-100"
                       }`}
                     >
-                      {isBooked ? (
+                      {guide.isAvailable === false ? (
+                        <div className="flex flex-col items-center justify-center py-4 gap-2 text-rose-400">
+                          <FaExclamationCircle size={22} />
+                          <p className="text-[10px] font-black uppercase tracking-widest text-center">
+                            Marked unavailable by guide
+                          </p>
+                        </div>
+                      ) : isBooked ? (
                         <div className="space-y-4">
                           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                             <div className="flex items-center gap-2 text-[#004d4d]">
@@ -181,7 +204,6 @@ const GuidesInfo = () => {
                               {formatDate(assignment.bookingDate)}
                             </span>
                           </div>
-
                           <div className="space-y-3">
                             <div className="flex items-start gap-3">
                               <FaUserAlt
