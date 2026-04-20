@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { isLoggedIn } from "../api/authAPI";
 import {
@@ -10,11 +10,16 @@ import {
 const IMG_URL = "http://localhost:8000/uploads/";
 
 const getId = (value) => value?._id || value || "";
+const getMessageId = (message) =>
+  message?._id?.toString?.() || message?._id || "";
+const getConversationKey = (conversation) =>
+  conversation ? `${conversation.bookingId}:${conversation.staffRole}` : "";
 
 const Messages = () => {
   const [auth] = useState(() => isLoggedIn());
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
   const [conversations, setConversations] = useState([]);
   const [activeConversation, setActiveConversation] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -23,28 +28,159 @@ const Messages = () => {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+  const [isTabVisible, setIsTabVisible] = useState(() =>
+    typeof document === "undefined"
+      ? true
+      : document.visibilityState === "visible"
+  );
+
+  // New states for smart scrolling and indicators
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const scrollContainerRef = useRef(null);
+  const isNearBottomRef = useRef(true);
+
   const messagesEndRef = useRef(null);
+  const activeConversationRef = useRef(null);
 
   const currentUserId = auth?.user?._id ? String(auth.user._id) : "";
   const requestedBookingId = searchParams.get("bookingId");
   const requestedRole = searchParams.get("role");
 
-  const selectedKey = activeConversation
-    ? `${activeConversation.bookingId}:${activeConversation.staffRole}`
-    : "";
+  const selectedKey = getConversationKey(activeConversation);
+
+  useEffect(() => {
+    activeConversationRef.current = activeConversation;
+  }, [activeConversation]);
 
   useEffect(() => {
     if (!auth) {
-      navigate("/");
+      navigate("/", { replace: true });
     }
   }, [auth, navigate]);
 
   useEffect(() => {
-    const loadConversations = async () => {
+    if (typeof document === "undefined") return;
+
+    const handleVisibilityChange = () => {
+      setIsTabVisible(document.visibilityState === "visible");
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
+  // Handle scroll events to detect if user is near bottom
+  const handleScroll = () => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    // If user is within 100px of the bottom, consider them "at bottom"
+    const isAtBottom =
+      container.scrollHeight - container.scrollTop <=
+      container.clientHeight + 50;
+
+    isNearBottomRef.current = isAtBottom;
+
+    if (isAtBottom) {
+      setShowScrollButton(false);
+    }
+  };
+
+  const syncConversationAfterMessagesLoad = useCallback(
+    (conversation, nextMessages, serverConversation = null) => {
+      const targetKey = getConversationKey(conversation);
+      const latestMessage =
+        nextMessages.length > 0
+          ? nextMessages[nextMessages.length - 1]
+          : serverConversation?.lastMessage || null;
+
+      setConversations((current) =>
+        current
+          .map((item) =>
+            getConversationKey(item) === targetKey
+              ? {
+                  ...item,
+                  ...(serverConversation || {}),
+                  lastMessage: latestMessage || item.lastMessage || null,
+                  updatedAt:
+                    latestMessage?.createdAt ||
+                    serverConversation?.updatedAt ||
+                    item.updatedAt,
+                  unreadCount: 0,
+                }
+              : item
+          )
+          .sort(
+            (a, b) =>
+              new Date(b.updatedAt || 0).getTime() -
+              new Date(a.updatedAt || 0).getTime()
+          )
+      );
+
+      setActiveConversation((current) => {
+        if (!current || getConversationKey(current) !== targetKey)
+          return current;
+
+        return {
+          ...current,
+          ...(serverConversation || {}),
+          lastMessage: latestMessage || current.lastMessage || null,
+          updatedAt:
+            latestMessage?.createdAt ||
+            serverConversation?.updatedAt ||
+            current.updatedAt,
+          unreadCount: 0,
+        };
+      });
+    },
+    []
+  );
+
+  const loadMessages = useCallback(
+    async (conversation, silent = false) => {
+      if (!conversation) return;
+
+      if (!silent) {
+        setLoadingMessages(true);
+        setError("");
+      }
+
+      try {
+        const res = await getConversationMessages(
+          conversation.bookingId,
+          conversation.staffRole
+        );
+
+        const nextMessages = res.data || [];
+        setMessages(nextMessages);
+
+        syncConversationAfterMessagesLoad(
+          conversation,
+          nextMessages,
+          res.conversation || null
+        );
+      } catch (err) {
+        if (!silent) {
+          setError(err.message || "Unable to load messages.");
+        }
+      } finally {
+        if (!silent) setLoadingMessages(false);
+      }
+    },
+    [syncConversationAfterMessagesLoad]
+  );
+
+  const loadConversations = useCallback(
+    async ({ silent = false } = {}) => {
       if (!auth) return;
 
-      setLoadingConversations(true);
-      setError("");
+      if (!silent) {
+        setLoadingConversations(true);
+        setError("");
+      }
 
       try {
         const res = await getMessageConversations();
@@ -53,52 +189,165 @@ const Messages = () => {
 
         const requestedConversation = nextConversations.find(
           (conversation) =>
-            String(conversation.bookingId) === requestedBookingId &&
+            String(conversation.bookingId) === String(requestedBookingId) &&
             conversation.staffRole === requestedRole
         );
 
-        setActiveConversation(
-          requestedConversation || nextConversations[0] || null
-        );
-      } catch (err) {
-        setError(err.message || "Unable to load conversations.");
-      } finally {
-        setLoadingConversations(false);
-      }
-    };
+        const currentActive = activeConversationRef.current;
+        const currentActiveKey = getConversationKey(currentActive);
 
-    loadConversations();
-  }, [auth, requestedBookingId, requestedRole]);
+        const refreshedActive =
+          nextConversations.find(
+            (conversation) =>
+              getConversationKey(conversation) === currentActiveKey
+          ) || null;
+
+        const nextActive =
+          refreshedActive ||
+          requestedConversation ||
+          nextConversations[0] ||
+          null;
+
+        setActiveConversation(nextActive);
+      } catch (err) {
+        if (!silent) {
+          setError(err.message || "Unable to load conversations.");
+        }
+      } finally {
+        if (!silent) setLoadingConversations(false);
+      }
+    },
+    [auth, requestedBookingId, requestedRole]
+  );
+
+  const pollGlobalUpdates = useCallback(async () => {
+    if (!auth) return;
+
+    try {
+      const res = await getMessageConversations();
+      const fetchedConversations = res.data || [];
+
+      const currentActive = activeConversationRef.current;
+      const activeKey = getConversationKey(currentActive);
+
+      const rawActiveConversation = activeKey
+        ? fetchedConversations.find(
+            (conversation) => getConversationKey(conversation) === activeKey
+          ) || null
+        : null;
+
+      const normalizedConversations = fetchedConversations.map((conversation) =>
+        getConversationKey(conversation) === activeKey
+          ? { ...conversation, unreadCount: 0 }
+          : conversation
+      );
+
+      setConversations(normalizedConversations);
+
+      if (!currentActive) {
+        const requestedConversation = normalizedConversations.find(
+          (conversation) =>
+            String(conversation.bookingId) === String(requestedBookingId) &&
+            conversation.staffRole === requestedRole
+        );
+
+        const nextActive =
+          requestedConversation || normalizedConversations[0] || null;
+
+        if (nextActive) {
+          setActiveConversation(nextActive);
+        }
+
+        return;
+      }
+
+      const updatedActiveConversation =
+        normalizedConversations.find(
+          (conversation) => getConversationKey(conversation) === activeKey
+        ) || null;
+
+      if (!updatedActiveConversation) {
+        const fallbackConversation = normalizedConversations[0] || null;
+        setActiveConversation(fallbackConversation);
+        if (!fallbackConversation) {
+          setMessages([]);
+        }
+        return;
+      }
+
+      // setActiveConversation(updatedActiveConversation);
+      if (
+        JSON.stringify(updatedActiveConversation) !==
+        JSON.stringify(currentActive)
+      ) {
+        setActiveConversation(updatedActiveConversation);
+      }
+
+      const previousLastMessageId = getMessageId(currentActive.lastMessage);
+      const nextLastMessageId = getMessageId(
+        rawActiveConversation?.lastMessage
+      );
+      const hasUnreadForActive = (rawActiveConversation?.unreadCount || 0) > 0;
+      const activeConversationChanged =
+        nextLastMessageId && nextLastMessageId !== previousLastMessageId;
+
+      if (hasUnreadForActive || activeConversationChanged) {
+        await loadMessages(updatedActiveConversation, true);
+      }
+    } catch (err) {
+      console.warn("Global message polling failed:", err);
+    }
+  }, [auth, loadMessages, requestedBookingId, requestedRole]);
 
   useEffect(() => {
-    const loadMessages = async (silent = false) => {
-      if (!activeConversation) return;
+    loadConversations();
+  }, [loadConversations]);
 
-      if (!silent) setLoadingMessages(true);
-      setError("");
+  useEffect(() => {
+    if (!activeConversation) {
+      setMessages([]);
+      return;
+    }
 
-      try {
-        const res = await getConversationMessages(
-          activeConversation.bookingId,
-          activeConversation.staffRole
-        );
-        setMessages(res.data || []);
-      } catch (err) {
-        setError(err.message || "Unable to load messages.");
-      } finally {
-        if (!silent) setLoadingMessages(false);
+    loadMessages(activeConversation);
+    // Reset scroll tracking when switching conversations
+    isNearBottomRef.current = true;
+    setShowScrollButton(false);
+  }, [selectedKey, loadMessages]);
+
+  useEffect(() => {
+    if (!auth || !isTabVisible) return;
+
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        pollGlobalUpdates();
       }
-    };
-
-    loadMessages();
-    const timer = setInterval(() => loadMessages(true), 8000);
+    }, 8000);
 
     return () => clearInterval(timer);
-  }, [activeConversation]);
+  }, [auth, isTabVisible, pollGlobalUpdates]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (!auth || !isTabVisible) return;
+    pollGlobalUpdates();
+  }, [auth, isTabVisible, pollGlobalUpdates]);
+
+  // Smart Auto-Scroll and New Message Indicator Logic
+  useEffect(() => {
+    if (messages.length === 0) return;
+
+    const lastMessage = messages[messages.length - 1];
+    const isFromMe = String(getId(lastMessage.senderId)) === currentUserId;
+
+    // Scroll automatically if I sent it OR if the user is already at the bottom
+    if (isFromMe || isNearBottomRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      setShowScrollButton(false);
+    } else {
+      // If someone else sent a message and I'm scrolled up, show indicator
+      setShowScrollButton(true);
+    }
+  }, [messages, currentUserId]);
 
   const getCounterpart = (conversation) => {
     if (!conversation) return null;
@@ -125,9 +374,22 @@ const Messages = () => {
 
   const handleSend = async (event) => {
     event.preventDefault();
+    const cleanDraft = draft.trim();
+    if (!activeConversation || !cleanDraft || sending) return;
 
-    if (!activeConversation || !draft.trim() || sending) return;
+    // 1. Optimistic Update: Create a temporary message object
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMessage = {
+      _id: tempId,
+      text: cleanDraft,
+      senderId: currentUserId,
+      createdAt: new Date().toISOString(),
+      isOptimistic: true,
+    };
 
+    // 2. Add to UI immediately
+    setMessages((current) => [...current, optimisticMessage]);
+    setDraft("");
     setSending(true);
     setError("");
 
@@ -135,18 +397,18 @@ const Messages = () => {
       const res = await sendConversationMessage({
         bookingId: activeConversation.bookingId,
         staffRole: activeConversation.staffRole,
-        text: draft,
+        text: cleanDraft,
       });
 
-      setMessages((current) => [...current, res.data]);
-      setDraft("");
+      // 3. Replace the optimistic message with real server data
+      setMessages((current) =>
+        current.map((msg) => (msg._id === tempId ? res.data : msg))
+      );
 
       setConversations((current) =>
         current
           .map((conversation) =>
-            String(conversation.bookingId) ===
-              String(activeConversation.bookingId) &&
-            conversation.staffRole === activeConversation.staffRole
+            getConversationKey(conversation) === selectedKey
               ? {
                   ...conversation,
                   lastMessage: res.data,
@@ -155,9 +417,27 @@ const Messages = () => {
                 }
               : conversation
           )
-          .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+          .sort(
+            (a, b) =>
+              new Date(b.updatedAt || 0).getTime() -
+              new Date(a.updatedAt || 0).getTime()
+          )
+      );
+
+      setActiveConversation((current) =>
+        current
+          ? {
+              ...current,
+              lastMessage: res.data,
+              updatedAt: res.data.createdAt,
+              unreadCount: 0,
+            }
+          : current
       );
     } catch (err) {
+      // 4. On failure, remove the optimistic message and restore draft
+      setMessages((current) => current.filter((msg) => msg._id !== tempId));
+      setDraft(cleanDraft);
       setError(err.message || "Unable to send message.");
     } finally {
       setSending(false);
@@ -303,7 +583,7 @@ const Messages = () => {
             </div>
           </aside>
 
-          <section className="flex flex-col min-h-[620px]">
+          <section className="flex flex-col h-[650px] min-h-[620px] relative">
             {activeConversation ? (
               <>
                 <div className="p-5 border-b border-slate-100 flex items-center justify-between gap-4">
@@ -334,7 +614,26 @@ const Messages = () => {
                   </span>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50/70">
+                {/* NEW MESSAGE INDICATOR BUTTON */}
+                {showScrollButton && (
+                  <button
+                    onClick={() => {
+                      messagesEndRef.current?.scrollIntoView({
+                        behavior: "smooth",
+                      });
+                      setShowScrollButton(false);
+                    }}
+                    className="absolute bottom-28 left-1/2 -translate-x-1/2 z-10 bg-[#bd8157] text-white px-4 py-2 rounded-full shadow-lg text-[10px] font-black animate-bounce flex items-center gap-2 border-2 border-white"
+                  >
+                    <i className="bi bi-arrow-down" /> New Messages
+                  </button>
+                )}
+
+                <div
+                  ref={scrollContainerRef}
+                  onScroll={handleScroll}
+                  className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50/70 scroll-smooth"
+                >
                   {loadingMessages ? (
                     <div className="h-full flex items-center justify-center text-sm text-slate-400 font-bold animate-pulse">
                       Loading messages...
@@ -371,6 +670,8 @@ const Messages = () => {
                                 fromMe
                                   ? "bg-[#004d4d] text-white rounded-br-md"
                                   : "bg-white text-slate-700 border border-slate-100 rounded-bl-md"
+                              } ${
+                                message.isOptimistic ? "opacity-70 italic" : ""
                               }`}
                             >
                               <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
@@ -381,7 +682,9 @@ const Messages = () => {
                                   fromMe ? "text-white/60" : "text-slate-400"
                                 }`}
                               >
-                                {formatTime(message.createdAt)}
+                                {message.isOptimistic
+                                  ? "Sending..."
+                                  : formatTime(message.createdAt)}
                               </p>
                             </div>
                           </div>
@@ -400,6 +703,12 @@ const Messages = () => {
                     <textarea
                       value={draft}
                       onChange={(event) => setDraft(event.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSend(e);
+                        }
+                      }}
                       placeholder="Type your message..."
                       rows={2}
                       maxLength={2000}

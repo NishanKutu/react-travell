@@ -13,6 +13,17 @@ const toId = (value) => value?._id?.toString?.() || value?.toString?.() || "";
 const getConversationKey = (bookingId, staffRole) =>
   `${bookingId.toString()}:${staffRole}`;
 
+const canUserAccessConversation = (booking, staffRole, userId) => {
+  const travelerId = toId(booking.userId);
+  const staffId = toId(booking[STAFF_ROLE_FIELD[staffRole]]);
+  const currentUserId = userId.toString();
+
+  return (
+    Boolean(staffId) &&
+    (currentUserId === travelerId || currentUserId === staffId)
+  );
+};
+
 const buildConversation = (booking, staffRole, messageMeta = {}) => {
   const staffField = STAFF_ROLE_FIELD[staffRole];
   const staff = booking[staffField];
@@ -27,7 +38,9 @@ const buildConversation = (booking, staffRole, messageMeta = {}) => {
     lastMessage: messageMeta.lastMessage || null,
     unreadCount: messageMeta.unreadCount || 0,
     updatedAt:
-      messageMeta.lastMessage?.createdAt || booking.updatedAt || booking.createdAt,
+      messageMeta.lastMessage?.createdAt ||
+      booking.updatedAt ||
+      booking.createdAt,
   };
 };
 
@@ -109,6 +122,7 @@ exports.getConversations = async (req, res) => {
       .sort({ updatedAt: -1 });
 
     const bookingIds = bookings.map((booking) => booking._id);
+
     const latestMessages =
       bookingIds.length > 0
         ? await Message.aggregate([
@@ -151,37 +165,40 @@ exports.getConversations = async (req, res) => {
     }, new Map());
 
     const unreadByConversation = unreadCounts.reduce((map, item) => {
-      map.set(getConversationKey(item._id.bookingId, item._id.staffRole), item.count);
+      map.set(
+        getConversationKey(item._id.bookingId, item._id.staffRole),
+        item.count
+      );
       return map;
     }, new Map());
 
     const conversations = [];
 
     bookings.forEach((booking) => {
-      const bookingId = booking._id;
+      ["guide", "porter"].forEach((staffRole) => {
+        const staffField = STAFF_ROLE_FIELD[staffRole];
+        const staffMember = booking[staffField];
 
-      if ((currentRole === 0 || currentRole === 1 || currentRole === 2) && booking.guideId) {
-        const key = getConversationKey(bookingId, "guide");
+        if (!staffMember) return;
+        if (!canUserAccessConversation(booking, staffRole, currentUserId))
+          return;
+
+        const key = getConversationKey(booking._id, staffRole);
+
         conversations.push(
-          buildConversation(booking, "guide", {
+          buildConversation(booking, staffRole, {
             lastMessage: latestByConversation.get(key),
-            unreadCount: unreadByConversation.get(key),
+            unreadCount: unreadByConversation.get(key) || 0,
           })
         );
-      }
-
-      if ((currentRole === 0 || currentRole === 1 || currentRole === 3) && booking.porterId) {
-        const key = getConversationKey(bookingId, "porter");
-        conversations.push(
-          buildConversation(booking, "porter", {
-            lastMessage: latestByConversation.get(key),
-            unreadCount: unreadByConversation.get(key),
-          })
-        );
-      }
+      });
     });
 
-    conversations.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+    conversations.sort(
+      (a, b) =>
+        new Date(b.updatedAt || 0).getTime() -
+        new Date(a.updatedAt || 0).getTime()
+    );
 
     res.status(200).json({
       success: true,
@@ -217,10 +234,16 @@ exports.getMessages = async (req, res) => {
       .populate("receiverId", "username image role")
       .sort({ createdAt: 1 });
 
+    const lastMessage =
+      messages.length > 0 ? messages[messages.length - 1] : null;
+
     res.status(200).json({
       success: true,
       data: messages,
-      conversation: buildConversation(booking, staffRole),
+      conversation: buildConversation(booking, staffRole, {
+        lastMessage,
+        unreadCount: 0,
+      }),
     });
   } catch (error) {
     res
