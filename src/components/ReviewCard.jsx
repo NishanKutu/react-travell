@@ -1,10 +1,131 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom"; 
 
+const EMPTY_IMAGES = [];
+
+const ReviewLightbox = ({
+  showLightbox,
+  review,
+  images,
+  activeIndex,
+  IMG_URL,
+  onClose,
+  setActiveIndex,
+}) => {
+  if (!showLightbox) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-between p-6 animate-in fade-in duration-300">
+      <div className="w-full flex justify-between items-center z-[10000]">
+        <div className="flex flex-col">
+          <span className="text-white font-bold text-lg">
+            {review.destinationDetails?.title || "Gallery"}
+          </span>
+          <span className="text-white/50 text-xs uppercase tracking-widest">
+            Photo {activeIndex + 1} of {images.length}
+          </span>
+        </div>
+        <button
+          onClick={onClose}
+          className="text-white bg-white/10 p-3 rounded-full hover:bg-rose-500 transition-all shadow-xl"
+        >
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2.5"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <div className="relative flex-1 flex items-center justify-center w-full max-w-6xl group/main">
+        <button
+          onClick={() =>
+            setActiveIndex(
+              (prev) => (prev - 1 + images.length) % images.length
+            )
+          }
+          className="absolute left-4 p-4 text-white bg-black/20 hover:bg-black/50 rounded-full transition-all hidden md:block"
+        >
+          <svg
+            className="w-8 h-8"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+        </button>
+        <img
+          src={`${IMG_URL}${images[activeIndex]}`}
+          alt="Viewing"
+          className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-2xl animate-in zoom-in-95 duration-300"
+        />
+        <button
+          onClick={() =>
+            setActiveIndex((prev) => (prev + 1) % images.length)
+          }
+          className="absolute right-4 p-4 text-white bg-black/20 hover:bg-black/50 rounded-full transition-all hidden md:block"
+        >
+          <svg
+            className="w-8 h-8"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M9 5l7 7-7 7"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <div className="w-full max-w-4xl mb-4">
+        <div className="flex gap-3 overflow-x-auto p-4 bg-white/5 rounded-3xl border border-white/10 no-scrollbar justify-center">
+          {images.map((img, i) => (
+            <div
+              key={i}
+              onClick={() => setActiveIndex(i)}
+              className={`relative min-w-[80px] h-[60px] rounded-xl overflow-hidden cursor-pointer transition-all duration-200 ${
+                activeIndex === i
+                  ? "ring-4 ring-emerald-500 scale-105 opacity-100"
+                  : "opacity-30 hover:opacity-100"
+              }`}
+            >
+              <img
+                src={`${IMG_URL}${img}`}
+                className="w-full h-full object-cover"
+                alt="thumb"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+};
+
 const ReviewCard = ({ review, isAdmin = false, onDelete, IMG_URL }) => {
   const [showLightbox, setShowLightbox] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
+  const images = review.images ?? EMPTY_IMAGES;
 
   const wordLimit = 50;
   const comment = review.comment || "";
@@ -20,16 +141,16 @@ const ReviewCard = ({ review, isAdmin = false, onDelete, IMG_URL }) => {
     (e) => {
       if (!showLightbox) return;
       if (e.key === "ArrowRight") {
-        setActiveIndex((prev) => (prev + 1) % review.images.length);
+        setActiveIndex((prev) => (prev + 1) % images.length);
       } else if (e.key === "ArrowLeft") {
         setActiveIndex(
-          (prev) => (prev - 1 + review.images.length) % review.images.length
+          (prev) => (prev - 1 + images.length) % images.length
         );
       } else if (e.key === "Escape") {
         setShowLightbox(false);
       }
     },
-    [showLightbox, review.images?.length]
+    [showLightbox, images]
   );
 
   useEffect(() => {
@@ -40,118 +161,6 @@ const ReviewCard = ({ review, isAdmin = false, onDelete, IMG_URL }) => {
   const openGallery = (index) => {
     setActiveIndex(index);
     setShowLightbox(true);
-  };
-
-  // --- Lightbox Portal ---
-  const Lightbox = () => {
-    if (!showLightbox) return null;
-
-    return createPortal(
-      <div className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-between p-6 animate-in fade-in duration-300">
-        <div className="w-full flex justify-between items-center z-[10000]">
-          <div className="flex flex-col">
-            <span className="text-white font-bold text-lg">
-              {review.destinationDetails?.title || "Gallery"}
-            </span>
-            <span className="text-white/50 text-xs uppercase tracking-widest">
-              Photo {activeIndex + 1} of {review.images.length}
-            </span>
-          </div>
-          <button
-            onClick={() => setShowLightbox(false)}
-            className="text-white bg-white/10 p-3 rounded-full hover:bg-rose-500 transition-all shadow-xl"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2.5"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-
-        <div className="relative flex-1 flex items-center justify-center w-full max-w-6xl group/main">
-          <button
-            onClick={() =>
-              setActiveIndex(
-                (prev) =>
-                  (prev - 1 + review.images.length) % review.images.length
-              )
-            }
-            className="absolute left-4 p-4 text-white bg-black/20 hover:bg-black/50 rounded-full transition-all hidden md:block"
-          >
-            <svg
-              className="w-8 h-8"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-          </button>
-          <img
-            src={`${IMG_URL}${review.images[activeIndex]}`}
-            alt="Viewing"
-            className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-2xl animate-in zoom-in-95 duration-300"
-          />
-          <button
-            onClick={() =>
-              setActiveIndex((prev) => (prev + 1) % review.images.length)
-            }
-            className="absolute right-4 p-4 text-white bg-black/20 hover:bg-black/50 rounded-full transition-all hidden md:block"
-          >
-            <svg
-              className="w-8 h-8"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </button>
-        </div>
-
-        <div className="w-full max-w-4xl mb-4">
-          <div className="flex gap-3 overflow-x-auto p-4 bg-white/5 rounded-3xl border border-white/10 no-scrollbar justify-center">
-            {review.images.map((img, i) => (
-              <div
-                key={i}
-                onClick={() => setActiveIndex(i)}
-                className={`relative min-w-[80px] h-[60px] rounded-xl overflow-hidden cursor-pointer transition-all duration-200 ${
-                  activeIndex === i
-                    ? "ring-4 ring-emerald-500 scale-105 opacity-100"
-                    : "opacity-30 hover:opacity-100"
-                }`}
-              >
-                <img
-                  src={`${IMG_URL}${img}`}
-                  className="w-full h-full object-cover"
-                  alt="thumb"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>,
-      document.body 
-    );
   };
 
   return (
@@ -170,8 +179,15 @@ const ReviewCard = ({ review, isAdmin = false, onDelete, IMG_URL }) => {
         `}
       </style>
 
-      {/* Render the Lightbox using Portal */}
-      <Lightbox />
+      <ReviewLightbox
+        showLightbox={showLightbox}
+        review={review}
+        images={images}
+        activeIndex={activeIndex}
+        IMG_URL={IMG_URL}
+        onClose={() => setShowLightbox(false)}
+        setActiveIndex={setActiveIndex}
+      />
 
       <div className="p-5 flex justify-between items-center bg-transparent border-b border-white/10">
         <div className="flex items-center gap-3">
@@ -230,7 +246,7 @@ const ReviewCard = ({ review, isAdmin = false, onDelete, IMG_URL }) => {
                 {isExpanded ? "↑ Show Less" : "↓ Read More"}
               </button>
             )}
-            {review.images?.length > 0 && (
+            {images.length > 0 && (
               <button
                 onClick={() => openGallery(0)}
                 className="animate-wiggle flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-2 rounded-lg transition-all group/btn"
@@ -249,7 +265,7 @@ const ReviewCard = ({ review, isAdmin = false, onDelete, IMG_URL }) => {
                   />
                 </svg>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-white">
-                  View Photos ({review.images.length})
+                  View Photos ({images.length})
                 </span>
               </button>
             )}

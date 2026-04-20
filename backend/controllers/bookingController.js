@@ -1,9 +1,19 @@
 const Booking = require("../models/bookingModel");
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const createStripeClient = require("stripe");
 const Destination = require("../models/destinationModel");
 const crypto = require("crypto");
 const CustomTour = require("../models/customTourModel");
 const User = require("../models/userModel");
+
+const getStripeClient = () => {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    const error = new Error("Stripe is not configured on the server");
+    error.statusCode = 500;
+    throw error;
+  }
+
+  return createStripeClient(process.env.STRIPE_SECRET_KEY);
+};
 
 const checkAvailability = async (staffId, role, start, end) => {
   const query = {
@@ -368,6 +378,7 @@ exports.cancelAndRefund = async (req, res) => {
 exports.initiateStripePayment = async (req, res) => {
   try {
     const { bookingId, amount, destinationName } = req.body;
+    const stripe = getStripeClient();
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -399,6 +410,7 @@ exports.initiateStripePayment = async (req, res) => {
 exports.verifyStripePayment = async (req, res) => {
   try {
     const { session_id, bookingId } = req.query;
+    const stripe = getStripeClient();
 
     const session = await stripe.checkout.sessions.retrieve(session_id);
 

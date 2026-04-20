@@ -1,5 +1,5 @@
 const UserModel = require("../models/userModel");
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcrypt");
 const saltRounds = 10;
 const TokenModel = require("../models/tokenModel");
 const crypto = require("crypto");
@@ -8,6 +8,12 @@ const Booking = require("../models/bookingModel");
 const Destination = require("../models/destinationModel");
 
 const jwt = require("jsonwebtoken");
+
+const sendOptionalEmail = (mailOptions) => {
+  emailSender(mailOptions).catch((error) => {
+    console.error("Email delivery failed:", error.message);
+  });
+};
 
 // Register
 exports.register = async (req, res) => {
@@ -64,7 +70,7 @@ exports.register = async (req, res) => {
   }
 
   const URL = `${process.env.FRONTEND_URL}/verify/${tokenToSend.token}`;
-  emailSender({
+  sendOptionalEmail({
     from: "noreply@something.com",
     to: email,
     subject: "Email Verification",
@@ -239,7 +245,7 @@ exports.resendVerification = async (req, res) => {
       .json({ error: "Faile to generate token. Try again later." });
   }
   const URL = `${process.env.FRONTEND_URL}/verify/${tokenToSend.token}`;
-  emailSender({
+  sendOptionalEmail({
     from: `noreply@something.com`,
     to: userToVerify.email,
     subject: "Verification Email",
@@ -339,7 +345,7 @@ exports.forgetPassword = async (req, res) => {
   }
   const URL = `${process.env.FRONTEND_URL}/resetpassword/${tokenToSend.token}`;
 
-  emailSender({
+  sendOptionalEmail({
     from: `noreply@somethig.com`,
     to: req.body.email,
     subject: `Password reset link`,
@@ -479,47 +485,56 @@ exports.resetPassword = async (req, res) => {
 
 // login
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
-  let user = await UserModel.findOne({ email });
-  if (!user) {
-    return res.status(400).json({ error: "User not registered" });
-  }
-  let passwordMatch = await bcrypt.compare(password, user.password);
-  if (!passwordMatch) {
-    return res.status(400).json({ error: "Email and password do not match." });
-  }
-  if (!user.isVerified) {
-    return res.status(400).json({ error: "User not verified." });
-  }
-  let token = jwt.sign(
-    {
-      _id: user._id,
-      email,
-      username: user.username,
-      role: user.role,
-    },
-    process.env.JWT_SECRET,
-    { expiresIn: "24h" }
-  );
+  try {
+    const { email, password } = req.body;
+    let user = await UserModel.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ error: "User not registered" });
+    }
+    let passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
+      return res
+        .status(400)
+        .json({ error: "Email and password do not match." });
+    }
+    if (!user.isVerified) {
+      return res.status(400).json({ error: "User not verified." });
+    }
+    let token = jwt.sign(
+      {
+        _id: user._id,
+        email,
+        username: user.username,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "24h" }
+    );
 
-  res.send({
-    success: true,
-    token,
-    message: "Logged in successfully",
-    user: {
-      _id: user._id,
-      email: user.email,
-      username: user.username,
-      role: user.role,
-      image: user.image,
-      experience: user.experience,
-      age: user.age,
-      dailyRate: user.dailyRate,
-      bio: user.bio,
-      specialization: user.specialization,
-      maxWeight: user.maxWeight,
-    },
-  });
+    res.send({
+      success: true,
+      token,
+      message: "Logged in successfully",
+      user: {
+        _id: user._id,
+        email: user.email,
+        username: user.username,
+        role: user.role,
+        image: user.image,
+        experience: user.experience,
+        age: user.age,
+        dailyRate: user.dailyRate,
+        bio: user.bio,
+        specialization: user.specialization,
+        maxWeight: user.maxWeight,
+      },
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    return res.status(500).json({
+      error: "Unable to login right now. Please try again shortly.",
+    });
+  }
 };
 
 // get all users
@@ -593,7 +608,7 @@ exports.deleteUser = async (req, res) => {
     res
       .status(200)
       .json({ success: true, message: "User deleted successfully" });
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -613,7 +628,7 @@ exports.toggleUserRole = async (req, res) => {
       message: `User role updated to ${user.role === 1 ? "Admin" : "Client"}`,
       role: user.role,
     });
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -636,7 +651,7 @@ exports.manualVerifyUser = async (req, res) => {
       success: true,
       message: "User verified successfully by administrator",
     });
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };

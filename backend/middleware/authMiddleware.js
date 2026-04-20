@@ -21,7 +21,7 @@ exports.isLoggedIn = async (req, res, next) => {
 
     req.user = user;
     next();
-  } catch (error) {
+  } catch {
     return res.status(401).json({
       success: false,
       message: "Session expired. Please login again.",
@@ -48,7 +48,7 @@ exports.isAdmin = async (req, res, next) => {
       return res.status(403).json({ error: "Access denied. Admin only." });
     }
     next();
-  } catch (error) {
+  } catch {
     return res.status(401).json({ error: "Invalid Token" });
   }
 };

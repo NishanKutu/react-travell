@@ -1,8 +1,12 @@
-const API = `http://localhost:8000/api/user`;
+const API = "http://localhost:8000/api/user";
 
 // 1. Centralized Response Handler
 const handleResponse = async (response) => {
-    const data = await response.json();
+    const contentType = response.headers.get("content-type") || "";
+    const data = contentType.includes("application/json")
+        ? await response.json()
+        : { error: await response.text() };
+
     if (!response.ok) {
         throw new Error(data.error || data.message || 'Something went wrong');
     }
@@ -87,16 +91,12 @@ export const resetPassword = async (token, password) => {
 };
 
 export const resendVerification = async (email) => {
-    try {
-        const response = await fetch(`${API}/resendverification`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email })
-        });
-        return await handleResponse(response);
-    } catch (error) {
-        throw error;
-    }
+    const response = await fetch(`${API}/resendverification`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+    });
+    return await handleResponse(response);
 };
 
 // 2. Session Management
@@ -109,7 +109,14 @@ export const keepLoggedIn = (data) => {
 export const isLoggedIn = () => {
     if (typeof window === "undefined") return false;
     const auth = localStorage.getItem('auth');
-    return auth ? JSON.parse(auth) : false;
+    if (!auth) return false;
+
+    try {
+        return JSON.parse(auth);
+    } catch {
+        localStorage.removeItem("auth");
+        return false;
+    }
 };
 
 export const logout = () => {

@@ -4,36 +4,36 @@ import Button from "../layout/Button";
 import { AiOutlineMenu, AiOutlineClose } from "react-icons/ai";
 import { isLoggedIn } from "../api/authAPI";
 
+const HikeHubLogo = () => (
+  <div className="flex items-center justify-center bg-[#bd8157] p-1.5 rounded-xl shadow-lg group-hover:rotate-12 transition-transform flex-shrink-0">
+    <svg
+      width="30"
+      height="30"
+      viewBox="0 0 100 100"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path d="M15 80L50 20L85 80H15Z" fill="white" />
+      <path
+        d="M50 20L60 38L50 34L40 38L50 20Z"
+        fill="#004d4d"
+        fillOpacity="0.2"
+      />
+      <path
+        d="M35 80C35 80 43 65 50 65C57 65 65 80 65 80"
+        stroke="#004d4d"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+    </svg>
+  </div>
+);
+
 const Navbar = ({ openLogin, openSignup }) => {
   const [menu, setMenu] = useState(false);
 
   let auth = isLoggedIn();
   let navigate = useNavigate();
-
-  const HikeHubLogo = () => (
-    <div className="flex items-center justify-center bg-[#bd8157] p-1.5 rounded-xl shadow-lg group-hover:rotate-12 transition-transform flex-shrink-0">
-      <svg
-        width="30"
-        height="30"
-        viewBox="0 0 100 100"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path d="M15 80L50 20L85 80H15Z" fill="white" />
-        <path
-          d="M50 20L60 38L50 34L40 38L50 20Z"
-          fill="#004d4d"
-          fillOpacity="0.2"
-        />
-        <path
-          d="M35 80C35 80 43 65 50 65C57 65 65 80 65 80"
-          stroke="#004d4d"
-          strokeWidth="4"
-          strokeLinecap="round"
-        />
-      </svg>
-    </div>
-  );
 
   const handleSignout = () => {
     localStorage.removeItem("auth");
@@ -49,6 +49,9 @@ const Navbar = ({ openLogin, openSignup }) => {
     { name: "About", path: "/about" },
     { name: "Contact", path: "/contact" },
     { name: "Testimonials", path: "/testimonials" },
+    ...(auth && auth.user?.role !== 1
+      ? [{ name: "Messages", path: "/messages" }]
+      : []),
   ];
 
   const handleChange = () => setMenu(!menu);
@@ -135,11 +138,22 @@ const Navbar = ({ openLogin, openSignup }) => {
           ))}
           <div className="flex flex-col items-center gap-4 mt-4">
             {auth ? (
-              <Button
-                onClick={handleSignout}
-                title="Sign Out"
-                variant="primary"
-              />
+              <>
+                <Link
+                  to={auth.user?.role === 1 ? "/admin/dashboard" : "/profile"}
+                  onClick={() => setMenu(false)}
+                >
+                  <Button
+                    title={auth.user?.role === 1 ? "Dashboard" : "Profile"}
+                    variant="secondary"
+                  />
+                </Link>
+                <Button
+                  onClick={handleSignout}
+                  title="Sign Out"
+                  variant="primary"
+                />
+              </>
             ) : (
               <>
                 <Button onClick={openLogin} title="Login" variant="secondary" />

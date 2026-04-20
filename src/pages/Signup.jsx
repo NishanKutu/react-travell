@@ -289,6 +289,17 @@ const SignupPage = ({ isOpen, onClose, switchToLogin }) => {
             {loading ? "Processing..." : "Register"}
           </button>
         </form>
+
+        <p className="mt-4 text-center text-sm text-gray-600">
+          Already have an account?
+          <button
+            type="button"
+            onClick={switchToLogin}
+            className="text-[#004d4d] font-bold hover:underline pl-1"
+          >
+            Sign in
+          </button>
+        </p>
       </div>
     </div>
   );

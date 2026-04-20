@@ -40,7 +40,7 @@ const CustomTour = () => {
       try {
         const parsed = JSON.parse(authData);
         return parsed.token;
-      } catch (e) {
+      } catch {
         return null;
       }
     }

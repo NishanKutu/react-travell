@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { getAllReviews, deleteReview } from "../../api/reviewApi";
 import { isLoggedIn } from "../../api/authAPI";
 import {
@@ -25,11 +25,7 @@ const AdminReview = () => {
     title: "", 
   });
 
-  useEffect(() => {
-    fetchReviews();
-  }, []);
-
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async () => {
     try {
       const res = await getAllReviews(token);
       if (res.success) setReviews(res.data);
@@ -38,7 +34,11 @@ const AdminReview = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    fetchReviews();
+  }, [fetchReviews]);
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this review?")) return;

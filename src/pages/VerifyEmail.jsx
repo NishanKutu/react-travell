@@ -20,7 +20,7 @@ const VerifyEmail = () => {
                     setMessage('')
                 }
             })
-    }, [])
+    }, [token])
 
     return (
         <div className={`h-[80vh] flex justify-center items-center text-3xl 

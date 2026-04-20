@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useCallback, useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAllReviews } from "../api/reviewApi";
 import ReviewCard from "../components/ReviewCard";
@@ -18,7 +18,7 @@ const Testimonials = () => {
   const IMG_URL = "http://localhost:8000/uploads/";
   const bgColors = ["#52796f", "#2f3e46", "#354f52"];
 
-  const startAutoplay = () => {
+  const startAutoplay = useCallback(() => {
     if (autoplayRef.current) clearInterval(autoplayRef.current);
 
     autoplayRef.current = setInterval(() => {
@@ -35,9 +35,9 @@ const Testimonials = () => {
         window.swiffyslider.slide(sliderRef.current, true);
       }
     }, 3000);
-  };
+  }, [isHovered]);
 
-  const fetchPublicReviews = async () => {
+  const fetchPublicReviews = useCallback(async () => {
     try {
       const res = await getAllReviews();
       if (res.success) {
@@ -54,12 +54,13 @@ const Testimonials = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [startAutoplay]);
 
-  if (!hasFetched) {
+  useEffect(() => {
+    if (hasFetched) return;
     setHasFetched(true);
     fetchPublicReviews();
-  }
+  }, [fetchPublicReviews, hasFetched]);
 
   useEffect(() => {
     if (hasFetched && !loading) {
@@ -68,7 +69,7 @@ const Testimonials = () => {
     return () => {
       if (autoplayRef.current) clearInterval(autoplayRef.current);
     };
-  }, [isHovered, hasFetched, loading]);
+  }, [hasFetched, loading, startAutoplay]);
 
   return (
     <div className="min-h-screen bg-white font-sans overflow-x-hidden">

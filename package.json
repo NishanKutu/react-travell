@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "seed": "npm --prefix backend run seed --",
+    "seed:reset": "npm --prefix backend run seed:reset"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

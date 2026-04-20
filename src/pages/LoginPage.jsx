@@ -30,8 +30,6 @@ const LoginPage = ({ isOpen, onClose, switchToSignup }) => {
         alert("Logged in successfully!");
         keepLoggedIn({ user: data.user, token: data.token });
 
-        const redirectPath = location.state?.from || "/";
-
         // --- ROLE REDIRECTION LOGIC ---
         const role = Number(data?.user?.role);
 

@@ -1,5 +1,4 @@
 const Review = require("../models/reviewModel");
-const mongoose = require("mongoose");
 
 exports.postReview = async (req, res) => {
   try {

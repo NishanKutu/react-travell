@@ -40,7 +40,7 @@ const ContactPage = () => {
         setResult(resJson.message);
         setStatus("text-red-500");
       }
-    } catch (error) {
+    } catch {
       setResult("Something went wrong!");
       setStatus("text-red-500");
     }

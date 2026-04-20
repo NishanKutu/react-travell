@@ -1,4 +1,4 @@
-const BASE_URL = "/api/cities";
+const BASE_URL = "http://localhost:8000/api/cities";
 
 const getAuthToken = () => {
   const authData = localStorage.getItem("auth");
@@ -6,7 +6,7 @@ const getAuthToken = () => {
     try {
       const parsedData = JSON.parse(authData);
       return parsedData.token;
-    } catch (err) {
+    } catch {
       return null;
     }
   }

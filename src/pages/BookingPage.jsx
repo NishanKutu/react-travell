@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { isLoggedIn } from "../api/authAPI";
 import { getDestinationById } from "../api/destinationApi";
 import {
@@ -13,7 +13,7 @@ import { FaCalendarAlt } from "react-icons/fa";
 import { useOutletContext } from "react-router-dom";
 
 const BookingPage = () => {
-  const { user, token } = isLoggedIn();
+  const { user } = isLoggedIn();
   const { id } = useParams();
 
   const [destination, setDestination] = useState(null);
@@ -43,7 +43,7 @@ const BookingPage = () => {
       try {
         const destRes = await getDestinationById(id);
         if (destRes.success) setDestination(destRes.data);
-      } catch (err) {
+      } catch {
         setError("Failed to load destination details.");
       } finally {
         setLoading(false);
@@ -172,7 +172,7 @@ const BookingPage = () => {
           setPaymentError("Failed to connect to Stripe. Please try again.");
         }
       }
-    } catch (err) {
+    } catch {
       setPaymentError("An unexpected error occurred. Please try again.");
     }
   };

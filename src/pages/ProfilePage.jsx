@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { isLoggedIn } from "../api/authAPI";
 import PaymentModal from "./PaymentModal";
 import DestinationCard from "../components/DestinationCard";
@@ -55,6 +56,7 @@ const ProfilePage = () => {
   const isPorter = Number(user?.role) === 3;
   const isStaff = isGuide || isPorter;
   const IMG_URL = "http://localhost:8000/uploads/";
+  const chatEnabledStatuses = ["pending", "confirmed", "completed"];
 
   const completedTreksCount =
     bookings?.length > 0
@@ -69,11 +71,7 @@ const ProfilePage = () => {
         })
       : [];
 
-  useEffect(() => {
-    fetchMyData();
-  }, []);
-
-  const fetchMyData = async () => {
+  const fetchMyData = useCallback(async () => {
     setLoading(true);
     setUserReviews([]);
 
@@ -147,7 +145,11 @@ const ProfilePage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [initialUser?._id, token, user?._id, user?.role]);
+
+  useEffect(() => {
+    fetchMyData();
+  }, [fetchMyData]);
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -274,7 +276,7 @@ const ProfilePage = () => {
         setShowReviewModal(false);
         fetchMyData();
       }
-    } catch (error) {
+    } catch {
       alert("Error processing review.");
     }
   };
@@ -295,7 +297,7 @@ const ProfilePage = () => {
         alert(`Trek marked as ${newStatus}!`);
         fetchMyData();
       }
-    } catch (error) {
+    } catch {
       alert("Failed to update status.");
     }
   };
@@ -337,6 +339,29 @@ const ProfilePage = () => {
     e.stopPropagation();
     setPaymentBooking(booking);
     setShowPaymentModal(true);
+  };
+
+  const canChatForBooking = (booking) =>
+    !booking.isCustom && chatEnabledStatuses.includes(booking.status);
+
+  const getStaffAssignmentRole = (booking) => {
+    const currentUserId = String(user?._id || "");
+
+    if (
+      isGuide &&
+      String(booking.guideId?._id || booking.guideId) === currentUserId
+    ) {
+      return "guide";
+    }
+
+    if (
+      isPorter &&
+      String(booking.porterId?._id || booking.porterId) === currentUserId
+    ) {
+      return "porter";
+    }
+
+    return "";
   };
 
   const onSelectPayment = async (method) => {
@@ -725,6 +750,16 @@ const ProfilePage = () => {
                 {isEditing ? "Save Profile Changes" : "Edit Profile"}
               </button>
 
+              {!isEditing && (
+                <Link
+                  to="/messages"
+                  className="inline-flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-8 py-2.5 rounded-xl text-sm font-bold shadow-sm hover:border-[#004d4d]/40 hover:text-[#004d4d] transition-all active:scale-95"
+                >
+                  <i className="bi bi-chat-dots"></i>
+                  Messages
+                </Link>
+              )}
+
               {/* Availability Toggle — only shown for guides and porters */}
               {isStaff && !isEditing && (
                 <button
@@ -1052,6 +1087,42 @@ const ProfilePage = () => {
                         </div>
 
                         <div className="flex flex-col gap-2 pt-3 border-t border-slate-200/50 mt-2">
+                          {canChatForBooking(booking) && (
+                            <>
+                              {!isStaff && booking.guideId && (
+                                <Link
+                                  to={`/messages?bookingId=${booking._id}&role=guide`}
+                                  className="w-full inline-flex items-center justify-center gap-2 bg-white border border-emerald-200 text-emerald-700 text-[11px] font-black uppercase tracking-widest py-2.5 rounded-xl hover:bg-emerald-50 transition-all shadow-sm active:scale-95"
+                                >
+                                  <i className="bi bi-chat-dots"></i>
+                                  Chat Guide
+                                </Link>
+                              )}
+
+                              {!isStaff && booking.porterId && (
+                                <Link
+                                  to={`/messages?bookingId=${booking._id}&role=porter`}
+                                  className="w-full inline-flex items-center justify-center gap-2 bg-white border border-orange-200 text-orange-700 text-[11px] font-black uppercase tracking-widest py-2.5 rounded-xl hover:bg-orange-50 transition-all shadow-sm active:scale-95"
+                                >
+                                  <i className="bi bi-chat-dots"></i>
+                                  Chat Porter
+                                </Link>
+                              )}
+
+                              {isStaff && getStaffAssignmentRole(booking) && (
+                                <Link
+                                  to={`/messages?bookingId=${
+                                    booking._id
+                                  }&role=${getStaffAssignmentRole(booking)}`}
+                                  className="w-full inline-flex items-center justify-center gap-2 bg-white border border-[#004d4d]/20 text-[#004d4d] text-[11px] font-black uppercase tracking-widest py-2.5 rounded-xl hover:bg-[#004d4d]/5 transition-all shadow-sm active:scale-95"
+                                >
+                                  <i className="bi bi-chat-dots"></i>
+                                  Chat Traveler
+                                </Link>
+                              )}
+                            </>
+                          )}
+
                           {Number(user?.role) === 2 &&
                             booking.status === "confirmed" && (
                               <button

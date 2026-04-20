@@ -34,6 +34,7 @@ import CustomTour from './pages/CustomTour';
 import ManageActivity from './pages/admin/ManageActivity';
 import Activities from './pages/admin/Activities';
 import CustomTourList from './pages/admin/CustomTourList';
+import Messages from './pages/Messages';
 
 
 const MyRoutes = () => {
@@ -63,6 +64,7 @@ const MyRoutes = () => {
           <Route path="/payment-success" element={<PaymentSuccess />} />
           <Route path="/payment-failure" element={<PaymentFailure />} />
           <Route path="/custom-tours" element={<CustomTour />} />
+          <Route path="/messages" element={<Messages />} />
 
           <Route path='*' element = {<PageNotFound/>}/>
 

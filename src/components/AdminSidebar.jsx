@@ -1,10 +1,8 @@
 import React, { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 const AdminSidebar = () => {
-  const navigate = useNavigate();
   const [isBackHovered, setIsBackHovered] = useState(false);
-  const [isLogoutHovered, setIsLogoutHovered] = useState(false);
 
   const getLinkStyle = ({ isActive }) => ({
     display: "flex",
@@ -19,14 +17,6 @@ const AdminSidebar = () => {
     backgroundColor: isActive ? "#334155" : "transparent",
     color: isActive ? "#f8fafc" : "#94a3b8",
   });
-
-  const handleLogout = () => {
-    if (window.confirm("Are you sure you want to logout?")) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      navigate("/login");
-    }
-  };
 
   return (
     <aside

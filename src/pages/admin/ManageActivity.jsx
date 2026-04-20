@@ -25,15 +25,15 @@ const ManageActivity = () => {
   // --- UI State ---
   const [status, setStatus] = useState({ message: "", type: "" });
 
-  // Load cities on mount
-  useEffect(() => {
-    loadCities();
-  }, []);
-
   const loadCities = async () => {
     const res = await fetchCities();
     if (res.success) setCities(res.data);
   };
+
+  // Load cities on mount
+  useEffect(() => {
+    loadCities();
+  }, []);
 
   const handleAddCity = async (e) => {
     e.preventDefault();

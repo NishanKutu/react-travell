@@ -7,6 +7,10 @@ import {
 import { fetchCities } from "../../api/cityApi";
 import { motion, AnimatePresence } from "framer-motion";
 
+const MotionButton = motion.button;
+const MotionDiv = motion.div;
+const MotionP = motion.p;
+
 const Activities = () => {
   const [cities, setCities] = useState([]);
   const [activities, setActivities] = useState([]);
@@ -169,7 +173,7 @@ const Activities = () => {
       } else {
         showStatus(res.message || "Update failed", "error");
       }
-    } catch (error) {
+    } catch {
       showStatus("Something went wrong during update", "error");
     }
   };
@@ -276,7 +280,7 @@ const Activities = () => {
               <div className="overflow-hidden">
                 <AnimatePresence mode="wait">
                   {cityActivities.length > 0 ? (
-                    <motion.div
+                    <MotionDiv
                       key={`${city._id}-${currentPage}`}
                       variants={containerVariants}
                       initial="hidden"
@@ -285,7 +289,7 @@ const Activities = () => {
                       className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
                     >
                       {currentCards.map((activity) => (
-                        <motion.div
+                        <MotionDiv
                           key={activity._id}
                           variants={itemVariants}
                           className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all hover:-translate-y-1 cursor-default group p-5"
@@ -328,17 +332,17 @@ const Activities = () => {
                               </button>
                             </div>
                           </div>
-                        </motion.div>
+                        </MotionDiv>
                       ))}
-                    </motion.div>
+                    </MotionDiv>
                   ) : (
-                    <motion.p
+                    <MotionP
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       className="text-gray-400 italic py-4"
                     >
                       No activities listed for {city.cityname} yet.
-                    </motion.p>
+                    </MotionP>
                   )}
                 </AnimatePresence>
               </div>
@@ -382,7 +386,7 @@ const Activities = () => {
       {/* --- GO TO TOP BUTTON --- */}
       <AnimatePresence>
         {showGoTop && (
-          <motion.button
+          <MotionButton
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
@@ -390,7 +394,7 @@ const Activities = () => {
             className="fixed bottom-10 right-10 w-14 h-14 bg-[#004d43] text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-[#c08457] transition-all z-[99] border-2 border-white"
           >
             <i className="bi bi-arrow-up-short text-3xl"></i>
-          </motion.button>
+          </MotionButton>
         )}
       </AnimatePresence>
 

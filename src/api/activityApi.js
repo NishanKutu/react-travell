@@ -1,4 +1,4 @@
-const BASE_URL = "/api/activities";
+const BASE_URL = "http://localhost:8000/api/activities";
 
 const getAuthToken = () => {
   const authData = localStorage.getItem("auth");
@@ -6,7 +6,7 @@ const getAuthToken = () => {
     try {
       const parsed = JSON.parse(authData);
       return parsed.token;
-    } catch (e) {
+    } catch {
       return null;
     }
   }
@@ -14,41 +14,29 @@ const getAuthToken = () => {
 };
 
 export const createActivity = async (activityData) => {
-  try {
-    const response = await fetch(`${BASE_URL}/add`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getAuthToken()}`,
-      },
-      body: JSON.stringify(activityData),
-    });
-    return await response.json();
-  } catch (error) {
-    throw error;
-  }
+  const response = await fetch(`${BASE_URL}/add`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getAuthToken()}`,
+    },
+    body: JSON.stringify(activityData),
+  });
+  return await response.json();
 };
 
 /**
  * Fetch activities using the City's ObjectId
  */
 export const getActivitiesByCity = async (cityId) => {
-  try {
-    // API URL remains the same, but the variable passed is the ID
-    const response = await fetch(`${BASE_URL}/places/${cityId}`);
-    return await response.json();
-  } catch (error) {
-    throw error;
-  }
+  // API URL remains the same, but the variable passed is the ID
+  const response = await fetch(`${BASE_URL}/places/${cityId}`);
+  return await response.json();
 };
 
 export const getAllActivities = async () => {
-  try {
-    const response = await fetch(`${BASE_URL}/`);
-    return await response.json();
-  } catch (error) {
-    throw error;
-  }
+  const response = await fetch(`${BASE_URL}/`);
+  return await response.json();
 };
 
 export const updateActivity = async (activityId, updatedData) => {

@@ -80,7 +80,7 @@ const BookingList = () => {
       } else {
         toast.error(response.message);
       }
-    } catch (err) {
+    } catch {
       toast.error("An error occurred while updating status.");
     }
   };
@@ -106,7 +106,7 @@ const BookingList = () => {
         } else {
           toast.error(response.message);
         }
-      } catch (err) {
+      } catch {
         toast.error("An error occurred while processing your request.");
       }
     }
