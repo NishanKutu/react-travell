@@ -34,12 +34,6 @@ const Messages = () => {
       : document.visibilityState === "visible"
   );
 
-  // New states for smart scrolling and indicators
-  const [showScrollButton, setShowScrollButton] = useState(false);
-  const scrollContainerRef = useRef(null);
-  const isNearBottomRef = useRef(true);
-
-  const messagesEndRef = useRef(null);
   const activeConversationRef = useRef(null);
 
   const currentUserId = auth?.user?._id ? String(auth.user._id) : "";
@@ -71,23 +65,6 @@ const Messages = () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
-
-  // Handle scroll events to detect if user is near bottom
-  const handleScroll = () => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    // If user is within 100px of the bottom, consider them "at bottom"
-    const isAtBottom =
-      container.scrollHeight - container.scrollTop <=
-      container.clientHeight + 50;
-
-    isNearBottomRef.current = isAtBottom;
-
-    if (isAtBottom) {
-      setShowScrollButton(false);
-    }
-  };
 
   const syncConversationAfterMessagesLoad = useCallback(
     (conversation, nextMessages, serverConversation = null) => {
@@ -275,7 +252,6 @@ const Messages = () => {
         return;
       }
 
-      // setActiveConversation(updatedActiveConversation);
       if (
         JSON.stringify(updatedActiveConversation) !==
         JSON.stringify(currentActive)
@@ -308,11 +284,7 @@ const Messages = () => {
       setMessages([]);
       return;
     }
-
     loadMessages(activeConversation);
-    // Reset scroll tracking when switching conversations
-    isNearBottomRef.current = true;
-    setShowScrollButton(false);
   }, [selectedKey, loadMessages]);
 
   useEffect(() => {
@@ -331,23 +303,6 @@ const Messages = () => {
     if (!auth || !isTabVisible) return;
     pollGlobalUpdates();
   }, [auth, isTabVisible, pollGlobalUpdates]);
-
-  // Smart Auto-Scroll and New Message Indicator Logic
-  useEffect(() => {
-    if (messages.length === 0) return;
-
-    const lastMessage = messages[messages.length - 1];
-    const isFromMe = String(getId(lastMessage.senderId)) === currentUserId;
-
-    // Scroll automatically if I sent it OR if the user is already at the bottom
-    if (isFromMe || isNearBottomRef.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      setShowScrollButton(false);
-    } else {
-      // If someone else sent a message and I'm scrolled up, show indicator
-      setShowScrollButton(true);
-    }
-  }, [messages, currentUserId]);
 
   const getCounterpart = (conversation) => {
     if (!conversation) return null;
@@ -377,7 +332,6 @@ const Messages = () => {
     const cleanDraft = draft.trim();
     if (!activeConversation || !cleanDraft || sending) return;
 
-    // 1. Optimistic Update: Create a temporary message object
     const tempId = `temp-${Date.now()}`;
     const optimisticMessage = {
       _id: tempId,
@@ -387,7 +341,6 @@ const Messages = () => {
       isOptimistic: true,
     };
 
-    // 2. Add to UI immediately
     setMessages((current) => [...current, optimisticMessage]);
     setDraft("");
     setSending(true);
@@ -400,7 +353,6 @@ const Messages = () => {
         text: cleanDraft,
       });
 
-      // 3. Replace the optimistic message with real server data
       setMessages((current) =>
         current.map((msg) => (msg._id === tempId ? res.data : msg))
       );
@@ -435,7 +387,6 @@ const Messages = () => {
           : current
       );
     } catch (err) {
-      // 4. On failure, remove the optimistic message and restore draft
       setMessages((current) => current.filter((msg) => msg._id !== tempId));
       setDraft(cleanDraft);
       setError(err.message || "Unable to send message.");
@@ -495,6 +446,7 @@ const Messages = () => {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] bg-white border border-slate-100 shadow-sm rounded-2xl overflow-hidden min-h-[720px]">
+          {/* ── SIDEBAR ── */}
           <aside className="border-b lg:border-b-0 lg:border-r border-slate-100">
             <div className="p-5 border-b border-slate-100">
               <h2 className="text-lg font-black text-slate-800">
@@ -583,9 +535,11 @@ const Messages = () => {
             </div>
           </aside>
 
-          <section className="flex flex-col h-[650px] min-h-[620px] relative">
+          {/* ── CHAT PANEL ── */}
+          <section className="flex flex-col h-[650px] min-h-[620px]">
             {activeConversation ? (
               <>
+                {/* Header */}
                 <div className="p-5 border-b border-slate-100 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
@@ -614,26 +568,8 @@ const Messages = () => {
                   </span>
                 </div>
 
-                {/* NEW MESSAGE INDICATOR BUTTON */}
-                {showScrollButton && (
-                  <button
-                    onClick={() => {
-                      messagesEndRef.current?.scrollIntoView({
-                        behavior: "smooth",
-                      });
-                      setShowScrollButton(false);
-                    }}
-                    className="absolute bottom-28 left-1/2 -translate-x-1/2 z-10 bg-[#bd8157] text-white px-4 py-2 rounded-full shadow-lg text-[10px] font-black animate-bounce flex items-center gap-2 border-2 border-white"
-                  >
-                    <i className="bi bi-arrow-down" /> New Messages
-                  </button>
-                )}
-
-                <div
-                  ref={scrollContainerRef}
-                  onScroll={handleScroll}
-                  className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50/70 scroll-smooth"
-                >
+                {/* Messages — plain overflow scroll */}
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50/70">
                   {loadingMessages ? (
                     <div className="h-full flex items-center justify-center text-sm text-slate-400 font-bold animate-pulse">
                       Loading messages...
@@ -690,11 +626,11 @@ const Messages = () => {
                           </div>
                         );
                       })}
-                      <div ref={messagesEndRef} />
                     </div>
                   )}
                 </div>
 
+                {/* Input */}
                 <form
                   onSubmit={handleSend}
                   className="p-4 sm:p-5 border-t border-slate-100 bg-white"
