@@ -36,35 +36,53 @@ const Messages = () => {
 
   const activeConversationRef = useRef(null);
 
+  // The only scrollable div — the message list inside the card
+  const scrollContainerRef = useRef(null);
+
+  // true  = user is at (or near) the bottom → auto-scroll is allowed
+  // false = user scrolled up to read history → leave position alone
+  const isNearBottomRef = useRef(true);
+
   const currentUserId = auth?.user?._id ? String(auth.user._id) : "";
   const requestedBookingId = searchParams.get("bookingId");
   const requestedRole = searchParams.get("role");
-
   const selectedKey = getConversationKey(activeConversation);
+
+  // ── scroll helpers ────────────────────────────────────────────────────────
+
+  const scrollToBottom = useCallback((behavior = "smooth") => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior });
+  }, []);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    // "near bottom" = within 80 px of the end
+    isNearBottomRef.current =
+      el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+  }, []);
+
+  // ── lifecycle ─────────────────────────────────────────────────────────────
 
   useEffect(() => {
     activeConversationRef.current = activeConversation;
   }, [activeConversation]);
 
   useEffect(() => {
-    if (!auth) {
-      navigate("/", { replace: true });
-    }
+    if (!auth) navigate("/", { replace: true });
   }, [auth, navigate]);
 
   useEffect(() => {
     if (typeof document === "undefined") return;
-
-    const handleVisibilityChange = () => {
+    const onChange = () =>
       setIsTabVisible(document.visibilityState === "visible");
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
+    document.addEventListener("visibilitychange", onChange);
+    return () => document.removeEventListener("visibilitychange", onChange);
   }, []);
+
+  // ── data ──────────────────────────────────────────────────────────────────
 
   const syncConversationAfterMessagesLoad = useCallback(
     (conversation, nextMessages, serverConversation = null) => {
@@ -100,7 +118,6 @@ const Messages = () => {
       setActiveConversation((current) => {
         if (!current || getConversationKey(current) !== targetKey)
           return current;
-
         return {
           ...current,
           ...(serverConversation || {}),
@@ -119,30 +136,24 @@ const Messages = () => {
   const loadMessages = useCallback(
     async (conversation, silent = false) => {
       if (!conversation) return;
-
       if (!silent) {
         setLoadingMessages(true);
         setError("");
       }
-
       try {
         const res = await getConversationMessages(
           conversation.bookingId,
           conversation.staffRole
         );
-
         const nextMessages = res.data || [];
         setMessages(nextMessages);
-
         syncConversationAfterMessagesLoad(
           conversation,
           nextMessages,
           res.conversation || null
         );
       } catch (err) {
-        if (!silent) {
-          setError(err.message || "Unable to load messages.");
-        }
+        if (!silent) setError(err.message || "Unable to load messages.");
       } finally {
         if (!silent) setLoadingMessages(false);
       }
@@ -153,43 +164,36 @@ const Messages = () => {
   const loadConversations = useCallback(
     async ({ silent = false } = {}) => {
       if (!auth) return;
-
       if (!silent) {
         setLoadingConversations(true);
         setError("");
       }
-
       try {
         const res = await getMessageConversations();
         const nextConversations = res.data || [];
         setConversations(nextConversations);
 
         const requestedConversation = nextConversations.find(
-          (conversation) =>
-            String(conversation.bookingId) === String(requestedBookingId) &&
-            conversation.staffRole === requestedRole
+          (c) =>
+            String(c.bookingId) === String(requestedBookingId) &&
+            c.staffRole === requestedRole
         );
 
         const currentActive = activeConversationRef.current;
         const currentActiveKey = getConversationKey(currentActive);
-
         const refreshedActive =
           nextConversations.find(
-            (conversation) =>
-              getConversationKey(conversation) === currentActiveKey
+            (c) => getConversationKey(c) === currentActiveKey
           ) || null;
 
-        const nextActive =
+        setActiveConversation(
           refreshedActive ||
-          requestedConversation ||
-          nextConversations[0] ||
-          null;
-
-        setActiveConversation(nextActive);
+            requestedConversation ||
+            nextConversations[0] ||
+            null
+        );
       } catch (err) {
-        if (!silent) {
-          setError(err.message || "Unable to load conversations.");
-        }
+        if (!silent) setError(err.message || "Unable to load conversations.");
       } finally {
         if (!silent) setLoadingConversations(false);
       }
@@ -199,7 +203,6 @@ const Messages = () => {
 
   const pollGlobalUpdates = useCallback(async () => {
     if (!auth) return;
-
     try {
       const res = await getMessageConversations();
       const fetchedConversations = res.data || [];
@@ -209,93 +212,77 @@ const Messages = () => {
 
       const rawActiveConversation = activeKey
         ? fetchedConversations.find(
-            (conversation) => getConversationKey(conversation) === activeKey
+            (c) => getConversationKey(c) === activeKey
           ) || null
         : null;
 
-      const normalizedConversations = fetchedConversations.map((conversation) =>
-        getConversationKey(conversation) === activeKey
-          ? { ...conversation, unreadCount: 0 }
-          : conversation
+      const normalizedConversations = fetchedConversations.map((c) =>
+        getConversationKey(c) === activeKey ? { ...c, unreadCount: 0 } : c
       );
 
       setConversations(normalizedConversations);
 
       if (!currentActive) {
-        const requestedConversation = normalizedConversations.find(
-          (conversation) =>
-            String(conversation.bookingId) === String(requestedBookingId) &&
-            conversation.staffRole === requestedRole
+        const requested = normalizedConversations.find(
+          (c) =>
+            String(c.bookingId) === String(requestedBookingId) &&
+            c.staffRole === requestedRole
         );
-
-        const nextActive =
-          requestedConversation || normalizedConversations[0] || null;
-
-        if (nextActive) {
-          setActiveConversation(nextActive);
-        }
-
+        const nextActive = requested || normalizedConversations[0] || null;
+        if (nextActive) setActiveConversation(nextActive);
         return;
       }
 
-      const updatedActiveConversation =
+      const updatedActive =
         normalizedConversations.find(
-          (conversation) => getConversationKey(conversation) === activeKey
+          (c) => getConversationKey(c) === activeKey
         ) || null;
 
-      if (!updatedActiveConversation) {
-        const fallbackConversation = normalizedConversations[0] || null;
-        setActiveConversation(fallbackConversation);
-        if (!fallbackConversation) {
-          setMessages([]);
-        }
+      if (!updatedActive) {
+        const fallback = normalizedConversations[0] || null;
+        setActiveConversation(fallback);
+        if (!fallback) setMessages([]);
         return;
       }
 
-      if (
-        JSON.stringify(updatedActiveConversation) !==
-        JSON.stringify(currentActive)
-      ) {
-        setActiveConversation(updatedActiveConversation);
+      if (JSON.stringify(updatedActive) !== JSON.stringify(currentActive)) {
+        setActiveConversation(updatedActive);
       }
 
-      const previousLastMessageId = getMessageId(currentActive.lastMessage);
-      const nextLastMessageId = getMessageId(
-        rawActiveConversation?.lastMessage
-      );
-      const hasUnreadForActive = (rawActiveConversation?.unreadCount || 0) > 0;
-      const activeConversationChanged =
-        nextLastMessageId && nextLastMessageId !== previousLastMessageId;
+      const previousLastId = getMessageId(currentActive.lastMessage);
+      const nextLastId = getMessageId(rawActiveConversation?.lastMessage);
+      const hasUnread = (rawActiveConversation?.unreadCount || 0) > 0;
+      const changed = nextLastId && nextLastId !== previousLastId;
 
-      if (hasUnreadForActive || activeConversationChanged) {
-        await loadMessages(updatedActiveConversation, true);
+      if (hasUnread || changed) {
+        await loadMessages(updatedActive, true);
       }
     } catch (err) {
       console.warn("Global message polling failed:", err);
     }
   }, [auth, loadMessages, requestedBookingId, requestedRole]);
 
+  // Load conversations once on mount
   useEffect(() => {
     loadConversations();
   }, [loadConversations]);
 
+  // When the user switches conversation reset scroll intent and load messages
   useEffect(() => {
     if (!activeConversation) {
       setMessages([]);
       return;
     }
+    isNearBottomRef.current = true; // always start at bottom for a new thread
     loadMessages(activeConversation);
-  }, [selectedKey, loadMessages]);
+  }, [selectedKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Polling interval
   useEffect(() => {
     if (!auth || !isTabVisible) return;
-
     const timer = setInterval(() => {
-      if (document.visibilityState === "visible") {
-        pollGlobalUpdates();
-      }
+      if (document.visibilityState === "visible") pollGlobalUpdates();
     }, 8000);
-
     return () => clearInterval(timer);
   }, [auth, isTabVisible, pollGlobalUpdates]);
 
@@ -304,16 +291,47 @@ const Messages = () => {
     pollGlobalUpdates();
   }, [auth, isTabVisible, pollGlobalUpdates]);
 
+  /**
+   * Scroll logic — fires after every render where messages changes.
+   *
+   * Case 1: loadingMessages just flipped to false (initial load or
+   *         conversation switch) → instant snap to bottom.
+   * Case 2: I sent a message (optimistic or confirmed) → smooth scroll.
+   * Case 3: Incoming message from the other side AND I'm near the bottom
+   *         → smooth scroll.
+   * Case 4: Incoming message AND I'm scrolled up reading history → do nothing.
+   */
+  useEffect(() => {
+    if (loadingMessages || messages.length === 0) return;
+
+    const last = messages[messages.length - 1];
+    const isMine =
+      last.isOptimistic || String(getId(last.senderId)) === currentUserId;
+
+    if (isMine || isNearBottomRef.current) {
+      scrollToBottom("smooth");
+    }
+  }, [messages]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // After the spinner disappears, jump instantly to the bottom
+  useEffect(() => {
+    if (!loadingMessages) {
+      // Small timeout so the DOM has painted the messages before we scroll
+      const id = setTimeout(() => scrollToBottom("instant"), 0);
+      return () => clearTimeout(id);
+    }
+  }, [loadingMessages]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── handlers ──────────────────────────────────────────────────────────────
+
   const getCounterpart = (conversation) => {
     if (!conversation) return null;
-
     const isTraveler = String(getId(conversation.traveler)) === currentUserId;
     return isTraveler ? conversation.staff : conversation.traveler;
   };
 
   const formatTime = (date) => {
     if (!date) return "";
-
     return new Date(date).toLocaleString("en-US", {
       month: "short",
       day: "numeric",
@@ -323,6 +341,7 @@ const Messages = () => {
   };
 
   const handleSelectConversation = (conversation) => {
+    isNearBottomRef.current = true;
     setActiveConversation(conversation);
     setDraft("");
   };
@@ -341,6 +360,7 @@ const Messages = () => {
       isOptimistic: true,
     };
 
+    // Append optimistic message — the messages useEffect fires → scrolls down
     setMessages((current) => [...current, optimisticMessage]);
     setDraft("");
     setSending(true);
@@ -353,21 +373,22 @@ const Messages = () => {
         text: cleanDraft,
       });
 
+      // Swap optimistic → real; useEffect fires again → scrolls down smoothly
       setMessages((current) =>
         current.map((msg) => (msg._id === tempId ? res.data : msg))
       );
 
       setConversations((current) =>
         current
-          .map((conversation) =>
-            getConversationKey(conversation) === selectedKey
+          .map((c) =>
+            getConversationKey(c) === selectedKey
               ? {
-                  ...conversation,
+                  ...c,
                   lastMessage: res.data,
                   updatedAt: res.data.createdAt,
                   unreadCount: 0,
                 }
-              : conversation
+              : c
           )
           .sort(
             (a, b) =>
@@ -395,6 +416,8 @@ const Messages = () => {
     }
   };
 
+  // ── render ────────────────────────────────────────────────────────────────
+
   if (!auth) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
@@ -421,6 +444,7 @@ const Messages = () => {
   return (
     <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-10">
       <div className="max-w-7xl mx-auto">
+        {/* Page header */}
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
           <div>
             <p className="text-xs font-black uppercase tracking-widest text-[#bd8157]">
@@ -539,8 +563,8 @@ const Messages = () => {
           <section className="flex flex-col h-[650px] min-h-[620px]">
             {activeConversation ? (
               <>
-                {/* Header */}
-                <div className="p-5 border-b border-slate-100 flex items-center justify-between gap-4">
+                {/* Chat header */}
+                <div className="p-5 border-b border-slate-100 flex items-center justify-between gap-4 shrink-0">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
                       {activeCounterpart?.image ? (
@@ -563,13 +587,21 @@ const Messages = () => {
                       </p>
                     </div>
                   </div>
-                  <span className="px-3 py-1 rounded-full border border-emerald-100 bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase">
+                  <span className="px-3 py-1 rounded-full border border-emerald-100 bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase shrink-0">
                     {activeConversation.status}
                   </span>
                 </div>
 
-                {/* Messages — plain overflow scroll */}
-                <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50/70">
+                {/*
+                  ── Scrollable message list ──
+                  Only THIS div scrolls. scrollContainerRef + onScroll live here.
+                  The page behind it never moves.
+                */}
+                <div
+                  ref={scrollContainerRef}
+                  onScroll={handleScroll}
+                  className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-50/70"
+                >
                   {loadingMessages ? (
                     <div className="h-full flex items-center justify-center text-sm text-slate-400 font-bold animate-pulse">
                       Loading messages...
@@ -630,15 +662,15 @@ const Messages = () => {
                   )}
                 </div>
 
-                {/* Input */}
+                {/* Input bar */}
                 <form
                   onSubmit={handleSend}
-                  className="p-4 sm:p-5 border-t border-slate-100 bg-white"
+                  className="p-4 sm:p-5 border-t border-slate-100 bg-white shrink-0"
                 >
                   <div className="flex items-end gap-3">
                     <textarea
                       value={draft}
-                      onChange={(event) => setDraft(event.target.value)}
+                      onChange={(e) => setDraft(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !e.shiftKey) {
                           e.preventDefault();
