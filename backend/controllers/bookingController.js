@@ -16,18 +16,28 @@ const getStripeClient = () => {
 };
 
 const checkAvailability = async (staffId, role, start, end) => {
-  const query = {
+  const bookingQuery = {
     status: { $in: ["pending", "confirmed"] },
-    // Standard Overlap Logic: (NewStart <= ExistingEnd) AND (NewEnd >= ExistingStart)
     bookingDate: { $lte: end },
     endDate: { $gte: start },
   };
+  if (role === "guide") bookingQuery.guideId = staffId;
+  if (role === "porter") bookingQuery.porterId = staffId;
 
-  if (role === "guide") query.guideId = staffId;
-  if (role === "porter") query.porterId = staffId;
+  const bookingOverlap = await Booking.findOne(bookingQuery);
+  if (bookingOverlap) return false;
 
-  const overlap = await Booking.findOne(query);
-  return !overlap; // Returns true if no overlap is found
+  if (role === "guide") {
+    const customTourOverlap = await CustomTour.findOne({
+      guideId: staffId,
+      status: { $in: ["pending", "confirmed"] },
+      startDate: { $lte: end },
+      endDate: { $gte: start },
+    });
+    if (customTourOverlap) return false;
+  }
+
+  return true;
 };
 
 // Create Initial Booking
@@ -470,6 +480,17 @@ exports.getAvailableStaff = async (req, res) => {
       if (role === "3" && b.porterId)
         occupiedStaffIds.push(b.porterId.toString());
     });
+
+    if (role === "2") {
+      const occupiedByCustomTours = await CustomTour.find({
+        status: { $in: ["pending", "confirmed"] },
+        startDate: { $lte: requestedEnd },
+        endDate: { $gte: requestedStart },
+      });
+      occupiedByCustomTours.forEach((t) => {
+        if (t.guideId) occupiedStaffIds.push(t.guideId.toString());
+      });
+    }
 
     const availableStaff = await User.find({
       role: Number(role),

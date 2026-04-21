@@ -7,7 +7,7 @@ const customTourSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    
+
     itinerary: [
       {
         dayNumber: { type: Number, required: true },
@@ -29,12 +29,14 @@ const customTourSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'confirmed', 'cancelled', 'completed', 'refunded'],
+      enum: ["pending", "confirmed", "cancelled", "completed", "refunded"],
       default: "pending",
     },
     travelerCount: { type: Number, default: 1, min: 1 },
     guideId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     guideCost: { type: Number, default: 0 },
+    startDate: { type: Date },
+    endDate: { type: Date },
   },
   { timestamps: true }
 );

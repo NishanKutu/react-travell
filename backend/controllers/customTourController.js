@@ -12,6 +12,10 @@ const createCustomTour = async (req, res) => {
         .json({ success: false, message: "Itinerary is required" });
     }
 
+    const allDates = itinerary.map((day) => new Date(day.bookingDate));
+    const startDate = new Date(Math.min(...allDates));
+    const endDate = new Date(Math.max(...allDates));
+
     // Extract all activity IDs to calculate price
     const activityIds = [];
     itinerary.forEach((day) => {
@@ -40,6 +44,8 @@ const createCustomTour = async (req, res) => {
       guideId,
       guideCost,
       totalPrice: finalTotal,
+      startDate, 
+      endDate,
       status: "pending",
     });
 
