@@ -87,17 +87,20 @@ const BookingPage = () => {
     fetchStaff();
   }, [bookingDate, id]);
 
-  // Price calculations
-  const price = Number(destination?.price) || 0;
-  const discountPerPerson = Number(destination?.discount) || 0;
-  const subtotal = price * travelerCount;
-  const totalDiscount = discountPerPerson * travelerCount;
+  // Price Calculation
+  const basePrice = Number(destination?.price) || 0;
+  const discountPercentage = Number(destination?.discount) || 0;
+  const discountAmountPerPerson = basePrice * (discountPercentage / 100);
+  const totalDiscount = discountAmountPerPerson * travelerCount;
+  const priceAfterDiscount = basePrice - discountAmountPerPerson;
+  const subtotal = priceAfterDiscount * travelerCount;
+  // Staff Costs
   const guideTotal =
     hasGuide && selectedGuide ? Number(selectedGuide.dailyRate) || 0 : 0;
   const porterTotal =
     hasPorter && selectedPorter ? Number(selectedPorter.dailyRate) || 0 : 0;
-
-  const finalTotal = subtotal - totalDiscount + guideTotal + porterTotal;
+  // Grand Total
+  const finalTotal = subtotal + guideTotal + porterTotal;
 
   const handleTravelerChange = (val) => {
     const max = destination?.groupSize || 10;

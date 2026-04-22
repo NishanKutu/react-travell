@@ -43,6 +43,19 @@ const PackageDetail = () => {
     fetchTour();
   }, [id]);
 
+  // 1. Extract values from the tour object
+  const basePrice = Number(tour?.price) || 0;
+  const discountPercentage = Number(tour?.discount) || 0;
+
+  // 2. Calculate the discounted price (e.g., 5000 - (5000 * 0.08) = 4600)
+  const finalPrice =
+    discountPercentage > 0
+      ? basePrice - basePrice * (discountPercentage / 100)
+      : basePrice;
+
+  // 3. (Optional) Calculate the amount saved to show a badge
+  const amountSaved = basePrice - finalPrice;
+
   const openLightbox = (images, index, title) => {
     setLightbox({ isOpen: true, images, index, title: title || tour.title });
   };
@@ -156,10 +169,10 @@ const PackageDetail = () => {
             Price
           </p>
           <p className="text-2xl font-bold text-[#004d4d]">
-            Rs {tour.price}
+            Rs {finalPrice.toLocaleString()}
             {tour.discount > 0 && (
               <span className="text-sm text-rose-500 line-through ml-2 font-normal">
-                Rs {Math.round(tour.price * (1 + tour.discount / 100))}
+                Rs {basePrice.toLocaleString()}
               </span>
             )}
           </p>
